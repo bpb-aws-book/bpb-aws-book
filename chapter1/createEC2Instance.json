@@ -5,6 +5,10 @@
             "Type": "String",
             "Default": "10.0.0.0/16"
         },
+        "YourPublicIPAddress": {
+            "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
+            "Type": "String"
+        },
         "LatestAmiId": {
             "Description": "The latest AMI id. Default is Amazon Linux 2",
             "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
@@ -78,6 +82,27 @@
             "ConstraintDescription" : "must be a valid EC2 instance type."
           }
     },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+          "ParameterGroups" : [
+            {
+              "Label" : { "default" : "Your IP and EC2 Configuration" },
+              "Parameters" : [ "YourPublicIPAddress","LatestAmiId", "InstanceType"]
+            },
+            {
+              "Label" : { "default": "VPC Configuration" },
+              "Parameters" : [ "VpcCIDR", "PublicSubnet1CIDR" ]
+            }
+          ],
+          "ParameterLabels" : {
+            "VpcCIDR" : { "default" : "CIDR of the VPC where the web server will be deployed" },
+            "PublicSubnet1CIDR" : { "default" : "CIDR of the public subnet where the web server will be deployed" },
+            "YourPublicIPAddress" : { "default" : "Your public IP Address"},
+            "LatestAmiId" : { "default" : "Amazon Linux 2 AMI ID"},
+            "InstanceType" : { "default" : "Instance Type" }
+          }
+        }
+      },
     "Resources": {
         "VPC": {
             "Type": "AWS::EC2::VPC",
@@ -190,7 +215,7 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : 80,
                     "ToPort" : 80,
-                    "CidrIp" : "0.0.0.0/0"
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"} 
                 }]
             }
         },
