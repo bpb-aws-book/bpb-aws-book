@@ -46,13 +46,13 @@ Tip: There are certain operations that can only be performed with root login and
 
 ![8  SelectSupportPlan](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/46e36599-7d67-44bb-8422-94e8cb14e5a6)
 
-10. Although your sign up process is done, executing this step is strongly recommended.
-
+Helpful Tip:
+Please take a look at the link below to review features of different AWS Support Plans.
 [https://aws.amazon.com/premiumsupport/plans/](https://aws.amazon.com/premiumsupport/plans/)
 
 Also, please keep in mind that you can create a billing support case under the free basic support. If you have a question related to AWS charges, please make use of this feature.
 
-**Important**: Even though you are done with AWS account creation, I strongly recommend that you complete recipe 2 immediately to add multi-factor authentication to your root email login. This will ensure you supply an additional authentication code (in addition to your email and password) each time you try to login to your AWS account as the root user. Please note that the root email user is authorized to perform all actions in your AWS account and so multi-factor authentication adds an additional layer of security. Once MFA is enabled, you need to supply an additional code to authenticate with AWS and login.
+**Important**: Even though you are done with AWS account creation, I strongly recommend that you add multi-factor authentication to your root email login. This will ensure you supply an additional authentication code (in addition to your email and password) each time you try to login to your AWS account as the root user. Please note that the root email user is authorized to perform all actions in your AWS account and so multi-factor authentication adds an additional layer of security. Once MFA is enabled, you need to supply an additional code to authenticate with AWS and login.
 
 Tip: MFA or multi-factor authentication is a technique that requires users to authenticate with additional secret information in addition to the login credentials. That additional MFA code can be supplied by a hardware device or via a software or virtual device. 
 
