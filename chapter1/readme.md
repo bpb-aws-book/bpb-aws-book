@@ -118,6 +118,7 @@ Click Add MFA button
 
 7. Switch to the Google Authenticator App on your mobile device, click the ‘+’ button and select the Scan a QR Code option.
 8. Switch back to the IAM dashboard, supply device name and leave the MFA device option to ‘Authenticator app’. Click the Next button.
+![Screenshot 2024-06-05 at 12 11 14 AM](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/b4a88b2d-c183-4796-a0c5-983bc17cf6ec)
 
 
 9. In the next step, select the Virtual MFA Device option and click the Continue button.
