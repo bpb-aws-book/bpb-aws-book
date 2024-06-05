@@ -43,18 +43,10 @@ Tip: There are certain operations that can only be performed with root login and
 ![7  VerifyIdentity](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/405c4b06-92e8-4e29-b6b6-86db8cba650f)
 
 8. In the next step, you will get the option to select an AWS support plan. Please leave the default as Basic Support and click the Complete sign up button.
-9. Although your sign up process is done, executing this step is strongly recommended.
 
-    
+![8  SelectSupportPlan](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/46e36599-7d67-44bb-8422-94e8cb14e5a6)
 
-<p id="gdcalert8" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image8.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert9">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image8.png "image_tooltip")
- 
-
-
-Tip: For running the recipes in this book, you won’t need any paid support type but it is a good idea to familiarize yourself with different types of AWS Support. Please refer to this link for more details:
+10. Although your sign up process is done, executing this step is strongly recommended.
 
 [https://aws.amazon.com/premiumsupport/plans/](https://aws.amazon.com/premiumsupport/plans/)
 
