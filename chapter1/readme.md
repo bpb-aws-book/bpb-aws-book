@@ -1,5 +1,5 @@
 # **AWS Account Setup**
-# **Creating an AWS account**
+# **Section A: Creating an AWS account**
 
 Creating an AWS account is a fairly straightforward process and is documented on the AWS site at this URL:
 
@@ -59,7 +59,7 @@ Tip: MFA or multi-factor authentication is a technique that requires users to au
 
 Your MFA device can be a hardware device or you can use a virtual or software based device for multi-factor authentication. One of the most popular devices is Google Authenticator which we will use in the next recipe. 
 
-# **Configure Root Account Credentials**
+# **Section B: Configure Root Account Credentials**
 
 1. Review the list of MFA devices supported by AWS.
 
