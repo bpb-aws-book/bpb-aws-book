@@ -1,13 +1,94 @@
+# **Recipe 1: Creating an AWS account**
+
 Creating an AWS account is a fairly straightforward process and is documented on the AWS site at this URL:
-https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html
+
+[https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html)
 
 An alternate resource that provides step-by-step tutorial on AWS account creation is available at:
-https://aws.amazon.com/getting-started/guides/setup-environment/module-one/#
 
-You can follow any of the above URLs to create an AWS account and skip this documentation. Or you can follow instructions in this recipe to create an AWS account.
+[https://aws.amazon.com/getting-started/guides/setup-environment/module-one/#](https://aws.amazon.com/getting-started/guides/setup-environment/module-one/#)
+
+You can follow any of the above URLs to create an AWS account and skip this recipe. Or you can follow instructions in this recipe to create an AWS account.
+
+Let's continue with our AWS account creation process. 
+
+
+
+1. Navigate to [https://aws.amazon.com/](https://aws.amazon.com/)  and click on the button with label ‘Create an AWS Account’.
+    
+![1  CreateAWSAccount](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/911c8bc5-b9f0-4a73-9e02-9eaa915506e1)
+
+2. Fill in Root user email address email id and AWS account name text boxes. Click Verify Email Address Button.
+![2  SignupForAWSAccount](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/0114fc54-b2f9-4b3c-9ab4-f346676752c3)
+
+3. AWS will send you a code to the root email id. Supply that code in the next step and click the Verify Email button.
+![3  VerifyEmail](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/31ddc447-bfce-432e-8a13-450cc2e3ac98)
+
+4. In this step, create your root login password and click on the Continue button. Please provide a strong password for your root login. 
+
+Tip: There are certain operations that can only be performed with root login and so please make sure you have always have access to this email id. Refer to this link for more details: [https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html)
+
+
+    
+
+<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image4.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
+
+
+![alt_text](images/image4.png "image_tooltip")
 
 
 
 
+5. In this step, specify that your AWS account usage type will be Personal, provide your contact information (name and address), accept AWS customer agreement and click Continue button. 
+
+    
+
+<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image5.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
+![alt_text](images/image5.png "image_tooltip")
+
+
+6.  In this step, provide credit card payment information along with a billing address. Click the Verify and Continue button.
+
+    
+
+<p id="gdcalert6" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image6.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert7">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
+
+
+![alt_text](images/image6.png "image_tooltip")
+
+
+7. Provide a mobile phone number for verification along with Capcha. Click the Send SMS Button.
+
+    
+
+<p id="gdcalert7" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image7.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert8">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
+
+
+![alt_text](images/image7.png "image_tooltip")
+
+
+8. In the next step, you will get the option to select an AWS support plan. Please leave the default as Basic Support and click the Complete sign up button.
+9. Although your sign up process is done, executing this step is strongly recommended.
+
+    
+
+<p id="gdcalert8" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image8.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert9">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
+
+
+![alt_text](images/image8.png "image_tooltip")
+ 
+
+
+Tip: For running the recipes in this book, you won’t need any paid support type but it is a good idea to familiarize yourself with different types of AWS Support. Please refer to this link for more details:
+
+[https://aws.amazon.com/premiumsupport/plans/](https://aws.amazon.com/premiumsupport/plans/)
+
+Also, please keep in mind that you can create a billing support case under the free basic support. If you have a question related to AWS charges, please make use of this feature.
+
+**Important**: Even though you are done with AWS account creation, I strongly recommend that you complete recipe 2 immediately to add multi-factor authentication to your root email login. This will ensure you supply an additional authentication code (in addition to your email and password) each time you try to login to your AWS account as the root user. Please note that the root email user is authorized to perform all actions in your AWS account and so multi-factor authentication adds an additional layer of security. Once MFA is enabled, you need to supply an additional code to authenticate with AWS and login.
+
+Tip: MFA or multi-factor authentication is a technique that requires users to authenticate with additional secret information in addition to the login credentials. That additional MFA code can be supplied by a hardware device or via a software or virtual device. 
+
+Your MFA device can be a hardware device or you can use a virtual or software based device for multi-factor authentication. One of the most popular devices is Google Authenticator which we will use in the next recipe. 
