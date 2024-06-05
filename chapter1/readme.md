@@ -1,4 +1,4 @@
-# **Recipe 1: Creating an AWS account**
+# **Creating an AWS account**
 
 Creating an AWS account is a fairly straightforward process and is documented on the AWS site at this URL:
 
@@ -98,7 +98,7 @@ Conversion notes:
 
 
 
-# **Recipe 2: Configure Root Account Credentials**
+# **Configure Root Account Credentials**
 
 1. Review the list of MFA devices supported by AWS.
 
