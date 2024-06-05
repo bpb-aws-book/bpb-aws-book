@@ -57,3 +57,83 @@ Also, please keep in mind that you can create a billing support case under the f
 Tip: MFA or multi-factor authentication is a technique that requires users to authenticate with additional secret information in addition to the login credentials. That additional MFA code can be supplied by a hardware device or via a software or virtual device. 
 
 Your MFA device can be a hardware device or you can use a virtual or software based device for multi-factor authentication. One of the most popular devices is Google Authenticator which we will use in the next recipe. 
+
+<!-----
+
+You have some errors, warnings, or alerts. If you are using reckless mode, turn it off to see inline alerts.
+* ERRORs: 0
+* WARNINGs: 0
+* ALERTS: 5
+
+Conversion time: 1.007 seconds.
+
+
+Using this Markdown file:
+
+1. Paste this output into your source file.
+2. See the notes and action items below regarding this conversion run.
+3. Check the rendered output (headings, lists, code blocks, tables) for proper
+   formatting and use a linkchecker before you publish this page.
+
+Conversion notes:
+
+* Docs to Markdown version 1.0β36
+* Tue Jun 04 2024 23:53:13 GMT-0700 (PDT)
+* Source doc: Untitled document
+* This document has images: check for >>>>>  gd2md-html alert:  inline image link in generated source and store images to your server. NOTE: Images in exported zip file from Google Docs may not appear in  the same order as they do in your doc. Please check the images!
+
+----->
+
+
+<p style="color: red; font-weight: bold">>>>>>  gd2md-html alert:  ERRORs: 0; WARNINGs: 0; ALERTS: 5.</p>
+<ul style="color: red; font-weight: bold"><li>See top comment block for details on ERRORs and WARNINGs. <li>In the converted Markdown or HTML, search for inline alerts that start with >>>>>  gd2md-html alert:  for specific instances that need correction.</ul>
+
+<p style="color: red; font-weight: bold">Links to alert messages:</p><a href="#gdcalert1">alert1</a>
+<a href="#gdcalert2">alert2</a>
+<a href="#gdcalert3">alert3</a>
+<a href="#gdcalert4">alert4</a>
+<a href="#gdcalert5">alert5</a>
+
+<p style="color: red; font-weight: bold">>>>>> PLEASE check and correct alert issues and delete this message and the inline alerts.<hr></p>
+
+
+
+# **Recipe 2: Configure Root Account Credentials**
+
+1. Review the list of MFA devices supported by AWS.
+
+    [https://aws.amazon.com/iam/features/mfa/](https://aws.amazon.com/iam/features/mfa/)
+
+2. Install the Google Authenticator App from Google Play Store or App Store on your mobile device.
+3. Navigate to aws.amazon.com and click on the Sign in to Console Button.
+4. Select the Root User option and supply your root email id. Click the Next button.
+5. In the next step, supply your password to login to your AWS account.
+6. Once you are logged in, click on the Search textbox at the left hand top of the landing page, type “IAM” and select the IAM service.
+
+![IAM](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/549ec5f8-a175-4614-b408-94196c69b22d)
+
+On the IAM dashboard, you will see a message that recommends adding MFA to your root credentials.
+![AddMFA](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/7e834cb9-a388-4799-8a0a-d033aea8fb06)
+Click Add MFA button
+
+7. Switch to the Google Authenticator App on your mobile device, click the ‘+’ button and select the Scan a QR Code option.
+8. Switch back to the IAM dashboard, supply device name and leave the MFA device option to ‘Authenticator app’. Click the Next button.
+
+
+9. In the next step, select the Virtual MFA Device option and click the Continue button.
+
+
+10. Click the Show QR Code link and scan the QR code in the authenticator app on your mobile device.
+
+![ShowQRCode](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/4afff6ac-506d-4077-9357-35f1c01699eb)
+
+Enter MFA Codes 1 and 2 that are displayed on your mobile device and click the Add MFA button. 
+
+From this point onwards, you will need to supply root user email and password and the MFA code that displays in your authenticator app.
+
+Congratulations, you have created your AWS account and configured MFA on root credentials. Log out from AWS and login again with your root credentials and MFA code to your AWS Account.
+
+Tip: It is recommended that you do not login to your AWS account with root credentials unless you need to perform any operations that can only be executed by root credentials. We will create IAM users later and not use root credentials after this chapter.
+
+
+
