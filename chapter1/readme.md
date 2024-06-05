@@ -28,46 +28,19 @@ Let's continue with our AWS account creation process.
 
 Tip: There are certain operations that can only be performed with root login and so please make sure you have always have access to this email id. Refer to this link for more details: [https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html](https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html)
 
+![4  SupplyPassword](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/47aeb896-842c-4827-a0ac-8e8354063c15)
 
-    
+5. In this step, specify that your AWS account usage type will be Personal, provide your contact information (name and address), accept AWS customer agreement and click Continue button.
 
-<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image4.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image4.png "image_tooltip")
-
-
-
-
-5. In this step, specify that your AWS account usage type will be Personal, provide your contact information (name and address), accept AWS customer agreement and click Continue button. 
-
-    
-
-<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image5.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image5.png "image_tooltip")
-
+![5  ProvideContactInfo](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/a124964b-8d2d-49f5-a1f6-288e2b7af104)
 
 6.  In this step, provide credit card payment information along with a billing address. Click the Verify and Continue button.
 
-    
-
-<p id="gdcalert6" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image6.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert7">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image6.png "image_tooltip")
-
+![6  ProvideCreditCardInfo](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/ba78ab5b-2675-4bc9-af9c-4a6063eebf1c)
 
 7. Provide a mobile phone number for verification along with Capcha. Click the Send SMS Button.
 
-    
-
-<p id="gdcalert7" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image7.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert8">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image7.png "image_tooltip")
-
+![7  VerifyIdentity](https://github.com/bpb-aws-book/bpb-aws-book/assets/171321045/405c4b06-92e8-4e29-b6b6-86db8cba650f)
 
 8. In the next step, you will get the option to select an AWS support plan. Please leave the default as Basic Support and click the Complete sign up button.
 9. Although your sign up process is done, executing this step is strongly recommended.
