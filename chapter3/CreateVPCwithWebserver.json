@@ -1,0 +1,541 @@
+{
+    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "YourPublicIPAddress": {
+            "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
+            "Type": "String"
+        },
+        "LatestAmiId": {
+            "Description": "The latest AMI id. Default is Amazon Linux 2",
+            "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+        },
+        "InstanceType" : {
+            "Description" : "WebServer EC2 instance type",
+            "Type" : "String",
+            "Default" : "t2.small",
+            "AllowedValues" : [ 
+              "t1.micro", 
+              "t2.nano", 
+              "t2.micro", 
+              "t2.small", 
+              "t2.medium", 
+              "t2.large", 
+              "m1.small", 
+              "m1.medium", 
+              "m1.large", 
+              "m1.xlarge", 
+              "m2.xlarge", 
+              "m2.2xlarge", 
+              "m2.4xlarge", 
+              "m3.medium", 
+              "m3.large", 
+              "m3.xlarge", 
+              "m3.2xlarge", 
+              "m4.large", 
+              "m4.xlarge", 
+              "m4.2xlarge", 
+              "m4.4xlarge", 
+              "m4.10xlarge", 
+              "c1.medium", 
+              "c1.xlarge", 
+              "c3.large", 
+              "c3.xlarge", 
+              "c3.2xlarge", 
+              "c3.4xlarge", 
+              "c3.8xlarge", 
+              "c4.large", 
+              "c4.xlarge", 
+              "c4.2xlarge", 
+              "c4.4xlarge", 
+              "c4.8xlarge", 
+              "g2.2xlarge", 
+              "g2.8xlarge", 
+              "r3.large", 
+              "r3.xlarge", 
+              "r3.2xlarge", 
+              "r3.4xlarge", 
+              "r3.8xlarge", 
+              "i2.xlarge", 
+              "i2.2xlarge", 
+              "i2.4xlarge", 
+              "i2.8xlarge", 
+              "d2.xlarge", 
+              "d2.2xlarge", 
+              "d2.4xlarge", 
+              "d2.8xlarge", 
+              "hi1.4xlarge", 
+              "hs1.8xlarge", 
+              "cr1.8xlarge", 
+              "cc2.8xlarge", 
+              "cg1.4xlarge"
+            ],
+            "ConstraintDescription" : "must be a valid EC2 instance type."
+        },
+        "VpcCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for this VPC",
+            "Type": "String",
+            "Default": "10.0.0.0/16"
+        },
+        "FirstPublicSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone",
+            "Type": "String",
+            "Default": "10.0.1.0/24"
+        },
+        "SecondPublicSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone",
+            "Type": "String",
+            "Default": "10.0.2.0/24"
+        },
+        "FirstPrivateSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone",
+            "Type": "String",
+            "Default": "10.0.3.0/24"
+        },
+        "SecondPrivateSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone",
+            "Type": "String",
+            "Default": "10.0.4.0/24"
+        }
+    },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+          "ParameterGroups" : [
+            {
+              "Label" : { "default" : "Your IP and EC2 Configuration" },
+              "Parameters" : [ "YourPublicIPAddress","LatestAmiId", "InstanceType"]
+            },
+            {
+              "Label" : { "default": "VPC Configuration" },
+              "Parameters" : [ "VpcCIDR", "FirstPublicSubnetCIDR", "SecondPublicSubnetCIDR", "FirstPrivateSubnetCIDR", "SecondPrivateSubnetCIDR" ]
+            }
+          ],
+          "ParameterLabels" : {
+            "VpcCIDR" : { "default" : "CIDR of the VPC where the web server will be deployed" },
+            "FirstPublicSubnetCIDR" : { "default" : "CIDR of the public subnet where the web server will be deployed" },
+            "YourPublicIPAddress" : { "default" : "Your public IP Address"},
+            "LatestAmiId" : { "default" : "Amazon Linux 2 AMI ID"},
+            "InstanceType" : { "default" : "Instance Type" }
+          }
+        }
+      },
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "VpcCIDR"
+                },
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Custom VPC for learning"
+                    }
+                ]
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Metadata": {
+                "Comment": "The internet gateway allows resources a route out to the internet"
+            },
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "IGW"
+                    }
+                ]
+            }
+        },
+        "InternetGatewayAttachment": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                },
+                "VpcId": {
+                    "Ref": "VPC"
+                }
+            }
+        },
+        "FirstPublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "FirstPublicSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Public Subnet (AZ1)"
+                    }
+                ]
+            }
+        },
+        "SecondPublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        1,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "SecondPublicSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Public Subnet (AZ2)"
+                    }
+                ]
+            }
+        },
+        "FirstPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "FirstPrivateSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Private Subnet (AZ1)"
+                    }
+                ]
+            }
+        },
+        "SecondPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        1,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "SecondPrivateSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Private Subnet (AZ2)"
+                    }
+                ]
+            }
+        },
+        "FirstNATGatewayEIP": {
+            "Type": "AWS::EC2::EIP",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "SecondNATGatewayEIP": {
+            "Type": "AWS::EC2::EIP",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "Domain": "vpc"
+            }
+        },
+        "FirstNATGateway": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "FirstNATGatewayEIP",
+                        "AllocationId"
+                    ]
+                },
+                "SubnetId": {
+                    "Ref": "FirstPublicSubnet"
+                }
+            }
+        },
+        "SecondNATGateway": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "SecondNATGatewayEIP",
+                        "AllocationId"
+                    ]
+                },
+                "SubnetId": {
+                    "Ref": "SecondPublicSubnet"
+                }
+            }
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Public Routes"
+                    }
+                ]
+            }
+        },
+        "DefaultPublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "FirstPublicSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "FirstPublicSubnet"
+                }
+            }
+        },
+        "SecondPublicSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "SecondPublicSubnet"
+                }
+            }
+        },
+        "FirstPrivateRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Private Routes (AZ1)"
+                    }
+                ]
+            }
+        },
+        "FirstDefaultPrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "FirstPrivateRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "FirstNATGateway"
+                }
+            }
+        },
+        "FirstPrivateSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "FirstPrivateRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "FirstPrivateSubnet"
+                }
+            }
+        },
+        "SecondPrivateRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Private Routes (AZ2)"
+                    }
+                ]
+            }
+        },
+        "SecondDefaultPrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "SecondPrivateRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "SecondNATGateway"
+                }
+            }
+        },
+        "SecondPrivateSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "SecondPrivateRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "SecondPrivateSubnet"
+                }
+            }
+        },
+        "EC2SecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Allow http to client host",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 80,
+                    "ToPort" : 80,
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"} 
+                }]
+            }
+        },
+          "WebServer": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+              "ImageId": {
+                    "Ref": "LatestAmiId"
+                },
+              "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+              "SecurityGroupIds" : [{ "Fn::GetAtt": ["EC2SecurityGroup", "GroupId"] }],
+              "SubnetId" : {"Ref": "FirstPublicSubnet"},
+              "Tags" : [ {"Key" : "Name", "Value" : "WebServer"}],
+              "UserData" : {"Fn::Base64" : { "Fn::Join" : ["",[
+                "#!/bin/bash -ex","\n",
+                "sudo su","\n",
+                "yum update -y","\n",
+                "yum install -y httpd","\n",
+                "systemctl start httpd","\n",
+                "systemctl enable httpd","\n",
+                "chmod 2775 /var/www","\n",
+                "echo 'Hello from BPB Publications' > /var/www/html/index.html","\n"
+                ]]}
+                }
+            }
+        }  
+    },
+    "Outputs": {
+        "PublicIp" : {
+            "Value" : { "Fn::GetAtt" : [ "WebServer", "PublicIp" ]},
+            "Description" : "Web Server's Public IP Address"
+          },
+        "VPC": {
+            "Description": "A reference to the created VPC",
+            "Value": {
+                "Ref": "VPC"
+            }
+        },
+        "PublicSubnets": {
+            "Description": "A list of the public subnets",
+            "Value": {
+                "Fn::Join": [
+                    ",",
+                    [
+                        {
+                            "Ref": "FirstPublicSubnet"
+                        },
+                        {
+                            "Ref": "SecondPublicSubnet"
+                        }
+                    ]
+                ]
+            }
+        },
+        "PrivateSubnets": {
+            "Description": "A list of the private subnets",
+            "Value": {
+                "Fn::Join": [
+                    ",",
+                    [
+                        {
+                            "Ref": "FirstPrivateSubnet"
+                        },
+                        {
+                            "Ref": "SecondPrivateSubnet"
+                        }
+                    ]
+                ]
+            }
+        },
+        "FirstPublicSubnet": {
+            "Description": "A reference to the public subnet in the 1st Availability Zone",
+            "Value": {
+                "Ref": "FirstPublicSubnet"
+            }
+        },
+        "SecondPublicSubnet": {
+            "Description": "A reference to the public subnet in the 2nd Availability Zone",
+            "Value": {
+                "Ref": "SecondPublicSubnet"
+            }
+        },
+        "FirstPrivateSubnet": {
+            "Description": "A reference to the private subnet in the 1st Availability Zone",
+            "Value": {
+                "Ref": "FirstPrivateSubnet"
+            }
+        },
+        "SecondPrivateSubnet": {
+            "Description": "A reference to the private subnet in the 2nd Availability Zone",
+            "Value": {
+                "Ref": "SecondPrivateSubnet"
+            }
+        }
+    }
+}
