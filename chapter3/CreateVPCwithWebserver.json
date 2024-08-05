@@ -133,7 +133,11 @@
                     {
                         "Key": "Name",
                         "Value": "Custom VPC for learning"
-                    }
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    } 
                 ]
             }
         },
@@ -146,7 +150,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "IGW"
+                        "Value": "ChapterThree-IGW"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -160,6 +168,9 @@
                 "VpcId": {
                     "Ref": "VPC"
                 }
+            },
+            "Metadata": {
+                "Comment": "Attaches the internet gateway to the VPC"
             }
         },
         "FirstPublicSubnet": {
@@ -183,7 +194,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Public Subnet (AZ1)"
+                        "Value": "Chapter Three Public Subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -209,7 +224,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Public Subnet (AZ2)"
+                        "Value": "Chapter Three Public Subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -235,7 +254,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Private Subnet (AZ1)"
+                        "Value": "Chapter three Private Subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -261,7 +284,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Private Subnet (AZ2)"
+                        "Value": "Chapter three Private Subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -271,6 +298,9 @@
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
                 "Domain": "vpc"
+            },
+            "Metadata": {
+                "Comment": "Allocates an Elastic IP address for the gateway"
             }
         },
         "SecondNATGatewayEIP": {
@@ -278,6 +308,9 @@
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
                 "Domain": "vpc"
+            },
+            "Metadata": {
+                "Comment": "Allocates an Elastic IP address for the gateway"
             }
         },
         "FirstNATGateway": {
@@ -291,7 +324,18 @@
                 },
                 "SubnetId": {
                     "Ref": "FirstPublicSubnet"
-                }
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NAT Gateway associated with the private subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    }
+                ]
+
             }
         },
         "SecondNATGateway": {
@@ -305,7 +349,17 @@
                 },
                 "SubnetId": {
                     "Ref": "SecondPublicSubnet"
-                }
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NAT Gateway associated with the private subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    }
+                ]
             }
         },
         "PublicRouteTable": {
@@ -317,7 +371,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Public Routes"
+                        "Value": "Chapter Three Public Route Table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -333,6 +391,9 @@
                 "GatewayId": {
                     "Ref": "InternetGateway"
                 }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the IGW"
             }
         },
         "FirstPublicSubnetRouteTableAssociation": {
@@ -344,6 +405,9 @@
                 "SubnetId": {
                     "Ref": "FirstPublicSubnet"
                 }
+            },
+            "Metadata": {
+                "Comment": "Associates the public subnet with the public route table"
             }
         },
         "SecondPublicSubnetRouteTableAssociation": {
@@ -355,6 +419,9 @@
                 "SubnetId": {
                     "Ref": "SecondPublicSubnet"
                 }
+            },
+            "Metadata": {
+                "Comment": "Associates the public subnet with the public route table"
             }
         },
         "FirstPrivateRouteTable": {
@@ -366,7 +433,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Private Routes (AZ1)"
+                        "Value": "Private Route table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -381,6 +452,9 @@
                 "NatGatewayId": {
                     "Ref": "FirstNATGateway"
                 }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the NAT gateway"
             }
         },
         "FirstPrivateSubnetRouteTableAssociation": {
@@ -392,6 +466,9 @@
                 "SubnetId": {
                     "Ref": "FirstPrivateSubnet"
                 }
+            },
+            "Metadata": {
+                "Comment": "Associates the private subnet with the private route table"
             }
         },
         "SecondPrivateRouteTable": {
@@ -403,7 +480,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Private Routes (AZ2)"
+                        "Value": "Second private route table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
                     }
                 ]
             }
@@ -418,6 +499,9 @@
                 "NatGatewayId": {
                     "Ref": "SecondNATGateway"
                 }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the NAT gateway"
             }
         },
         "SecondPrivateSubnetRouteTableAssociation": {
@@ -429,6 +513,9 @@
                 "SubnetId": {
                     "Ref": "SecondPrivateSubnet"
                 }
+            },
+            "Metadata": {
+                "Comment": "Associates the private subnet with the private route table"
             }
         },
         "EC2SecurityGroup" : {
@@ -442,21 +529,24 @@
                     "ToPort" : 80,
                     "CidrIp" : {"Ref" : "YourPublicIPAddress"} 
                 }]
+            },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address"
             }
         },
         "WebServer": {  
-      "Type": "AWS::EC2::Instance",
-      "Metadata" : {
-        "AWS::CloudFormation::Init" : {
-          "configSets" : {
-            "All" : [ "InstallWebServer"]
-          },
-          "InstallWebServer" : {
-            "packages" : {
-              "yum" : {
-                "httpd": []
-              }
-            },
+            "Type": "AWS::EC2::Instance",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                "configSets" : {
+                    "All" : [ "InstallWebServer"]
+                },
+                "InstallWebServer" : {
+                    "packages" : {
+                    "yum" : {
+                        "httpd": []
+                    }
+                },
             "files" : {
               "/var/www/html/index.html" : {
                 "content" : { "Fn::Join" : [ "", [
@@ -491,7 +581,9 @@
         "InstanceType": {"Ref": "InstanceType"},
         "SecurityGroupIds" : [{ "Fn::GetAtt": ["EC2SecurityGroup", "GroupId"] }],
         "SubnetId" : {"Ref": "FirstPublicSubnet"},
-        "Tags" : [ {"Key" : "Name", "Value" : "WebServer"}],
+        "Tags" : [ 
+            {"Key" : "Name", "Value" : "WebServer"},
+            {"Key" : "Chapter", "Value" : "Three"}],
         "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
              "#!/bin/bash -xe\n",
              "yum install -y aws-cfn-bootstrap\n",
@@ -526,38 +618,6 @@
             "Description": "A reference to the created VPC",
             "Value": {
                 "Ref": "VPC"
-            }
-        },
-        "PublicSubnets": {
-            "Description": "A list of the public subnets",
-            "Value": {
-                "Fn::Join": [
-                    ",",
-                    [
-                        {
-                            "Ref": "FirstPublicSubnet"
-                        },
-                        {
-                            "Ref": "SecondPublicSubnet"
-                        }
-                    ]
-                ]
-            }
-        },
-        "PrivateSubnets": {
-            "Description": "A list of the private subnets",
-            "Value": {
-                "Fn::Join": [
-                    ",",
-                    [
-                        {
-                            "Ref": "FirstPrivateSubnet"
-                        },
-                        {
-                            "Ref": "SecondPrivateSubnet"
-                        }
-                    ]
-                ]
             }
         },
         "FirstPublicSubnet": {
