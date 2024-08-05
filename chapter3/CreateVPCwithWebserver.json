@@ -21,7 +21,7 @@
               "t2.micro", 
               "t2.small", 
               "t2.medium", 
-              "t2.large", 
+              "t2.large",   
               "m1.small", 
               "m1.medium", 
               "m1.large", 
@@ -380,7 +380,7 @@
                 ]
             }
         },
-        "DefaultPublicRoute": {
+        "PublicRoute": {
             "Type": "AWS::EC2::Route",
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
@@ -407,7 +407,7 @@
                 }
             },
             "Metadata": {
-                "Comment": "Associates the public subnet with the public route table"
+                "Comment": "Associates the first public subnet with the public route table"
             }
         },
         "SecondPublicSubnetRouteTableAssociation": {
@@ -421,7 +421,7 @@
                 }
             },
             "Metadata": {
-                "Comment": "Associates the public subnet with the public route table"
+                "Comment": "Associates the second public subnet with the public route table"
             }
         },
         "FirstPrivateRouteTable": {
@@ -433,7 +433,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Private Route table"
+                        "Value": "Chapter Three First Private Route Table"
                     },
                     {
                         "Key": "Chapter",
@@ -442,7 +442,7 @@
                 ]
             }
         },
-        "FirstDefaultPrivateRoute": {
+        "FirstPrivateRoute": {
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
@@ -480,7 +480,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Second private route table"
+                        "Value": "Chapter Three Second Private Route Table"
                     },
                     {
                         "Key": "Chapter",
@@ -489,7 +489,7 @@
                 ]
             }
         },
-        "SecondDefaultPrivateRoute": {
+        "SecondPrivateRoute": {
             "Type": "AWS::EC2::Route",
             "Properties": {
                 "RouteTableId": {
