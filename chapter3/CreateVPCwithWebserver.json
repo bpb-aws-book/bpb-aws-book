@@ -521,23 +521,23 @@
         "EC2SecurityGroup" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "WebServerSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    }] ,
                 "GroupDescription" : "Allow http to client host",
+                "GroupName" : "WebServerSecurityGroup",
                 "VpcId" : {"Ref" : "VPC"},
                 "SecurityGroupIngress" : [{
                     "IpProtocol" : "tcp",
                     "FromPort" : 80,
                     "ToPort" : 80,
-                    "CidrIp" : {"Ref" : "YourPublicIPAddress"},
-                    "Tags": [
-                        {
-                            "Key": "Name",
-                            "Value": "Chapter Three Web Server Security Group"
-                        },
-                        {
-                            "Key": "Chapter",
-                            "Value": "Three"
-                        }
-                            ] 
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
                         }]
                     },
             "Metadata": {
