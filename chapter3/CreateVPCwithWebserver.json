@@ -527,9 +527,19 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : 80,
                     "ToPort" : 80,
-                    "CidrIp" : {"Ref" : "YourPublicIPAddress"} 
-                }]
-            },
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"},
+                    "Tags": [
+                        {
+                            "Key": "Name",
+                            "Value": "Chapter Three Web Server Security Group"
+                        },
+                        {
+                            "Key": "Chapter",
+                            "Value": "Three"
+                        }
+                            ] 
+                        }]
+                    },
             "Metadata": {
                 "Comment": "Allows inbound HTTP traffic from your public IP address"
             }
