@@ -645,28 +645,31 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallDjango"
+							"InstallDjangoApplication"
 						]
 					},
-					"InstallDjango": {
+					"InstallDjangoApplication": {
+                        "packages" : {
+                            "yum" : {
+                                "git" : []
+                            }
+                        },
 						"commands": {
-							"create project directory": {
-								"command": "mkdir /home/ec2-user/inquisitive_bookworm_club"
+                            "clone the repository":{
+                                "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
+                                "cwd": "/home/ec2-user"
+                            },
+                            "copy required files":{
+                                "command": "cp -r bpb-aws-book/chapter2/inquisitive_bookworm_club .",
+                                "cwd": "/home/ec2-user"
+                            },
+                            "create script file": {
+								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							"create virtual environment": {
-								"command": "python3 -m venv env && source env/bin/activate"
-							},
-							"upgrade pip": {
-								"command": "python3 -m pip install --upgrade pip"
-							},
-							"install django": {
-								"command": "/home/ec2-user/env/bin/python3 -m pip install django"
-							},
-							"install gunicorn": {
-								"command": "/home/ec2-user/env/bin/python3 -m pip install gunicorn"
-							},
-							"deactivate python environment": {
-								"command": "deactivate"
+							"create virtual environment and install django and gunicorn": {
+								"command": "sh setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
 					}
