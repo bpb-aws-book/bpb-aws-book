@@ -645,7 +645,7 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallDjangoApplication", "ConfigureGunicorn", "InstallNginx"
+							"InstallDjangoApplication", "ConfigureGunicorn"
 						]
 					},
 					"InstallDjangoApplication": {
@@ -693,20 +693,20 @@
                     "/etc/systemd/system/gunicorn.service" : {
                         "content" : { "Fn::Join" : [ "", [
                             "[Unit] \n",
-                            "Description=gunicorn daemon \n",
-                            "Requires=gunicorn.socket \n",
-                            "After=network.target \n",
+                            "Description=gunicorn daemon\n",
+                            "Requires=gunicorn.socket\n",
+                            "After=network.target\n",
                             "\n",
-                            "[Service] \n",
-                            "User=ec2-user \n",
-                            "Group=ec2-user \n",
-                            "WorkingDirectory=/home/ec2-user/inquisitive_bookworm_club \n",
-                            "ExecStart=/home/ec2-user/inquisitive_bookworm_club/env/bin/gunicorn \n",
-                            "--access-logfile - \\ \n ",
-                            "--workers 3 \\ \n",
-                            "--bind unix:/run/gunicorn.sock \\ \n",
-                            "inquisitive_bookworm_club_project.wsgi:application \n",
-                            "[Install] \n",
+                            "[Service]\n",
+                            "User=ec2-user\n",
+                            "Group=ec2-user\n",
+                            "WorkingDirectory=/home/ec2-user/inquisitive_bookworm_club\n",
+                            "ExecStart=/home/ec2-user/inquisitive_bookworm_club/env/bin/gunicorn \\\n",
+                            "--access-logfile - \\\n",
+                            "--workers 3 \\\n",
+                            "--bind unix:/run/gunicorn.sock \\\n",
+                            "inquisitive_bookworm_club_project.wsgi:application\n",
+                            "[Install]\n",
                             "WantedBy=multi-user.target"
                         ]]},
                         "mode"  : "000644",
