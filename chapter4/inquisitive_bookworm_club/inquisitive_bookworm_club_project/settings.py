@@ -28,7 +28,7 @@ SECRET_KEY = "django-insecure-x=9tfd6si*=%g&hpz!-l(m4v!*n0ukyhpyo97*-!*o_x9$y-14
 DEBUG = True
 
 # ALLOWED_HOSTS = []
-ip = "'" + requests.get("http://169.254.169.254/latest/meta-data/public-ipv4").content + "'"
+ip = "'" + requests.get("curl http://checkip.amazonaws.com").content + "'"
 ALLOWED_HOSTS = ['localhost',ip]
 
 # Application definition
