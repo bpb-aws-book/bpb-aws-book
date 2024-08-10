@@ -659,11 +659,23 @@
                                 "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
                                 "cwd": "/home/ec2-user"
                             },
-                            "copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter2/inquisitive_bookworm_club .",
+							"copy required files":{
+                                "command": "cp -r bpb-aws-book/chapter4/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
-                            "create script file": {
+							 "remove the cloned repository": {
+                                "command": "rm -rf bpb-aws-book",
+                                "cwd": "/home/ec2-user"
+                            },
+							"get security token for reading metadata": {
+								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"retrieve public ip from instance metadata": {
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"create script file": {
 								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
