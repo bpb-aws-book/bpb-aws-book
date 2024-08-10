@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-import io
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,12 +25,7 @@ SECRET_KEY = "django-insecure-x=9tfd6si*=%g&hpz!-l(m4v!*n0ukyhpyo97*-!*o_x9$y-14
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-#ALLOWED_HOSTS = []
-publicipfile = open('/home/ec2-user/inquisitive_bookworm_club/publicipv4file', 'r')
-publicip = publicipfile.read()
-publicipfile.close()
-formatted_allowed_hosts = "'localhost','" + publicip + "'"
-ALLOWED_HOSTS = [formatted_allowed_hosts]
+ALLOWED_HOSTS = [EC2PUBLICIPV4,'localhost']
 
 # Application definition
 
