@@ -676,7 +676,7 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							 "update settings file": {
-								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py",
+								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -r tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"create script file to upgrade and install pip and gunicorn": {
@@ -685,6 +685,10 @@
 							},
 							"execute script file from the previous step": {
 								"command": "sh setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"perform migrations": {
+								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
