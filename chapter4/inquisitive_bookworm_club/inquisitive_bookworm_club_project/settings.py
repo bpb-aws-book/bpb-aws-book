@@ -27,10 +27,11 @@ SECRET_KEY = "django-insecure-x=9tfd6si*=%g&hpz!-l(m4v!*n0ukyhpyo97*-!*o_x9$y-14
 DEBUG = True
 
 #ALLOWED_HOSTS = []
-publicipfile = open('../publicipv4file', 'r')
+publicipfile = open('/home/ec2-user/inquisitive_bookworm_club/publicipv4file', 'r')
 publicip = publicipfile.read()
 publicipfile.close()
-ALLOWED_HOSTS = "['localhost','" + publicip + "']"
+formatted_allowed_hosts = "'localhost','" + publicip + "'"
+ALLOWED_HOSTS = [formatted_allowed_hosts]
 
 # Application definition
 
