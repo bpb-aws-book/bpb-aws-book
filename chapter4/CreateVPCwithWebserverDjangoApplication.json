@@ -733,8 +733,15 @@
                         "owner" : "ec2-user",
                         "group" : "ec2-user"
                     }
-                }
                 },
+				"commands": {
+					"activate gunicorn service": {
+						"command": "systemctl start gunicorn.socket && systemctl enable gunicorn.socket && file /run/gunicorn.sock && systemctl daemon-reload",
+						"cwd": "/home/ec2-user"
+					}
+					}
+				},
+
                     "InstallNginx" : {
                         "packages" : {
                         "yum" : {
