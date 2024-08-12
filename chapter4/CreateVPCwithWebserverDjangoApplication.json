@@ -645,7 +645,7 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallDjangoApplication", "ConfigureGunicorn"
+							"InstallDjangoApplication", "ConfigureGunicorn","InstallNginx"
 						]
 					},
 					"InstallDjangoApplication": {
@@ -741,7 +741,6 @@
 					}
 					}
 				},
-
                     "InstallNginx" : {
                         "packages" : {
                         "yum" : {
@@ -752,7 +751,19 @@
                         "sysvinit" : {  
                             "nginx"   : { "enabled" : "true", "ensureRunning" : "true" }
                         }
-                        }
+                        },
+						"files" : {
+							"/etc/nginx/default.d/inquisitebookwormclub.conf" : {
+								"content" : { "Fn::Join" : [ "", [
+									"location / {\n",
+									"    proxy_set_header Host $http_host;\n",
+									"    proxy_set_header X-Real-IP $remote_addr;\n",
+									"    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n",
+									"    proxy_set_header X-Forwarded-Proto $scheme;\n",
+									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
+									"}"
+								]]}
+							}}
                     }
 				}
 			},
