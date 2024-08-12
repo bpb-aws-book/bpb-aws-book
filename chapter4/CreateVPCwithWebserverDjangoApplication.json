@@ -690,6 +690,10 @@
 							"perform migrations": {
 								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"populate sample data": {
+								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
 					},
@@ -763,7 +767,13 @@
 									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
 									"}"
 								]]}
-							}}
+							}},
+							"commands": {
+								"apply right permissions on home directory": {
+									"command": "chmod o+rw inquisitive_bookworm_club && chmod o+rw ./inquisitive_bookworm_club/db.sqlite3",
+									"cwd": "/home/ec2-user"
+								}
+							}
                     }
 				}
 			},
