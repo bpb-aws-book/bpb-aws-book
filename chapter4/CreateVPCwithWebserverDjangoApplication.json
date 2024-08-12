@@ -769,8 +769,8 @@
 								]]}
 							}},
 							"commands": {
-								"apply right permissions on home directory": {
-									"command": "chmod o+rw inquisitive_bookworm_club && chmod o+rw ./inquisitive_bookworm_club/db.sqlite3",
+								"change ownership": {
+									"command": "sudo chown ec2-user:ec2-user inquisitive_bookworm_club && sudo chown ec2-user:ec2-user ./inquisitive_bookworm_club/db.sqlite3",
 									"cwd": "/home/ec2-user"
 								}
 							}
