@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+import socket
 from .models import book
 
 
@@ -36,4 +37,5 @@ def returnbook(request, pk):
         return HttpResponse("Book not found")
 
 def about(request):
-    return render(request, 'about.html')
+    HostName = socket.gethostname()
+    return render(request, 'about.html', {'HostName':HostName})
