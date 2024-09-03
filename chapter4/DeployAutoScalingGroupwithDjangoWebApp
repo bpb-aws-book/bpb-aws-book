@@ -654,7 +654,7 @@
 			  }
 			}
 		  },
-		  "DjangoAppAutoscalingGroup": {
+		  "DjangoWebAppAutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
                 "LaunchTemplate": {
@@ -670,9 +670,99 @@
 					{
 					  "Ref": "SecondPublicSubnet"
 					}
-				  ]
+				  ],
+				  "Tags":
+						[{
+						  "Key": "Name",
+						  "Value": "DjangoWebServer",
+						  "PropagateAtLaunch": "true"
+						}]
             }
-        }
+        },
+		"ASGScalingPolicyHigh":{
+			"Type":"AWS::AutoScaling::ScalingPolicy",
+			"Properties":{
+			  "AutoScalingGroupName":{ "Ref":"DjangoWebAppAutoScalingGroup" },
+			  "PolicyType":"StepScaling",
+			  "AdjustmentType":"ChangeInCapacity",
+			  "StepAdjustments":[
+				{
+				  "MetricIntervalLowerBound":0,
+				  "ScalingAdjustment":1
+				}
+			  ]
+			}
+		  },
+		  "ASGScalingPolicyScaleOut":{
+			"Type":"AWS::AutoScaling::ScalingPolicy",
+			"Properties":{
+			  "AutoScalingGroupName":{ "Ref":"DjangoWebAppAutoScalingGroup" },
+			  "PolicyType":"TargetTrackingScaling",
+			  "TargetTrackingConfiguration":{
+				"PredefinedMetricSpecification":{
+				  "PredefinedMetricType":"ASGAverageNetworkIn"
+				},
+				"TargetValue":30
+			  },
+			  "AdjustmentType":"ChangeInCapacity",
+			  "Cooldown":"60"
+			}
+		  },
+		  "ASGScalingPolicyScaleIn":{
+			"Type":"AWS::AutoScaling::ScalingPolicy",
+			"Properties":{
+			  "AutoScalingGroupName":{ "Ref":"DjangoWebAppAutoScalingGroup" },
+			  "PolicyType":"TargetTrackingScaling",
+			  "TargetTrackingConfiguration":{
+				"PredefinedMetricSpecification":{
+				  "PredefinedMetricType":"ASGAverageNetworkIn"
+				},
+				"TargetValue":10
+			  },
+			  "AdjustmentType":"ChangeInCapacity",
+			  "Cooldown":"60"
+			}
+		  },
+		  "NetworkBytesInAlarmHigh":{
+			"Type":"AWS::CloudWatch::Alarm",
+			"Properties":{
+			  "EvaluationPeriods":"1",
+			  "Statistic":"Average",
+			  "Threshold":"90",
+			  "AlarmDescription":"Scale out if NetworkBytesIn > 30 bytes for 1 minute",
+			  "Period":"60",
+			  "AlarmActions":[ { "Ref":"ASGScalingPolicyScaleOut" } ],
+			  "Namespace":"AWS/EC2",
+			  "Dimensions":[
+				{
+				  "Name":"AutoScalingGroupName",
+				  "Value":{ "Ref":"DjangoWebAppAutoScalingGroup" }
+				}
+			  ],
+			  "ComparisonOperator":"GreaterThanThreshold",
+			  "MetricName":"ASGAverageNetworkIn"
+			}
+		  },
+		  "NetworkBytesInAlarmLow":{
+			"Type":"AWS::CloudWatch::Alarm",
+			"Properties":{
+			  "EvaluationPeriods":"1",
+			  "Statistic":"Average",
+			  "Threshold":"90",
+			  "AlarmDescription":"Scale out if NetworkBytesIn < 10 bytes for 1 minute",
+			  "Period":"60",
+			  "AlarmActions":[ { "Ref":"ASGScalingPolicyScaleIn" } ],
+			  "Namespace":"AWS/EC2",
+			  "Dimensions":[
+				{
+				  "Name":"AutoScalingGroupName",
+				  "Value":{ "Ref":"DjangoWebAppAutoScalingGroup" }
+				}
+			  ],
+			  "ComparisonOperator":"LessThanThreshold",
+			  "MetricName":"ASGAverageNetworkIn"
+			}
+		  }
 		},
 		"Outputs": {
 			"VPC": {
