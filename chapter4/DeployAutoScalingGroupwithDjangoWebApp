@@ -688,10 +688,9 @@
 				"PredefinedMetricSpecification":{
 				  "PredefinedMetricType":"ASGAverageNetworkIn"
 				},
-				"TargetValue":30,
+				"TargetValue":1000,
 				"DisableScaleIn": "true"
 			  },
-			  "AdjustmentType":"ChangeInCapacity",
 			  "Cooldown":"60"
 			}
 		  }
