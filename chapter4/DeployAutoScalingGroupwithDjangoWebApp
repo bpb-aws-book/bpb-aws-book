@@ -1,5 +1,5 @@
 {
-	"Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+	"Description": "This CloudFormation Template deploys the underlying infrastructure and an auto scaling group with web servers for our Django Web Application",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
 		"YourPublicIPAddress": {
@@ -562,8 +562,8 @@
 				"SecurityGroupIngress": [
 					{
 						"IpProtocol": "tcp",
-						"FromPort": 22,
-						"ToPort": 22,
+						"FromPort": 80,
+						"ToPort": 80,
 						"CidrIp": {
 							"Ref": "YourPublicIPAddress"
 						}
@@ -577,7 +577,7 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SPTvacmRole",
+                "RoleName": "SSMIAMRoleForDjangoWebServerASG",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
@@ -661,7 +661,7 @@
                     "LaunchTemplateId": { "Ref": "DjangoWebAppLaunchTemplate" },
                     "Version": { "Fn::GetAtt": [ "DjangoWebAppLaunchTemplate", "LatestVersionNumber" ] }
                 },
-                "MaxSize": "1",
+                "MaxSize": "2",
                 "MinSize": "1",
 				"VPCZoneIdentifier": [
 					{
@@ -679,20 +679,6 @@
 						}]
             }
         },
-		"ASGScalingPolicyHigh":{
-			"Type":"AWS::AutoScaling::ScalingPolicy",
-			"Properties":{
-			  "AutoScalingGroupName":{ "Ref":"DjangoWebAppAutoScalingGroup" },
-			  "PolicyType":"StepScaling",
-			  "AdjustmentType":"ChangeInCapacity",
-			  "StepAdjustments":[
-				{
-				  "MetricIntervalLowerBound":0,
-				  "ScalingAdjustment":1
-				}
-			  ]
-			}
-		  },
 		  "ASGScalingPolicyScaleOut":{
 			"Type":"AWS::AutoScaling::ScalingPolicy",
 			"Properties":{
@@ -702,65 +688,11 @@
 				"PredefinedMetricSpecification":{
 				  "PredefinedMetricType":"ASGAverageNetworkIn"
 				},
-				"TargetValue":30
+				"TargetValue":30,
+				"DisableScaleIn": "true"
 			  },
 			  "AdjustmentType":"ChangeInCapacity",
 			  "Cooldown":"60"
-			}
-		  },
-		  "ASGScalingPolicyScaleIn":{
-			"Type":"AWS::AutoScaling::ScalingPolicy",
-			"Properties":{
-			  "AutoScalingGroupName":{ "Ref":"DjangoWebAppAutoScalingGroup" },
-			  "PolicyType":"TargetTrackingScaling",
-			  "TargetTrackingConfiguration":{
-				"PredefinedMetricSpecification":{
-				  "PredefinedMetricType":"ASGAverageNetworkIn"
-				},
-				"TargetValue":10
-			  },
-			  "AdjustmentType":"ChangeInCapacity",
-			  "Cooldown":"60"
-			}
-		  },
-		  "NetworkBytesInAlarmHigh":{
-			"Type":"AWS::CloudWatch::Alarm",
-			"Properties":{
-			  "EvaluationPeriods":"1",
-			  "Statistic":"Average",
-			  "Threshold":"90",
-			  "AlarmDescription":"Scale out if NetworkBytesIn > 30 bytes for 1 minute",
-			  "Period":"60",
-			  "AlarmActions":[ { "Ref":"ASGScalingPolicyScaleOut" } ],
-			  "Namespace":"AWS/EC2",
-			  "Dimensions":[
-				{
-				  "Name":"AutoScalingGroupName",
-				  "Value":{ "Ref":"DjangoWebAppAutoScalingGroup" }
-				}
-			  ],
-			  "ComparisonOperator":"GreaterThanThreshold",
-			  "MetricName":"ASGAverageNetworkIn"
-			}
-		  },
-		  "NetworkBytesInAlarmLow":{
-			"Type":"AWS::CloudWatch::Alarm",
-			"Properties":{
-			  "EvaluationPeriods":"1",
-			  "Statistic":"Average",
-			  "Threshold":"90",
-			  "AlarmDescription":"Scale out if NetworkBytesIn < 10 bytes for 1 minute",
-			  "Period":"60",
-			  "AlarmActions":[ { "Ref":"ASGScalingPolicyScaleIn" } ],
-			  "Namespace":"AWS/EC2",
-			  "Dimensions":[
-				{
-				  "Name":"AutoScalingGroupName",
-				  "Value":{ "Ref":"DjangoWebAppAutoScalingGroup" }
-				}
-			  ],
-			  "ComparisonOperator":"LessThanThreshold",
-			  "MetricName":"ASGAverageNetworkIn"
 			}
 		  }
 		},
