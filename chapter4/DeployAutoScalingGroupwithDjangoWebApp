@@ -666,6 +666,7 @@
                 },
                 "MaxSize": "1",
                 "MinSize": "1",
+				"DefaultInstanceWarmup": 60,				
 				"VPCZoneIdentifier": [
 					{
 					  "Ref": "FirstPublicSubnet"
@@ -705,7 +706,7 @@
 				"PredefinedMetricSpecification":{
 				  "PredefinedMetricType":"ASGAverageNetworkIn"
 				},
-				"TargetValue":10000,
+				"TargetValue":100,
 				"DisableScaleIn": "true"
 			  },
 			  "Cooldown":"60"
