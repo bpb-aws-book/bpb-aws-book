@@ -616,6 +616,9 @@
 				"Arn":{"Fn::GetAtt": ["SSMIAMInstanceProfile", "Arn"]}
 				},
 				"DisableApiTermination":"true",
+				"Monitoring": {
+					"Enabled": "true"
+				},
 				"ImageId": {
 					"Ref": "LatestAmiId"
 				},
@@ -661,7 +664,7 @@
                     "LaunchTemplateId": { "Ref": "DjangoWebAppLaunchTemplate" },
                     "Version": { "Fn::GetAtt": [ "DjangoWebAppLaunchTemplate", "LatestVersionNumber" ] }
                 },
-                "MaxSize": "2",
+                "MaxSize": "1",
                 "MinSize": "1",
 				"VPCZoneIdentifier": [
 					{
@@ -671,6 +674,20 @@
 					  "Ref": "SecondPublicSubnet"
 					}
 				  ],
+				  "MetricsCollection": [
+                    {
+                        "Granularity": "1Minute",
+                        "Metrics": [
+                            "GroupMinSize",
+                            "GroupMaxSize",
+                            "GroupDesiredCapacity",
+                            "GroupInServiceInstances",
+                            "GroupPendingInstances",
+                            "GroupTerminatingInstances",
+                            "GroupTotalInstances"
+                        ]
+                    }
+                ],
 				  "Tags":
 						[{
 						  "Key": "Name",
@@ -688,7 +705,7 @@
 				"PredefinedMetricSpecification":{
 				  "PredefinedMetricType":"ASGAverageNetworkIn"
 				},
-				"TargetValue":1000,
+				"TargetValue":10000,
 				"DisableScaleIn": "true"
 			  },
 			  "Cooldown":"60"
