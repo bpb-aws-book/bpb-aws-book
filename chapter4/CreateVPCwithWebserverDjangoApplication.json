@@ -562,8 +562,8 @@
 				"SecurityGroupIngress": [
 					{
 						"IpProtocol": "tcp",
-						"FromPort": 22,
-						"ToPort": 22,
+						"FromPort": 80,
+						"ToPort": 80,
 						"CidrIp": {
 							"Ref": "YourPublicIPAddress"
 						}
