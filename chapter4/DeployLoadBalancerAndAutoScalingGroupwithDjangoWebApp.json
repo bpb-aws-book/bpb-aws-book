@@ -642,13 +642,14 @@
 		"EC2TargetGroup":{
 			"Type":"AWS::ElasticLoadBalancingV2::TargetGroup",
 			"Properties":{
-			  "HealthCheckIntervalSeconds":30,
+			  "HealthCheckIntervalSeconds":15,
 			  "HealthCheckProtocol":"HTTP",
-			  "HealthCheckTimeoutSeconds":15,
-			  "HealthyThresholdCount":5,
+			  "HealthCheckTimeoutSeconds":10,
+			  "HealthyThresholdCount":3,
 			  "Matcher":{
 				"HttpCode":"200"
 			  },
+			  "UnhealthyThresholdCount":3,
 			  "Name":"EC2TargetGroup",
 			  "Port":80,
 			  "Protocol":"HTTP",
@@ -658,7 +659,6 @@
 				  "Value":"20"
 				}
 			  ],
-			  "UnhealthyThresholdCount":3,
 			  "VpcId":{
 				"Ref":"VPC"
 			  }
@@ -741,14 +741,11 @@
 						  "systemctl enable amazon-ssm-agent\n",
 						  "systemctl start amazon-ssm-agent\n",
 						  "METADATATOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\n",
-						  "EC2PUBLICIPV4=$(curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\n",
+						  "EC2PRIVATEIPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\n",
 						  "cd /home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project\n",
-						  "sudo sed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']\" settings.py\n",
-						  "sudo sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py\n",
-						  "sudo systemctl restart gunicorn",
-						  "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm\n",
-						  "systemctl enable amazon-ssm-agent\n",
-						  "systemctl start amazon-ssm-agent\n"
+						  "sudo sed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['EC2PRIVATEIPV4','.elb.amazonaws.com','localhost']\" settings.py\n",
+						  "sudo sed -i 's/EC2PRIVATEIPV4/'${EC2PRIVATEIPV4}'/g' settings.py\n",
+						  "sudo systemctl restart gunicorn"
 						]
 					  ]
 					}
@@ -768,10 +765,10 @@
 				"DefaultInstanceWarmup": 60,				
 				"VPCZoneIdentifier": [
 					{
-					  "Ref": "FirstPublicSubnet"
+					  "Ref": "FirstPrivateSubnet"
 					},
 					{
-					  "Ref": "SecondPublicSubnet"
+					  "Ref": "SecondPrivateSubnet"
 					}
 				  ],
 				  "MetricsCollection": [
@@ -818,6 +815,15 @@
 		  }
 		},
 		"Outputs": {
+			"LoadBalancerURL": {
+				"Value": {
+					"Fn::GetAtt": [
+						"DjangoWebAppLoadBalancer",
+						"DNSName"
+					]
+				},
+				"Description": "Web Server's Public IP Address"
+			},
 			"VPC": {
 				"Description": "A reference to the created VPC",
 				"Value": {
