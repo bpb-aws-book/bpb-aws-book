@@ -160,7 +160,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -174,11 +174,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "ChapterThree-IGW"
+						"Value": "ChapterFour-IGW"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -218,11 +218,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Subnet in the first AZ"
+						"Value": "Chapter Four Public Subnet in the first AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -248,11 +248,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Subnet in the second AZ"
+						"Value": "Chapter Four Public Subnet in the second AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -278,11 +278,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Private Subnet in the first AZ"
+						"Value": "Chapter Four Private Subnet in the first AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -308,11 +308,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Private Subnet in the second AZ"
+						"Value": "Chapter Four Private Subnet in the second AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -356,7 +356,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -380,7 +380,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -394,11 +394,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Route Table"
+						"Value": "Chapter Four Public Route Table"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -456,11 +456,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three First Private Route Table"
+						"Value": "Chapter Four First Private Route Table"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -503,11 +503,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Second Private Route Table"
+						"Value": "Chapter Four Second Private Route Table"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -551,7 +551,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				],
 				"GroupDescription": "Allow http to client host",
@@ -597,11 +597,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter3WebServer"
+						"Value": "Chapter4WebServer"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				],
 				"UserData": {
