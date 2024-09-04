@@ -574,6 +574,39 @@
 				"Comment": "Allows inbound HTTP traffic from your public IP address"
 			}
 		},
+		"SSMIAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "SSMIAMRoleForDjangoWebServer",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+                ]
+            }
+        },
+		"SSMIAMInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "SSMIAMRole"
+                    }
+                ]
+            }
+        },
 		"WebServer": {
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
@@ -583,6 +616,9 @@
 				"InstanceType": {
 					"Ref": "InstanceType"
 				},
+				"IamInstanceProfile": {
+               "Ref": "SSMIAMInstanceProfile"
+            	},
 				"SecurityGroupIds": [
 					{
 						"Fn::GetAtt": [
@@ -655,6 +691,14 @@
                             }
                         },
 						"commands": {
+							"download SSM agent":{
+                                "command": "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
+                                "cwd": "/home/ec2-user"
+                            },
+							 "enable and start SSM agent":{
+                                "command": "systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent",
+                                "cwd": "/home/ec2-user"
+                            },
                             "clone the repository":{
                                 "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
                                 "cwd": "/home/ec2-user"
