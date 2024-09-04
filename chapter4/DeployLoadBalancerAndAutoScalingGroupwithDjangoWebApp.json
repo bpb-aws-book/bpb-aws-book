@@ -9,7 +9,7 @@
 		"LatestAmiId": {
 			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
 			"Type": "String",
-			"Default": "ami-0840f681d6f3c9371"
+			"Default": "ami-09ecb8b9aa69e0cf0"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
