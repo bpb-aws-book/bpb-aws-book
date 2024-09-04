@@ -9,7 +9,7 @@
 		"LatestAmiId": {
 			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
 			"Type": "String",
-			"Default": "ami-0851938ac6c0ce29a"
+			"Default": "ami-09ecb8b9aa69e0cf0"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
@@ -645,6 +645,7 @@
 						  "METADATATOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\n",
 						  "EC2PUBLICIPV4=$(curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\n",
 						  "cd /home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project\n",
+						  "sudo sed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']\" settings.py\n",
 						  "sudo sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py\n",
 						  "sudo systemctl restart gunicorn",
 						  "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm\n",
