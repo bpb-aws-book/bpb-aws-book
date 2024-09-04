@@ -23,8 +23,7 @@ def rentbook(request, pk):
     if TheBook:
         TheBook.is_rented = True
         TheBook.save()
-        #return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        return HttpResponseRedirect(request.path_info)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
         return HttpResponse("Book not found")
 
