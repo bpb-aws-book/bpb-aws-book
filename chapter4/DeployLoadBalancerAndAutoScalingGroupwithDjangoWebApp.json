@@ -760,7 +760,7 @@
                     "LaunchTemplateId": { "Ref": "DjangoWebAppLaunchTemplate" },
                     "Version": { "Fn::GetAtt": [ "DjangoWebAppLaunchTemplate", "LatestVersionNumber" ] }
                 },
-                "MaxSize": "1",
+                "MaxSize": "2",
                 "MinSize": "1",
 				"DefaultInstanceWarmup": 60,				
 				"VPCZoneIdentifier": [
