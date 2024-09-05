@@ -805,9 +805,28 @@
 			  "PolicyType":"TargetTrackingScaling",
 			  "TargetTrackingConfiguration":{
 				"PredefinedMetricSpecification":{
-				  "PredefinedMetricType":"ASGAverageNetworkIn"
+				  "PredefinedMetricType":"ALBRequestCountPerTarget",
+				  "ResourceLabel": {
+					"Fn::Join": [
+						"/",
+						[
+							{
+								"Fn::GetAtt": [
+									"DjangoWebAppLoadBalancer",
+									"LoadBalancerFullName"
+								]
+							},
+							{
+								"Fn::GetAtt": [
+									"EC2TargetGroup",
+									"TargetGroupFullName"
+								]
+							}
+						]
+					]
+				}
 				},
-				"TargetValue":100,
+				"TargetValue":15,
 				"DisableScaleIn": "true"
 			  },
 			  "Cooldown":"60"
