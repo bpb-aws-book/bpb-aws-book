@@ -681,9 +681,16 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallDjangoApplication", "ConfigureGunicorn","InstallNginx"
+							"InstallSSMAgent","InstallDjangoApplication", "ConfigureGunicorn","InstallNginx"
 						]
 					},
+					"InstallSSMAgent" : {
+                        "services" : {
+                        "sysvinit" : {  
+                            "amazon-ssm-agent"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        }
+                    },
 					"InstallDjangoApplication": {
                         "packages" : {
                             "yum" : {
@@ -691,14 +698,6 @@
                             }
                         },
 						"commands": {
-							"download SSM agent":{
-                                "command": "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
-                                "cwd": "/home/ec2-user"
-                            },
-							 "enable and start SSM agent":{
-                                "command": "systemctl enable amazon-ssm-agent && systemctl start amazon-ssm-agent",
-                                "cwd": "/home/ec2-user"
-                            },
                             "clone the repository":{
                                 "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
                                 "cwd": "/home/ec2-user"
