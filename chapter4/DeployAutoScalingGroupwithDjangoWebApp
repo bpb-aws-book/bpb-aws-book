@@ -611,6 +611,21 @@
 			"Type":"AWS::EC2::LaunchTemplate",
 			"Properties":{
 			  "LaunchTemplateName":"DjangoWebAppLaunchTemplate",
+			  "TagSpecifications": [
+				{
+					"ResourceType": "launch-template",
+					"Tags": [
+						{
+							"Key": "Name",
+							"Value": "DjangoWebAppLaunchTemplate"
+						},
+						{
+							"Key": "Chapter",
+							"Value": "Four"
+						}
+					]
+				}
+			],
 			  "LaunchTemplateData":{
 				"IamInstanceProfile":{
 				"Arn":{"Fn::GetAtt": ["SSMIAMInstanceProfile", "Arn"]}
@@ -638,19 +653,12 @@
 					  "Fn::Join": [
 						"", [
 						  "#!/bin/bash\n",
-						  "cd /tmp\n",
-						  "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm\n",
-						  "systemctl enable amazon-ssm-agent\n",
-						  "systemctl start amazon-ssm-agent\n",
 						  "METADATATOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\n",
 						  "EC2PUBLICIPV4=$(curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\n",
 						  "cd /home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project\n",
 						  "sudo sed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']\" settings.py\n",
 						  "sudo sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py\n",
-						  "sudo systemctl restart gunicorn",
-						  "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm\n",
-						  "systemctl enable amazon-ssm-agent\n",
-						  "systemctl start amazon-ssm-agent\n"
+						  "sudo systemctl restart gunicorn"
 						]
 					  ]
 					}
@@ -715,6 +723,18 @@
 		  }
 		},
 		"Outputs": {
+			"LaunchTemplate": {
+				"Description": "A reference to the launch template",
+				"Value": {
+					"Ref": "DjangoWebAppLaunchTemplate"
+				}
+			},
+			"AutoScaling": {
+				"Description": "A reference to the created Auto Scaling Group",
+				"Value": {
+					"Ref": "DjangoWebAppAutoScalingGroup"
+				}
+			},
 			"VPC": {
 				"Description": "A reference to the created VPC",
 				"Value": {
