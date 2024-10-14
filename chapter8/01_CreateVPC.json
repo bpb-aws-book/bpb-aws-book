@@ -472,8 +472,7 @@
         },
         "RDSSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
-            "Properties": {
-                "Properties" : {
+            "Properties" : {
                     "Tags": [
                         {
                             "Key": "Name",
@@ -483,7 +482,7 @@
                             "Key": "Chapter",
                             "Value": "Eight"
                         }],
-                "GroupDescription": "Allow web server's security group to access database",
+                "GroupDescription": "Allow web server security group to access database",
                 "VpcId": {
                     "Ref": "VPC"
                 },
@@ -499,7 +498,7 @@
                 ]
             }
         }
-    }},
+    },
     "Outputs": {
         "VPC": {
             "Description": "A reference to the created VPC",
