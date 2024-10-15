@@ -239,7 +239,8 @@
 					"InstallDjangoApplication": {
                         "packages" : {
                             "yum" : {
-                                "git" : []
+                                "git" : [],
+								"psycopg2-binary" : []
                             }
                         },
 						"commands": {
@@ -248,7 +249,7 @@
                                 "cwd": "/home/ec2-user"
                             },
 							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter4/inquisitive_bookworm_club .",
+                                "command": "cp -r bpb-aws-book/chapter8/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
 							 "remove the cloned repository": {
@@ -273,6 +274,10 @@
 							},
 							"execute script file from the previous step": {
 								"command": "sh setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							 "install dependencies for postgresql access": {
+								"command": "sudo su && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"perform migrations": {
