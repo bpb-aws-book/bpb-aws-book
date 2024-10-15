@@ -113,7 +113,29 @@
                 "Path": "/",
                 "ManagedPolicyArns": [
                     "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
-                ]
+                ],
+				"Policies": [{
+					"PolicyName": "AdditionalPermissionsPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [
+							{
+								"Effect": "Allow",
+								"Action": ["secretsmanager:GetResourcePolicy",
+											"secretsmanager:GetSecretValue",
+											"secretsmanager:DescribeSecret",
+											"secretsmanager:ListSecretVersionIds"],
+								"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+							},
+							{
+								"Effect": "Allow",
+								"Action": ["secretsmanager:ListSecrets"],
+								"Resource": ["*"]
+							}
+						]
+					}
+				}]
+
             }
         },
 		"SSMIAMInstanceProfile": {
