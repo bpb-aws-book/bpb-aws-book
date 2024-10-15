@@ -131,6 +131,13 @@
 								"Effect": "Allow",
 								"Action": ["secretsmanager:ListSecrets"],
 								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"kms:Decrypt"
+								],
+								"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
 							}
 						]
 					}
@@ -239,8 +246,7 @@
 					"InstallDjangoApplication": {
                         "packages" : {
                             "yum" : {
-                                "git" : [],
-								"psycopg2-binary" : []
+                                "git" : [], "psycopg2-binary" : []
                             }
                         },
 						"commands": {
@@ -276,8 +282,8 @@
 								"command": "sh setupenv.sh",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							 "install dependencies for postgresql access": {
-								"command": "sudo su && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
+							 "install dependencies for postgresql access and boto3": {
+								"command": "sudo su && pip install boto3 && pip install aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"perform migrations": {
