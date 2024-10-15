@@ -96,7 +96,7 @@
               "MasterUsername": "admin",
               "DBInstanceClass": "db.t3.micro",
               "DBName": "bpbbookdb",
-              "Engine": "postgresql",
+              "Engine": "postgres",
               "AllocatedStorage": 5,
               "AutoMinorVersionUpgrade": false,
               "ManageMasterUserPassword": true,
