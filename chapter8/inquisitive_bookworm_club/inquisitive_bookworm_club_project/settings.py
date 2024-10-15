@@ -70,13 +70,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "inquisitive_bookworm_club_project.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-#local database for testing
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bpbbookdb',
+        'USER': 'postgres',
+        'PASSWORD': '',
+        'HOST': 'BPBBOOKDBURL',
+        'PORT': '5432'
     }
 }
 
