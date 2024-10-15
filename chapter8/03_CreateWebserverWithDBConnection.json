@@ -246,7 +246,7 @@
 					"InstallDjangoApplication": {
                         "packages" : {
                             "yum" : {
-                                "git" : [], "psycopg2-binary" : []
+                                "git" : []
                             }
                         },
 						"commands": {
@@ -283,7 +283,7 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							 "install dependencies for postgresql access and boto3": {
-								"command": "sudo su && pip install boto3 && pip install aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
+								"command": "sudo su && pip install boto3 psycopg2-binary aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"perform migrations": {
