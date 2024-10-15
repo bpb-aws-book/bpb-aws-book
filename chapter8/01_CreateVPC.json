@@ -62,7 +62,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     } 
                 ]
             }
@@ -76,11 +76,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "ChapterThree-IGW"
+                        "Value": "ChapterEight-IGW"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -120,11 +120,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Public Subnet in the first AZ"
+                        "Value": "Chapter Eight Public Subnet in the first AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -150,11 +150,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Public Subnet in the second AZ"
+                        "Value": "Chapter Eight Public Subnet in the second AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -180,11 +180,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Private Subnet in the first AZ"
+                        "Value": "Chapter Eight Private Subnet in the first AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -210,11 +210,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Private Subnet in the second AZ"
+                        "Value": "Chapter Eight Private Subnet in the second AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -258,7 +258,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
 
@@ -283,7 +283,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -297,11 +297,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Public Route Table"
+                        "Value": "Chapter Eight Public Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -359,11 +359,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three First Private Route Table"
+                        "Value": "Chapter Eight First Private Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -406,11 +406,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Three Second Private Route Table"
+                        "Value": "Chapter Eight Second Private Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Three"
+                        "Value": "Eight"
                     }
                 ]
             }
@@ -540,20 +540,28 @@
             "Description": "A reference to the public subnet in the 2nd Availability Zone",
             "Value": {
                 "Ref": "SecondPublicSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCSecondPublicSubnet"
             }
         },
         "FirstPrivateSubnet": {
             "Description": "A reference to the private subnet in the 1st Availability Zone",
             "Value": {
                 "Ref": "FirstPrivateSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCFirstPrivateSubnet"
             }
         },
         "SecondPrivateSubnet": {
             "Description": "A reference to the private subnet in the 2nd Availability Zone",
             "Value": {
                 "Ref": "SecondPrivateSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCSecondPrivateSubnet"
             }
         }
     }
 }
-
