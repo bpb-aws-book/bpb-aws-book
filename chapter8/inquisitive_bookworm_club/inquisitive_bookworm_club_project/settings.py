@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from pathlib import Path
+import botocore
+import botocore.session
+from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -69,13 +74,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "inquisitive_bookworm_club_project.wsgi.application"
 
+client = botocore.session.get_session().create_client('secretsmanager','us-east-1')
+cache_config = SecretCacheConfig()
+cache = SecretCache( config = cache_config, client = client)
+
+secret = cache.get_secret_string('SECRETNAME')
+secretdata = json.loads(secret)
+secretpassword = secretdata['password']
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'bpbbookdb',
         'USER': 'postgres',
-        'PASSWORD': '',
+        'PASSWORD': secretpassword,
         'HOST': 'BPBBOOKDBURL',
         'PORT': '5432'
     }
