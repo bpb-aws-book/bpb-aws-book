@@ -489,8 +489,8 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "5431",
-                        "ToPort": "5431",
+                        "FromPort": "5432",
+                        "ToPort": "5432",
                         "SourceSecurityGroupId": {
                             "Ref": "WebServerSecurityGroup"
                         }
