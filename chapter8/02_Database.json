@@ -1,0 +1,219 @@
+{
+    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "YourPublicIPAddress": {
+            "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
+            "Type": "String"
+        },
+        "LatestAmiId": {
+            "Description": "The latest AMI id. Default is Amazon Linux 2023",
+            "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+        },
+        "InstanceType" : {
+            "Description" : "WebServer EC2 instance type",
+            "Type" : "String",
+            "Default" : "t2.small",
+            "AllowedValues" : [ 
+              "t1.micro", 
+              "t2.nano", 
+              "t2.micro", 
+              "t2.small", 
+              "t2.medium", 
+              "t2.large",   
+              "m1.small", 
+              "m1.medium", 
+              "m1.large", 
+              "m1.xlarge", 
+              "m2.xlarge", 
+              "m2.2xlarge", 
+              "m2.4xlarge", 
+              "m3.medium", 
+              "m3.large", 
+              "m3.xlarge", 
+              "m3.2xlarge", 
+              "m4.large", 
+              "m4.xlarge", 
+              "m4.2xlarge", 
+              "m4.4xlarge", 
+              "m4.10xlarge", 
+              "c1.medium", 
+              "c1.xlarge", 
+              "c3.large", 
+              "c3.xlarge", 
+              "c3.2xlarge", 
+              "c3.4xlarge", 
+              "c3.8xlarge", 
+              "c4.large", 
+              "c4.xlarge", 
+              "c4.2xlarge", 
+              "c4.4xlarge", 
+              "c4.8xlarge", 
+              "g2.2xlarge", 
+              "g2.8xlarge", 
+              "r3.large", 
+              "r3.xlarge", 
+              "r3.2xlarge", 
+              "r3.4xlarge", 
+              "r3.8xlarge", 
+              "i2.xlarge", 
+              "i2.2xlarge", 
+              "i2.4xlarge", 
+              "i2.8xlarge", 
+              "d2.xlarge", 
+              "d2.2xlarge", 
+              "d2.4xlarge", 
+              "d2.8xlarge", 
+              "hi1.4xlarge", 
+              "hs1.8xlarge", 
+              "cr1.8xlarge", 
+              "cc2.8xlarge", 
+              "cg1.4xlarge"
+            ],
+            "ConstraintDescription" : "must be a valid EC2 instance type."
+        }
+    },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+          "ParameterGroups" : [
+            {
+              "Label" : { "default" : "Your IP and EC2 Configuration" },
+              "Parameters" : [ "YourPublicIPAddress","LatestAmiId", "InstanceType"]
+            }
+          ],
+          "ParameterLabels" : {
+            "YourPublicIPAddress" : { "default" : "Your public IP Address"},
+            "LatestAmiId" : { "default" : "Amazon Linux 2 AMI ID"},
+            "InstanceType" : { "default" : "Instance Type" }
+          }
+        }
+      },
+    "Resources": {
+        "MyInstance": {
+          "Type": "AWS::RDS::DBInstance",
+          "Properties": {
+              "MasterUsername": "admin",
+              "DBInstanceClass": "db.t3.micro",
+              "DBName": "bpbbookdb",
+              "Engine": "postgresql",
+              "AllocatedStorage": 5,
+              "AutoMinorVersionUpgrade": false,
+              "ManageMasterUserPassword": true,
+              "MasterUserSecret": {
+                  "KmsKeyId": {
+                      "Ref": "KMSKey"
+                  }
+              }
+          }
+      },
+      "KMSKey": {
+        "Type": "AWS::KMS::Key",
+        "Properties": {
+            "Description": "Manual test KMS key",
+            "EnableKeyRotation": true,
+            "KeyPolicy": {
+                "Version": "2012-10-17",
+                "Id": {
+                    "Ref": "AWS::StackName"
+                },
+                "Statement": [
+                    {
+                        "Sid": "Allow administration of the key",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": {
+                                "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                            }
+                        },
+                        "Action": [
+                            "kms:*"
+                        ],
+                        "Resource": "*"
+                    }
+                ]
+            }
+        }
+    },
+        "WebServer": {  
+            "Type": "AWS::EC2::Instance",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                "configSets" : {
+                    "All" : [ "InstallWebServer"]
+                },
+                "InstallWebServer" : {
+                    "packages" : {
+                    "yum" : {
+                        "httpd": []
+                    }
+                },
+            "files" : {
+              "/var/www/html/index.html" : {
+                "content" : { "Fn::Join" : [ "", [
+                  "<html>\n",
+                  "  <head>\n",
+                  "    <title>Hello from BPB Publications</title>\n",
+                  "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n",
+                  "  </head>\n",
+                  "  <body>\n",
+                  "    <h1>Hello from BPB Publications</h1>\n",
+                  "    <p/>\n",
+                  "  </body>\n",
+                  "</html>\n"
+                ]]},
+                "mode"  : "000644",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "services" : {
+              "sysvinit" : {  
+                "httpd"   : { "enabled" : "true", "ensureRunning" : "true" }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+            "Ref": "LatestAmiId"
+        },
+        "InstanceType": {"Ref": "InstanceType"},
+        "SecurityGroupIds" : [{ "Fn::ImportValue": "BPBBookWebServerSecurityGroup" }],
+        "SubnetId" : {"Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"},
+        "Tags" : [ 
+            {"Key" : "Name", "Value" : "Chapter3WebServer"},
+            {"Key" : "Chapter", "Value" : "Three"}],
+        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+             "#!/bin/bash -xe\n",
+             "yum install -y aws-cfn-bootstrap\n",
+
+             "# Install the files and packages from the metadata\n",
+             "/opt/aws/bin/cfn-init -v ",
+             "         --stack ", { "Ref" : "AWS::StackName" },
+             "         --resource WebServer ",
+             "         --configsets All",
+             "         --region ", { "Ref" : "AWS::Region" }, "\n",
+
+             "# Signal the status from cfn-init\n",
+             "/opt/aws/bin/cfn-signal -e $? ",
+             "         --stack ", { "Ref" : "AWS::StackName" },
+             "         --resource WebServer ",
+             "         --region ", { "Ref" : "AWS::Region" }, "\n"
+        ]]}}        
+      },
+        "CreationPolicy" : {
+            "ResourceSignal" : {
+            "Timeout" : "PT2M"
+                }
+            }
+        } 
+    },
+    "Outputs": {
+        "PublicIp" : {
+            "Value" : { "Fn::GetAtt" : [ "WebServer", "PublicIp" ]},
+            "Description" : "Web Server's Public IP Address"
+          }
+    }
+}
