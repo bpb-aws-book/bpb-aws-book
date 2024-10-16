@@ -78,7 +78,7 @@ client = botocore.session.get_session().create_client('secretsmanager','us-east-
 cache_config = SecretCacheConfig()
 cache = SecretCache( config = cache_config, client = client)
 
-secret = cache.get_secret_string('SECRETNAME')
+secret = cache.get_secret_string('SECRETARN')
 secretdata = json.loads(secret)
 secretpassword = secretdata['password']
 
