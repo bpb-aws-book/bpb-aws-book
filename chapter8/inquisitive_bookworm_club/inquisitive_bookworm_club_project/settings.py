@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from pathlib import Path
 import botocore
 import botocore.session
 from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
