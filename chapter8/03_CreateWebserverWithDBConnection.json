@@ -292,11 +292,11 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"update settings file database endpoint url": {
-								"command": "aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
+								"command": "sudo su && aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update settings file secrets arn": {
-								"command": "export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
+								"command": "sudo su && export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"perform migrations": {
