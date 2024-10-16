@@ -291,6 +291,14 @@
 								"command": "sudo su && source env/bin/activate && python3 -m pip install boto3 psycopg2-binary aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
+							"update settings file database endpoint url": {
+								"command": "aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"update settings file secrets arn": {
+								"command": "export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
 							"perform migrations": {
 								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
@@ -341,13 +349,7 @@
                         "owner" : "ec2-user",
                         "group" : "ec2-user"
                     }
-                },
-				"commands": {
-					"activate gunicorn service": {
-						"command": "systemctl start gunicorn.socket && systemctl enable gunicorn.socket && file /run/gunicorn.sock && systemctl daemon-reload",
-						"cwd": "/home/ec2-user"
-					}
-					}
+                }
 				},
                     "InstallNginx" : {
                         "packages" : {
@@ -371,13 +373,7 @@
 									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
 									"}"
 								]]}
-							}},
-							"commands": {
-								"change ownership": {
-									"command": "sudo chown ec2-user:ec2-user inquisitive_bookworm_club && sudo chown ec2-user:ec2-user ./inquisitive_bookworm_club/db.sqlite3",
-									"cwd": "/home/ec2-user"
-								}
-							}
+							}}
                     }
 				}
 			},
