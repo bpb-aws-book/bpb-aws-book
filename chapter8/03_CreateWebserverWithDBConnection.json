@@ -298,14 +298,6 @@
 							"update settings file secrets arn": {
 								"command": "sudo su && export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
-							},
-							"perform migrations": {
-								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
-							},
-							"populate sample data": {
-								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
 					},
@@ -349,7 +341,25 @@
                         "owner" : "ec2-user",
                         "group" : "ec2-user"
                     }
-                }
+                },
+					"commands": {
+						"start gunicorn": {
+							"command": "sudo systemctl start gunicorn.socket",
+							"cwd": "/home/ec2-user"
+						},
+						"enable gunicorn": {
+							"command": "sudo systemctl enable gunicorn.socket",
+							"cwd": "/home/ec2-user"
+						},
+						"perform migrations": {
+							"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
+							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+						},
+						"populate sample data": {
+							"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+						}
+					}
 				},
                     "InstallNginx" : {
                         "packages" : {
