@@ -190,7 +190,7 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter8WebServer"
+						"Value": "Chapter6WebServer"
 					},
 					{
 						"Key": "Chapter",
@@ -260,7 +260,7 @@
                                 "cwd": "/home/ec2-user"
                             },
 							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter8/inquisitive_bookworm_club .",
+                                "command": "cp -r bpb-aws-book/chapter6/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
 							 "remove the cloned repository": {
