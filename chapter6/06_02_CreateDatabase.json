@@ -1,0 +1,99 @@
+  {
+      "Description": "This CloudFormation Template creates an RDS DB instance.",
+      "AWSTemplateFormatVersion": "2010-09-09",
+      "Resources": {
+          "BPBBookRDSDBSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "RDS Subnet Group with Private Subnets of our VPC",
+                "SubnetIds": [
+                  {"Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet"},
+                  {"Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet"}
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "BPBBookRDSDBSubnetGroup"
+                    }
+                ]
+            }
+        },
+          "BPBBookRDSDBInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "MasterUsername": "postgres",
+                "DBInstanceClass": "db.t3.micro",
+                "VPCSecurityGroups": [{"Fn::ImportValue": "BPBBookRDSSecurityGroup"}],
+                "DBName": "bpbbookdb",
+                "Engine": "postgres",
+                "AllocatedStorage": 5,
+                "AutoMinorVersionUpgrade": false,
+                "DBSubnetGroupName": {
+                    "Ref": "BPBBookRDSDBSubnetGroup"
+                },
+                "ManageMasterUserPassword": true,
+                "MultiAZ": "False",
+                "MasterUserSecret": {
+                    "KmsKeyId": {
+                        "Ref": "KMSKey"
+                    }
+                }
+            }
+        },
+        "KMSKey": {
+          "Type": "AWS::KMS::Key",
+          "Properties": {
+              "Description": "Manual test KMS key",
+              "EnableKeyRotation": true,
+              "KeyPolicy": {
+                  "Version": "2012-10-17",
+                  "Id": {
+                      "Ref": "AWS::StackName"
+                  },
+                  "Statement": [
+                      {
+                          "Sid": "Allow administration of the key",
+                          "Effect": "Allow",
+                          "Principal": {
+                              "AWS": {
+                                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                              }
+                          },
+                          "Action": [
+                              "kms:*"
+                          ],
+                          "Resource": "*"
+                      }
+                  ]
+              }
+          }
+      }
+      },
+      "Outputs": {
+        "BPBBookRDSSecretARN": {
+          "Value": {
+              "Fn::GetAtt": "BPBBookRDSDBInstance.MasterUserSecret.SecretArn"
+          },
+          "Export": {
+              "Name": "BPBBookRDSSecretARN"
+          }
+      },
+      "BPBBookKMSKeyARN": {
+        "Value": {
+            "Fn::GetAtt": "KMSKey.Arn"
+        },
+        "Export": {
+            "Name": "BPBBookKMSKeyARN"
+        }
+    },
+      "BPBBookRDSDBAddress": {
+          "Description": "RDS DB Endpoint Address",
+          "Export": {
+              "Name": "BPBBookRDSDBAddress"
+          },
+          "Value": {
+              "Fn::GetAtt": "BPBBookRDSDBInstance.Endpoint.Address"
+          }
+      }
+      }
+  }
