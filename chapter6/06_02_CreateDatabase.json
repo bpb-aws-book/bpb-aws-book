@@ -43,7 +43,7 @@
         "KMSKey": {
           "Type": "AWS::KMS::Key",
           "Properties": {
-              "Description": "Manual test KMS key",
+              "Description": "KMS key for secrets",
               "EnableKeyRotation": true,
               "KeyPolicy": {
                   "Version": "2012-10-17",
