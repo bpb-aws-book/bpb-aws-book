@@ -539,6 +539,7 @@
                             "Value": "Seven"
                         }],
                 "GroupDescription": "Allow web server security group to access database",
+                "GroupName" : "RDSSecurityGroup",
                 "VpcId": {
                     "Ref": "VPC"
                 },
