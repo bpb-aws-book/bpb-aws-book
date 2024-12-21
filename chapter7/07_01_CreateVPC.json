@@ -506,7 +506,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "WebServerSecurityGroup"
+                        "Value": "StandaloneWebServerSecurityGroup"
                     },
                     {
                         "Key": "Chapter",
