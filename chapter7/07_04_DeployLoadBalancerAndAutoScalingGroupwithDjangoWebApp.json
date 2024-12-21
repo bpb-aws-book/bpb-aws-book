@@ -2,14 +2,10 @@
 	"Description": "This CloudFormation Template deploys the underlying infrastructure and an auto scaling group with web servers for our Django Web Application",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
-		"YourPublicIPAddress": {
-			"Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
-			"Type": "String"
-		},
 		"LatestAmiId": {
 			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
 			"Type": "String",
-			"Default": "ami-03f34618c28cfc6c9"
+			"Default": "ami-0f3214ef9fdb0a03e"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
@@ -72,31 +68,6 @@
 				"cg1.4xlarge"
 			],
 			"ConstraintDescription": "must be a valid EC2 instance type."
-		},
-		"VpcCIDR": {
-			"Description": "Please enter the IP range (CIDR notation) for this VPC",
-			"Type": "String",
-			"Default": "10.0.0.0/16"
-		},
-		"FirstPublicSubnetCIDR": {
-			"Description": "Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone",
-			"Type": "String",
-			"Default": "10.0.1.0/24"
-		},
-		"SecondPublicSubnetCIDR": {
-			"Description": "Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone",
-			"Type": "String",
-			"Default": "10.0.2.0/24"
-		},
-		"FirstPrivateSubnetCIDR": {
-			"Description": "Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone",
-			"Type": "String",
-			"Default": "10.0.3.0/24"
-		},
-		"SecondPrivateSubnetCIDR": {
-			"Description": "Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone",
-			"Type": "String",
-			"Default": "10.0.4.0/24"
 		}
 	},
 	"Metadata": {
@@ -107,34 +78,12 @@
 						"default": "Your IP and EC2 Configuration"
 					},
 					"Parameters": [
-						"YourPublicIPAddress",
 						"LatestAmiId",
 						"InstanceType"
-					]
-				},
-				{
-					"Label": {
-						"default": "VPC Configuration"
-					},
-					"Parameters": [
-						"VpcCIDR",
-						"FirstPublicSubnetCIDR",
-						"SecondPublicSubnetCIDR",
-						"FirstPrivateSubnetCIDR",
-						"SecondPrivateSubnetCIDR"
 					]
 				}
 			],
 			"ParameterLabels": {
-				"VpcCIDR": {
-					"default": "CIDR of the VPC where the web server will be deployed"
-				},
-				"FirstPublicSubnetCIDR": {
-					"default": "CIDR of the public subnet where the web server will be deployed"
-				},
-				"YourPublicIPAddress": {
-					"default": "Your public IP Address"
-				},
 				"LatestAmiId": {
 					"default": "Amazon Linux 2 AMI ID"
 				},
