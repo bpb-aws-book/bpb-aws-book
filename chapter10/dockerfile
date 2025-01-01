@@ -16,3 +16,6 @@ ENV PYTHONUNBUFFERED 1
 
 # copy project
 COPY inquisitive_bookworm_club /usr/src/inquisitive_bookworm_club
+
+# change working directory
+WORKDIR /usr/src/inquisitive_bookworm_club
