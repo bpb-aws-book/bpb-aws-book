@@ -5,6 +5,9 @@ FROM amazonlinux:2023
 #RUN mkdir /usr/src/inquisitive_bookworm_club
 WORKDIR /usr/src
 
+#default port used by Django Web Applications
+EXPOSE 8000
+
 # set environment variables
 #ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
