@@ -24,3 +24,5 @@ COPY inquisitive_bookworm_club /usr/src/inquisitive_bookworm_club
 
 # change working directory
 WORKDIR /usr/src/inquisitive_bookworm_club
+
+CMD ["gunicorn", "inquisitive_bookworm_club_project.wsgi:application", "-b", "0.0.0.0:8000"]
