@@ -19,7 +19,7 @@ COPY setup.sh /usr/src/inquisitive_bookworm_club
 WORKDIR /usr/src/inquisitive_bookworm_club
 
 # remove pre existing virtual environment setup for the EC2 instance
-RUN rm -rf venv
+RUN rm -rf env
 #install dependencies
 RUN dnf install pip -y
 CMD ["sh", "setup.sh"]
