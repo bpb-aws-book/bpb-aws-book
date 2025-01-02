@@ -27,4 +27,6 @@ WORKDIR /usr/src/inquisitive_bookworm_club
 
 RUN sh setup.sh
 
+RUN dnf install nginx -y
+
 CMD ["gunicorn", "inquisitive_bookworm_club_project.wsgi:application", "-b", "0.0.0.0:8000"]
