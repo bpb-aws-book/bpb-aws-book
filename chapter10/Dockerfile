@@ -21,8 +21,8 @@ WORKDIR /usr/src/inquisitive_bookworm_club
 # remove pre existing virtual environment setup for the EC2 instance
 RUN rm -rf venv
 #install dependencies
+RUN dnf install pip -y
 CMD ["sh", "setup.sh"]
-
 RUN dnf install nginx -y
 
 #run gunicorn
