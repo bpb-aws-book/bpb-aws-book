@@ -32,9 +32,6 @@ RUN sh setup.sh
 
 RUN dnf install nginx -y
 
-python3 -m venv env && \
-source env/bin/activate && \
-
 CMD ["python3", "-m", "venv", "env"]
 CMD ["source", "env/bin/activate"]
 CMD ["gunicorn", "inquisitive_bookworm_club_project.wsgi:application", "-b", "0.0.0.0:8000"]
