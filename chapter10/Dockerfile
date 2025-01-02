@@ -25,6 +25,9 @@ COPY inquisitive_bookworm_club /usr/src/inquisitive_bookworm_club
 # change working directory
 WORKDIR /usr/src/inquisitive_bookworm_club
 
+# remove pre existing virtual environment
+RUN rm -rf venv
+
 RUN sh setup.sh
 
 RUN dnf install nginx -y
