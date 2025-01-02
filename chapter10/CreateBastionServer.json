@@ -260,7 +260,15 @@
                                 "cwd": "/home/ec2-user"
                             },
 							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter6/inquisitive_bookworm_club .",
+                                "command": "cp -r bpb-aws-book/chapter10/inquisitive_bookworm_club .",
+                                "cwd": "/home/ec2-user"
+                            },
+							"copy docker build files":{
+                                "command": "cp -r bpb-aws-book/chapter10/Dockerfile .",
+                                "cwd": "/home/ec2-user"
+                            },
+							"copy dependency installation script file":{
+                                "command": "cp -r bpb-aws-book/chapter10/setup.sh .",
                                 "cwd": "/home/ec2-user"
                             },
 							 "remove the cloned repository": {
