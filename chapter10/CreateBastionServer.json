@@ -271,6 +271,14 @@
                                 "command": "cp -r bpb-aws-book/chapter10/setup.sh .",
                                 "cwd": "/home/ec2-user"
                             },
+				"copy docker entrypoint script file":{
+                                "command": "cp -r bpb-aws-book/chapter10/entrypoint.sh .",
+                                "cwd": "/home/ec2-user"
+                            },
+							"copy nginx configuration file":{
+                                "command": "cp -r bpb-aws-book/chapter10/inquisitivebookwormclubsite.conf .",
+                                "cwd": "/home/ec2-user"
+                            },
 							 "remove the cloned repository": {
                                 "command": "rm -rf bpb-aws-book",
                                 "cwd": "/home/ec2-user"
