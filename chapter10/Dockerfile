@@ -24,11 +24,11 @@ RUN rm -rf env
 #install dependencies
 RUN sh setup.sh
 
-#install configure and relad nginx
+#install and configure nginx
 RUN dnf install nginx -y
 COPY inquisitivebookwormclubsite.conf /etc/nginx/conf.d
-RUN nginx -t && nginx -s reload
+#RUN nginx -t && nginx -s reload
 
 
 #run gunicorn as entry point
-CMD ["sh", "entrypoint.sh"]
+ENTRYPOINT ["sh", "entrypoint.sh"]
