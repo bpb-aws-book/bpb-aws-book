@@ -4,8 +4,8 @@ FROM amazonlinux:2023
 # set work directory
 WORKDIR /usr/src
 
-#default port used by Django Web Applications
-EXPOSE 8000
+#expose http port to host
+EXPOSE 80
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
