@@ -14,7 +14,7 @@ ENV PYTHONUNBUFFERED 1
 # copy project
 COPY inquisitive_bookworm_club /usr/src/inquisitive_bookworm_club
 COPY setup.sh /usr/src/inquisitive_bookworm_club
-
+COPY entrypoint.sh /usr/src/inquisitive_bookworm_club
 
 # change working directory
 WORKDIR /usr/src/inquisitive_bookworm_club
@@ -24,9 +24,9 @@ RUN rm -rf env
 #install dependencies
 #RUN dnf install pip -y
 RUN sh setup.sh
-#RUN dnf install nginx -y
+RUN dnf install nginx -y
 
 #run gunicorn
 #CMD ["python3", "-m", "venv", "env"]
-#CMD ["source", "env/bin/activate"]
-#CMD ["gunicorn", "inquisitive_bookworm_club_project.wsgi:application", "-b", "0.0.0.0:8000"]
+#RUN source env/bin/activate
+CMD ["sh", "entrypoint.sh"]
