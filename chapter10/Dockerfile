@@ -21,10 +21,13 @@ WORKDIR /usr/src/inquisitive_bookworm_club
 
 # remove pre existing virtual environment setup for the EC2 instance
 RUN rm -rf env
+#install dependencies
+#RUN dnf install pip -y
 RUN sh setup.sh
-
-#install nginx
 RUN dnf install nginx -y
+COPY inquisitivebookwormclub.conf /etc/nginx/conf.d
 
 #run gunicorn
+#CMD ["python3", "-m", "venv", "env"]
+#RUN source env/bin/activate
 CMD ["sh", "entrypoint.sh"]
