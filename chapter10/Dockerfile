@@ -4,7 +4,7 @@ FROM amazonlinux:2023
 # set work directory
 WORKDIR /usr/src
 
-#expose http port to host
+#default port used by Django Web Applications
 EXPOSE 80
 
 # set environment variables
@@ -32,4 +32,3 @@ COPY inquisitivebookwormclubsite.conf /etc/nginx/conf.d
 
 #run gunicorn as entry point
 ENTRYPOINT ["sh", "entrypoint.sh"]
-CMD ["nginx"]
