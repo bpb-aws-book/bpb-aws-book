@@ -23,8 +23,12 @@ WORKDIR /usr/src/inquisitive_bookworm_club
 RUN rm -rf env
 #install dependencies
 RUN sh setup.sh
+
+#install configure and relad nginx
 RUN dnf install nginx -y
 COPY inquisitivebookwormclubsite.conf /etc/nginx/conf.d
+RUN nginx -t && nginx -s reload
+
 
 #run gunicorn as entry point
 CMD ["sh", "entrypoint.sh"]
