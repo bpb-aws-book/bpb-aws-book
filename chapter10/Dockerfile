@@ -32,3 +32,4 @@ COPY inquisitivebookwormclubsite.conf /etc/nginx/conf.d
 
 #run gunicorn as entry point
 ENTRYPOINT ["sh", "entrypoint.sh"]
+CMD ["nginx"]
