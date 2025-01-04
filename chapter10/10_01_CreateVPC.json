@@ -444,63 +444,7 @@
                 "Comment": "Associates the private subnet with the private route table"
             }
         },
-        "ELBSecurityGroup" : {
-            "Type" : "AWS::EC2::SecurityGroup",
-            "Properties" : {
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "ELBSecurityGroup"
-                    },
-                    {
-                        "Key": "Chapter",
-                        "Value": "Ten"
-                    }] ,
-                "GroupDescription" : "Allow http to client host",
-                "GroupName" : "ELBSecurityGroup",
-                "VpcId" : {"Ref" : "VPC"},
-                "SecurityGroupIngress" : [{
-                    "IpProtocol" : "tcp",
-                    "FromPort" : 80,
-                    "ToPort" : 80,
-                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
-                        }]
-                    },
-            "Metadata": {
-                "Comment": "Allows inbound HTTP traffic from your public IP address"
-            }
-        },
-        "WebServerSecurityGroup" : {
-            "Type" : "AWS::EC2::SecurityGroup",
-            "Properties" : {
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "WebServerSecurityGroup"
-                    },
-                    {
-                        "Key": "Chapter",
-                        "Value": "Ten"
-                    }] ,
-                "GroupDescription" : "Allow http to client host",
-                "GroupName" : "WebServerSecurityGroup",
-                "VpcId" : {"Ref" : "VPC"},
-                "SecurityGroupIngress": [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "80",
-                        "ToPort": "80",
-                        "SourceSecurityGroupId": {
-                            "Ref": "ELBSecurityGroup"
-                        }
-                    }
-                ]
-                    },
-            "Metadata": {
-                "Comment": "Allows inbound HTTP traffic from your public IP address"
-            }
-        },
-        "StandaloneWebServerSecurityGroup" : {
+        "BastionServerSecurityGroup" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
                 "Tags": [
@@ -574,26 +518,8 @@
                 "Name": "BPBBookVPCForLearning"
             }
         },
-        "ELBSecurityGroup": {
-            "Description": "A reference to the ELB security group",
-            "Value": {
-                "Ref": "ELBSecurityGroup"
-            },
-            "Export": {
-                "Name": "BPBBookELBSecurityGroup"
-            }
-        },
-        "WebServerSecurityGroup": {
-            "Description": "A reference to the web server security group to be used by auto scaling group instances",
-            "Value": {
-                "Ref": "WebServerSecurityGroup"
-            },
-            "Export": {
-                "Name": "BPBBookWebServerSecurityGroup"
-            }
-        },
-        "StandaloneWebServerSecurityGroup": {
-            "Description": "A reference to the web server security group to be used by the web server for creating images",
+        "BastionServerSecurityGroup": {
+            "Description": "A reference to the web server security group to be used by the bastion server for creating images",
             "Value": {
                 "Ref": "StandaloneWebServerSecurityGroup"
             },
