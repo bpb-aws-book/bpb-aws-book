@@ -416,16 +416,5 @@
 					"Timeout": "PT5M"
 				}
 			}
-		}},
-		"Outputs": {
-			"PublicIp": {
-				"Value": {
-					"Fn::GetAtt": [
-						"BastionServer",
-						"PublicIp"
-					]
-				},
-				"Description": "Web Server's Public IP Address"
-			}
-		}
+		}}
 	}
