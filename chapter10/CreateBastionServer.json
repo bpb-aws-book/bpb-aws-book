@@ -271,7 +271,7 @@
                                 "command": "cp -r bpb-aws-book/chapter10/setup.sh .",
                                 "cwd": "/home/ec2-user"
                             },
-				"copy docker entrypoint script file":{
+							"copy docker entrypoint script file":{
                                 "command": "cp -r bpb-aws-book/chapter10/entrypoint.sh .",
                                 "cwd": "/home/ec2-user"
                             },
