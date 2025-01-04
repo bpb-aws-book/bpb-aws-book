@@ -2,10 +2,6 @@
     "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
-        "YourPublicIPAddress": {
-            "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
-            "Type": "String"
-        },
         "VpcCIDR": {
             "Description": "Please enter the IP range (CIDR notation) for this VPC",
             "Type": "String",
@@ -37,11 +33,10 @@
           "ParameterGroups" : [
             {
               "Label" : { "default": "VPC Configuration" },
-              "Parameters" : [ "YourPublicIPAddress", "VpcCIDR","FirstPublicSubnetCIDR", "SecondPublicSubnetCIDR", "FirstPrivateSubnetCIDR", "SecondPrivateSubnetCIDR" ]
+              "Parameters" : [ "VpcCIDR","FirstPublicSubnetCIDR", "SecondPublicSubnetCIDR", "FirstPrivateSubnetCIDR", "SecondPrivateSubnetCIDR" ]
             }
           ],
           "ParameterLabels" : {
-            "YourPublicIPAddress" : { "default" : "Your public IP Address"},
             "VpcCIDR" : { "default" : "CIDR of the VPC where the web server will be deployed" }
           }
         }
@@ -450,24 +445,18 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "StandaloneWebServerSecurityGroup"
+                        "Value": "BastionServerSecurityGroup"
                     },
                     {
                         "Key": "Chapter",
                         "Value": "Ten"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
-                "GroupName" : "StandaloneWebServerSecurityGroup",
-                "VpcId" : {"Ref" : "VPC"},
-                "SecurityGroupIngress" : [{
-                    "IpProtocol" : "tcp",
-                    "FromPort" : 80,
-                    "ToPort" : 80,
-                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
-                        }]
+                "GroupName" : "BastionServerSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"}
                     },
             "Metadata": {
-                "Comment": "Allows inbound HTTP traffic from your public IP address. Used by standalone web server for image creation"
+                "Comment": "Allows inbound HTTP traffic from your public IP address. Used by bastion web server for image creation"
             }
         },
         "RDSSecurityGroup": {
@@ -493,15 +482,7 @@
                         "FromPort": "5432",
                         "ToPort": "5432",
                         "SourceSecurityGroupId": {
-                            "Ref": "WebServerSecurityGroup"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "5432",
-                        "ToPort": "5432",
-                        "SourceSecurityGroupId": {
-                            "Ref": "StandaloneWebServerSecurityGroup"
+                            "Ref": "BastionServerSecurityGroup"
                         }
                     }
                 ]
@@ -521,10 +502,10 @@
         "BastionServerSecurityGroup": {
             "Description": "A reference to the web server security group to be used by the bastion server for creating images",
             "Value": {
-                "Ref": "StandaloneWebServerSecurityGroup"
+                "Ref": "BastionServerSecurityGroup"
             },
             "Export": {
-                "Name": "BPBBookStandaloneWebServerSecurityGroup"
+                "Name": "BPBBookBastionServerSecurityGroup"
             }
         },
         "RDSSecurityGroup": {
