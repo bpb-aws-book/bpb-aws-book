@@ -456,7 +456,7 @@
                 "VpcId" : {"Ref" : "VPC"}
                     },
             "Metadata": {
-                "Comment": "Allows inbound HTTP traffic from your public IP address. Used by bastion web server for image creation"
+                "Comment": "Used by the bastion server"
             }
         },
         "RDSSecurityGroup": {
