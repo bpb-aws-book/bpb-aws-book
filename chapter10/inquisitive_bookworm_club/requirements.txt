@@ -1,1 +1,5 @@
 django
+gunicorn
+boto3
+psycopg2-binary
+aws-secretsmanager-caching
