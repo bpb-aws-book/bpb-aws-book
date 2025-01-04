@@ -500,7 +500,7 @@
             }
         },
         "BastionServerSecurityGroup": {
-            "Description": "A reference to the web server security group to be used by the bastion server for creating images",
+            "Description": "A reference to the security group to be used by the bastion server",
             "Value": {
                 "Ref": "BastionServerSecurityGroup"
             },
