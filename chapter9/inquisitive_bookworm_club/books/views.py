@@ -55,7 +55,7 @@ def displaysamplechapter(request, pk):
         return HttpResponse(str(e))
 
 def logmessage(message):
-        client = boto3.client('logs')
+        client = boto3.client('logs', region_name='AWSREGION')
         log_event = {
             'logGroupName': 'InquisitiveBookwormClubLogs',
             'logStreamName': 'InquisitiveBookwormClubLogStream',
