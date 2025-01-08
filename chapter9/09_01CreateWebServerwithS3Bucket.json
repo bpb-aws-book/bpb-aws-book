@@ -770,7 +770,7 @@
                                         {
                                             "Ref": "S3Bucket"
                                         },
-                                        "'/g views.py"
+                                        "'/g' views.py"
                                     ]]
                                 },
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/books"
