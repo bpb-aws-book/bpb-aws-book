@@ -4,7 +4,6 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 import socket
 from .models import book
-import boto3
 
 
 def home(request):
