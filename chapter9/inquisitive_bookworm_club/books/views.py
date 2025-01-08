@@ -50,4 +50,4 @@ def displaysamplechapter(request, pk):
         return response
     except Exception as e:
         print(f"Error occurred: {str(e)}")
-        return HttpResponse("Error retrieving PDF")    
+        return HttpResponse(str(e))    
