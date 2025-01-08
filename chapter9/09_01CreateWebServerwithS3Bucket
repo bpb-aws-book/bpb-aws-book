@@ -728,7 +728,7 @@
                                 "cwd": "/home/ec2-user"
                             },
 							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter4/inquisitive_bookworm_club .",
+                                "command": "cp -r bpb-aws-book/chapter9/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
 							 "remove the cloned repository": {
@@ -762,7 +762,19 @@
 							"populate sample data": {
 								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
-							}
+							},
+                            "update details page": {
+                                "command": {
+                                    "Fn::Join": ["", [
+                                        "sed -i 's/BPBS3Bucket/'",
+                                        {
+                                            "Ref": "S3Bucket"
+                                        },
+                                        "'/g details.html"
+                                    ]]
+                                },
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/books/templates"
+                            }
 						}
 					},
                     "ConfigureGunicorn" : {
