@@ -40,13 +40,13 @@ def returnbook(request, pk):
 def displaysamplechapter(request, pk):
     try:
         s3_client = boto3.client('s3')
-        s3_response_object = s3_client.get_object(Bucket="BPBS3Bucket", Key="samplechapter.pdf")
+        s3_response_object = s3_client.get_object(Bucket="bedrock-demo-shkhars", Key="samplechapter.pdf")
         object_content = s3_response_object['Body'].read()
         response = HttpResponse(object_content, content_type='application/pdf')
+        return response
     except Exception as e:
-        print(f"Error occurred: {str(e)}")    
-    
-    return response if response else HttpResponse("Error retrieving PDF")
+        print(f"Error occurred: {str(e)}")
+        return HttpResponse("Error retrieving PDF")    
 
 def about(request):
     HostName = socket.gethostname()
