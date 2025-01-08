@@ -763,17 +763,17 @@
 								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-                            "update details page": {
+                            "update views.py to use the S3 bucket": {
                                 "command": {
                                     "Fn::Join": ["", [
                                         "sed -i 's/BPBS3Bucket/'",
                                         {
                                             "Ref": "S3Bucket"
                                         },
-                                        "'/g details.html"
+                                        "'/g views.py"
                                     ]]
                                 },
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/books/templates"
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/books"
                             }
 						}
 					},
