@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 import socket
 from .models import book
+import boto3
 
 
 def home(request):
@@ -39,3 +40,14 @@ def returnbook(request, pk):
 def about(request):
     HostName = socket.gethostname()
     return render(request, 'about.html', {'HostName':HostName})
+
+def displaysamplechapter(request, pk):
+    try:
+        s3_client = boto3.client('s3')
+        s3_response_object = s3_client.get_object(Bucket="bedrock-demo-shkhars", Key="samplechapter.pdf")
+        object_content = s3_response_object['Body'].read()
+        response = HttpResponse(object_content, content_type='application/pdf')
+        return response
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return HttpResponse("Error retrieving PDF")    
