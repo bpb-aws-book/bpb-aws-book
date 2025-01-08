@@ -55,7 +55,6 @@ def displaysamplechapter(request, pk):
         return HttpResponse(str(e))
 
 def logmessage(message):
-    try:
         client = boto3.client('logs')
         log_event = {
             'logGroupName': 'InquisitiveBookwormClubLogs',
