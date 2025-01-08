@@ -25,5 +25,5 @@ urlpatterns = [
     path("details/<int:pk>/", views.details, name="details"),
     path("rentbook/<int:pk>/", views.rentbook, name="rentbook"),
     path("returnbook/<int:pk>/", views.returnbook, name="returnbook"),
-    path("displaysamplechapter/<int:pk>/", views.displayabstract, name="displaysamplechapter"),
+    path("displaysamplechapter/<int:pk>/", views.displaysamplechapter, name="displaysamplechapter"),
     path("about/", views.about, name="about")]
