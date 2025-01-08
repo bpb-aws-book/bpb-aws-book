@@ -52,7 +52,7 @@ def displaysamplechapter(request, pk):
         return response
     except Exception as e:
         logmessage(str(e))
-        return HttpResponse("Error in retrieving pdf")
+        return HttpResponse(str(e))
 
 def logmessage(message):
     try:
@@ -68,5 +68,3 @@ def logmessage(message):
             ],
         }
         client.put_log_events(**log_event)
-    except Exception as e:
-        print(e)
