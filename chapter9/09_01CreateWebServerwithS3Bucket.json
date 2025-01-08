@@ -606,15 +606,10 @@
 							},
 							{
 								"Effect": "Allow",
-								"Action": ["s3:Get*"],
-								"Resource": [{
-                                    "Fn::Join": ["", [
-                                        {
-                                            "Ref": "S3Bucket"
-                                        },
-                                        "/*"
-                                    ]]
-                                }]
+								"Action": ["s3:*"],
+								"Resource": {
+                                "Fn::Join": ["",["arn:aws:s3:::",{"Ref": "S3Bucket"},"/*"]]
+                                            }
 							}
 						]
 					}
