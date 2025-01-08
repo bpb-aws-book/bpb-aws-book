@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 import socket
 from .models import book
 import boto3
+import time
 
 
 def home(request):
@@ -47,6 +48,26 @@ def displaysamplechapter(request, pk):
         s3_response_object = s3_client.get_object(Bucket="BPBS3Bucket", Key="samplechapter.pdf")
         object_content = s3_response_object['Body'].read()
         response = HttpResponse(object_content, content_type='application/pdf')
+        logmessage("retrieved pdf from S3 bucket")
         return response
     except Exception as e:
-        return HttpResponse("Error in retrieving pdf")    
+        logmessage(str(e))
+        return HttpResponse("Error in retrieving pdf")
+
+def logmessage(message):
+    try:
+        client = boto3.client('logs')
+        print("Error")
+        log_event = {
+            'logGroupName': 'InquisitiveBookwormClubLogs',
+            'logStreamName': 'InquisitiveBookwormClubLogStream',
+            'logEvents': [
+                {
+                    'timestamp': int(round(time.time() * 1000)),
+                    'message': message
+                },
+            ],
+        }
+        client.put_log_events(**log_event)
+    except Exception as e:
+        print(e)
