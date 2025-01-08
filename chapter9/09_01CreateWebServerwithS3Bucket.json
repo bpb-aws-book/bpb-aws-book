@@ -574,6 +574,30 @@
 				"Comment": "Allows inbound HTTP traffic from your public IP address"
 			}
 		},
+		"ApplicationLogStream": {
+		    "Type": "AWS::Logs::LogStream",
+		    "Properties": {
+		        "LogGroupName": {
+		            "Ref": "InquisitiveBookwormClubLogGroup"
+		        },
+		        "LogStreamName": "InquisitiveBookwormClubLogStream"
+		    }
+		},
+		"InquisitiveBookwormClubLogGroup": {
+			"Type" : "AWS::Logs::LogGroup",
+			"Properties" : {
+				"LogGroupName" : "InquisitiveBookwormClubLogs",
+				"RetentionInDays" : 7,
+				"Tags" : [{
+					"Key": "Name",
+					"Value": "InquisitiveBookwormClubLogGroup"
+				},
+				{
+					"Key": "Chapter",
+					"Value": "Nine"
+				}  ]
+			  }
+		  },
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -610,6 +634,11 @@
                                 "Resource": [
                                 {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}, "/*"]]},
                                 {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "S3Bucket"}]]}]
+							},
+							{
+								"Effect": "Allow",
+								"Action": ["logs:*"],
+                                "Resource": [{"Fn::Join": ["", ["arn:aws:logs:::", {"Ref": "InquisitiveBookwormClubLogGroup"}]]}]
 							}
 						]
 					}
