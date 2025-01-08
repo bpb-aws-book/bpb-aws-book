@@ -49,5 +49,4 @@ def displaysamplechapter(request, pk):
         response = HttpResponse(object_content, content_type='application/pdf')
         return response
     except Exception as e:
-        print(f"Error occurred: {str(e)}")
         return HttpResponse("Error in retrieving pdf")    
