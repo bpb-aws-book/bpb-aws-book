@@ -57,7 +57,6 @@ def displaysamplechapter(request, pk):
 def logmessage(message):
     try:
         client = boto3.client('logs')
-        print("Error")
         log_event = {
             'logGroupName': 'InquisitiveBookwormClubLogs',
             'logStreamName': 'InquisitiveBookwormClubLogStream',
