@@ -44,7 +44,7 @@ def about(request):
 def displaysamplechapter(request, pk):
     try:
         s3_client = boto3.client('s3')
-        s3_response_object = s3_client.get_object(Bucket="bedrock-demo-shkhars", Key="samplechapter.pdf")
+        s3_response_object = s3_client.get_object(Bucket="BPBS3Bucket", Key="samplechapter.pdf")
         object_content = s3_response_object['Body'].read()
         response = HttpResponse(object_content, content_type='application/pdf')
         return response
