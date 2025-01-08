@@ -608,8 +608,13 @@
 								"Effect": "Allow",
 								"Action": ["s3:Get*"],
 								"Resource": [{
-                                            "Fn::GetAtt": ["S3Bucket", "Arn"]
-                                            }]
+                                    "Fn::Join": ["", [
+                                        {
+                                            "Ref": "S3Bucket"
+                                        },
+                                        "/*"
+                                    ]]
+                                }]
 							}
 						]
 					}
