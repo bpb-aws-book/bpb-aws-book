@@ -44,7 +44,7 @@ def about(request):
 
 def displaysamplechapter(request, pk):
     try:
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client('s3', region_name='AWSREGION')
         s3_response_object = s3_client.get_object(Bucket="BPBS3Bucket", Key="samplechapter.pdf")
         object_content = s3_response_object['Body'].read()
         response = HttpResponse(object_content, content_type='application/pdf')
