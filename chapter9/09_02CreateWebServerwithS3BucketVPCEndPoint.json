@@ -580,7 +580,16 @@
 			  ],
 			  "VpcId":{
 				"Ref": "VPC"
-			  }
+			  },
+			  "TargetType":"instance",
+			  "Targets":[
+				{
+				  "Id":{
+					"Ref": "WebServer" 
+				  },
+				  "Port":80
+				}
+			  ]
 			}
 		  },
 		"DjangoWebAppLoadBalancerListener":{
