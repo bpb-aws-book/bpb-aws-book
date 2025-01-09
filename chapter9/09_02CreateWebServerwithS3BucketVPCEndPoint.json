@@ -791,7 +791,7 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter4WebServer"
+						"Value": "Chapter9WebServer"
 					},
 					{
 						"Key": "Chapter",
@@ -873,11 +873,11 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"retrieve public ip from instance metadata": {
-								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/local-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > privateipv4file",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							 "update settings file": {
-								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -r tokenfile",
+								"command": "export EC2PRIVATEIPV4=$(cat privateipv4file) && sed -i 's/EC2PRIVATEIPV4/'${EC2PRIVATEIPV4}'/g' settings.py && rm -r tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"create script file to upgrade and install pip and gunicorn": {
@@ -1009,14 +1009,14 @@
 			}
 		}},
 		"Outputs": {
-			"PublicIp": {
+			"LoadBalancerURL": {
 				"Value": {
 					"Fn::GetAtt": [
-						"WebServer",
-						"PublicIp"
+						"DjangoWebAppLoadBalancer",
+						"DNSName"
 					]
 				},
-				"Description": "Web Server's Public IP Address"
+				"Description": "Load Balancer URL"
 			},
 			"VPC": {
 				"Description": "A reference to the created VPC",
