@@ -541,39 +541,142 @@
 				"Comment": "Associates the private subnet with the private route table"
 			}
 		},
-		"EC2SecurityGroup": {
-			"Type": "AWS::EC2::SecurityGroup",
-			"Properties": {
-				"Tags": [
-					{
-						"Key": "Name",
-						"Value": "WebServerSecurityGroup"
-					},
-					{
-						"Key": "Chapter",
-						"Value": "Nine"
-					}
-				],
-				"GroupDescription": "Allow http to client host",
-				"GroupName": "WebServerSecurityGroup",
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"SecurityGroupIngress": [
-					{
-						"IpProtocol": "tcp",
-						"FromPort": 80,
-						"ToPort": 80,
-						"CidrIp": {
-							"Ref": "YourPublicIPAddress"
-						}
-					}
-				]
-			},
-			"Metadata": {
-				"Comment": "Allows inbound HTTP traffic from your public IP address"
+		"S3GatewayEndpoint": {
+            "Type": "AWS::EC2::VPCEndpoint",
+            "Properties": {
+                "VpcEndpointType": "Gateway",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "ServiceName": {
+                    "Fn::Sub": "com.amazonaws.${AWS::Region}.s3"
+                },
+                "RouteTableIds": [
+                    {
+                        "Ref": "FirstPrivateRouteTable"
+                    }
+                ]
+            }
+        },
+		"EC2TargetGroup":{
+			"Type":"AWS::ElasticLoadBalancingV2::TargetGroup",
+			"Properties":{
+			  "HealthCheckIntervalSeconds":15,
+			  "HealthCheckProtocol":"HTTP",
+			  "HealthCheckTimeoutSeconds":10,
+			  "HealthyThresholdCount":3,
+			  "Matcher":{
+				"HttpCode":"200"
+			  },
+			  "UnhealthyThresholdCount":3,
+			  "Name":"EC2TargetGroup",
+			  "Port":80,
+			  "Protocol":"HTTP",
+			  "TargetGroupAttributes":[
+				{
+				  "Key":"deregistration_delay.timeout_seconds",
+				  "Value":"20"
+				}
+			  ],
+			  "VpcId":{
+				"Ref": "VPC"
+			  }
 			}
-		},
+		  },
+		"DjangoWebAppLoadBalancerListener":{
+			"Type":"AWS::ElasticLoadBalancingV2::Listener",
+			"Properties":{
+			  "DefaultActions":[
+				{
+				  "Type":"forward",
+				  "TargetGroupArn":{
+					"Ref":"EC2TargetGroup"
+				  }
+				}
+			  ],
+			  "LoadBalancerArn":{
+				"Ref":"DjangoWebAppLoadBalancer"
+			  },
+			  "Port":80,
+			  "Protocol":"HTTP"
+			}
+		  },
+		"DjangoWebAppLoadBalancer":{
+			"Type":"AWS::ElasticLoadBalancingV2::LoadBalancer",
+			"Properties":{
+			  "Scheme":"internet-facing",
+			  "Name":"DjangoWebAppLoadBalancer",
+			  "Subnets":[
+				{
+					"Ref": "FirstPublicSubnet"
+				  },
+				  {
+					"Ref": "SecondPublicSubnet"
+				  }
+			  ],
+			  "SecurityGroups":[
+				{
+					"Ref": "ELBSecurityGroup"
+				}
+			  ]
+			}
+		  },
+		  "ELBSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "ELBSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Nine"
+                    }] ,
+                "GroupDescription" : "Allow http to client host",
+                "GroupName" : "ELBSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 80,
+                    "ToPort" : 80,
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                        }]
+                    },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address"
+            }
+        },
+        "WebServerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "WebServerSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Nine"
+                    }] ,
+                "GroupDescription" : "Allow http to client host",
+                "GroupName" : "WebServerSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "SourceSecurityGroupId": {
+                            "Ref": "ELBSecurityGroup"
+                        }
+                    }
+                ]
+                    },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address"
+            }
+        },
 		"ApplicationLogStream": {
 		    "Type": "AWS::Logs::LogStream",
 		    "Properties": {
@@ -677,18 +780,18 @@
 				"SecurityGroupIds": [
 					{
 						"Fn::GetAtt": [
-							"EC2SecurityGroup",
+							"WebServerSecurityGroup",
 							"GroupId"
 						]
 					}
 				],
 				"SubnetId": {
-					"Ref": "FirstPublicSubnet"
+					"Ref": "FirstPrivateSubnet"
 				},
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter4WebServer"
+						"Value": "Chapter9WebServer"
 					},
 					{
 						"Key": "Chapter",
@@ -770,11 +873,11 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"retrieve public ip from instance metadata": {
-								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/local-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > privateipv4file",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							 "update settings file": {
-								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -r tokenfile",
+								"command": "export EC2PRIVATEIPV4=$(cat privateipv4file) && sed -i 's/EC2PRIVATEIPV4/'${EC2PRIVATEIPV4}'/g' settings.py && rm -r tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"create script file to upgrade and install pip and gunicorn": {
