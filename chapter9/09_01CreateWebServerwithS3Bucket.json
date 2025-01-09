@@ -1009,15 +1009,6 @@
 			}
 		}},
 		"Outputs": {
-			"PublicIp": {
-				"Value": {
-					"Fn::GetAtt": [
-						"WebServer",
-						"PublicIp"
-					]
-				},
-				"Description": "Web Server's Public IP Address"
-			},
 			"VPC": {
 				"Description": "A reference to the created VPC",
 				"Value": {
