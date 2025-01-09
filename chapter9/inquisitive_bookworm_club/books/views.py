@@ -52,7 +52,8 @@ def displaysamplechapter(request, pk):
         return response
     except Exception as e:
         logmessage(str(e))
-        return HttpResponse("Error in retrieving sample chapter")
+        # return HttpResponse("Error in retrieving sample chapter")
+        return HttpResponse(str(e))
 
 def logmessage(message):
         client = boto3.client('logs', region_name='AWSREGION')
