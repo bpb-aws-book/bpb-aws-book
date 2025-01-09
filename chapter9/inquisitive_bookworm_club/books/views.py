@@ -52,7 +52,6 @@ def displaysamplechapter(request, pk):
         return response
     except Exception as e:
         logmessage(str(e))
-        return HttpResponse(str(e))
 
 def logmessage(message):
         client = boto3.client('logs', region_name='AWSREGION')
