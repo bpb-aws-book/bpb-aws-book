@@ -2,7 +2,7 @@
    "Version": "2012-10-17",
    "Statement": [
      {
-       "Sid": "DenyVPCAccess",
+       "Sid": "DenyVPCEndpointAccess",
        "Principal": "*",
        "Action": "s3:*",
        "Effect": "Deny",
