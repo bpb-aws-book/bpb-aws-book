@@ -1,17 +1,16 @@
 {
    "Version": "2012-10-17",
-   "Id": "Policy1415115909152",
    "Statement": [
      {
-       "Sid": "Access-to-specific-VPCE-only",
+       "Sid": "DenyVPCAccess",
        "Principal": "*",
        "Action": "s3:*",
        "Effect": "Deny",
-       "Resource": ["arn:aws:s3:::awsexamplebucket1",
-                    "arn:aws:s3:::awsexamplebucket1/*"],
+       "Resource": ["arn:aws:s3:::YOURBUCKETNAME",
+                    "arn:aws:s3:::YOURBUCKETNAME/*"],
        "Condition": {
-         "StringNotEquals": {
-           "aws:SourceVpce": "vpce-1a2b3c4d"
+         "StringEquals": {
+           "aws:SourceVpce": "YOURVPCENDPOINT"
          }
        }
      }
