@@ -48,7 +48,7 @@ def displaysamplechapter(request, pk):
         s3_response_object = s3_client.get_object(Bucket="BPBS3Bucket", Key="samplechapter.pdf")
         object_content = s3_response_object['Body'].read()
         response = HttpResponse(object_content, content_type='application/pdf')
-        logmessage("retrieved pdf from S3 bucket")
+        # logmessage("retrieved pdf from S3 bucket")
         return response
     except Exception as e:
         # logmessage(str(e))
