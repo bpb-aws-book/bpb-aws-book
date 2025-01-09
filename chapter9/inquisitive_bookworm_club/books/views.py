@@ -51,7 +51,7 @@ def displaysamplechapter(request, pk):
         logmessage("retrieved pdf from S3 bucket")
         return response
     except Exception as e:
-        logmessage(str(e))
+        # logmessage(str(e))
         # return HttpResponse("Error in retrieving sample chapter")
         return HttpResponse(str(e))
 
