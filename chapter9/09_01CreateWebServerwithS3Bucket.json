@@ -638,7 +638,8 @@
 							{
 								"Effect": "Allow",
 								"Action": ["logs:*"],
-                                "Resource": [{"Fn::Join": ["", ["arn:aws:logs:::", {"Ref": "InquisitiveBookwormClubLogGroup"}]]}]
+                                "Resource": [{"Fn::Join": ["", ["arn:aws:logs:", {"Ref": "AWS::Region"},
+                                ":", {"Ref": "AWS::AccountId"}, ":log-group:", {"Ref": "InquisitiveBookwormClubLogGroup"},":*"]]}]
 							}
 						]
 					}
@@ -798,6 +799,18 @@
                                         "sed -i 's/BPBS3Bucket/'",
                                         {
                                             "Ref": "S3Bucket"
+                                        },
+                                        "'/g' views.py"
+                                    ]]
+                                },
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/books"
+                            },
+							"update views.py to use the current region": {
+                                "command": {
+                                    "Fn::Join": ["", [
+                                        "sed -i 's/AWSREGION/'",
+                                        {
+                                            "Ref": "AWS::Region"
                                         },
                                         "'/g' views.py"
                                     ]]
