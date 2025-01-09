@@ -877,7 +877,7 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							 "update settings file": {
-								"command": "export EC2PRIVATEIPV4=$(cat privateipv4file) && sed -i 's/EC2PRIVATEIPV4/'${EC2PRIVATEIPV4}'/g' settings.py && rm -r tokenfile",
+								"command": "export EC2PRIVATEIPV4=$(cat privateipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PRIVATEIPV4}'/g' settings.py && rm -r tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"create script file to upgrade and install pip and gunicorn": {
