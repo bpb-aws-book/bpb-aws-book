@@ -464,6 +464,12 @@
                     "FromPort" : 80,
                     "ToPort" : 80,
                     "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                        },
+                        {
+                            "IpProtocol" : "tcp",
+                            "FromPort" : 443,
+                            "ToPort" : 443,
+                            "CidrIp" : {"Ref" : "YourPublicIPAddress"}
                         }]
                     },
             "Metadata": {
