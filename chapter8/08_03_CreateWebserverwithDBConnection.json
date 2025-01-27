@@ -143,7 +143,16 @@
 								"Effect": "Allow",
 								"Action": ["cloudformation:ListExports"],
 								"Resource": ["*"]
-							}
+							},
+							{
+								"Action": [
+									"iam:UploadServerCertificate"
+								],
+								"Resource": [
+									"*"
+								],
+								"Effect": "Allow"
+							}					
 						]
 					}
 				}]
@@ -238,7 +247,7 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallSSMAgent","InstallDjangoApplication", "ConfigureGunicorn","InstallNginx"
+							"InstallSSMAgent","InstallDjangoApplication", "ConfigureGunicorn","InstallNginx","ExportCertificatestoIAM"
 						]
 					},
 					"InstallSSMAgent" : {
@@ -394,6 +403,10 @@
 							}
 						},
 						"commands": {
+							"take a backup of our nginx config file": {
+								"command": "sudo cp nginx.conf nginx.conf.original",
+								"cwd": "/etc/nginx"
+							},
 							"install openssl": {
 								"command": "sudo yum install openssl -y",
 								"cwd": "/etc/nginx"
@@ -402,16 +415,20 @@
 								"command": "sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout inquisitivebookwormclub.key -out inquisitivebookwormclub.crt -subj \"/C=US/ST=AnyState/L=Anycity/O=Inquisitive Bookworm Club/OU=ITDepartment/CN=None\"",
 								"cwd": "/etc/nginx"
 							},
-							"take a backup of our nginx config file": {
-								"command": "sudo cp nginx.conf nginx.conf.original",
-								"cwd": "/etc/nginx"
-							},
 							"overwrite the SSL enabled nginx conf file": {
 								"command": "sudo cp /home/ec2-user/inquisitive_bookworm_club/nginx.conf ./nginx.conf",
 								"cwd": "/etc/nginx"
 							},
 							"restart nginx": {
 								"command": "sudo service nginx restart",
+								"cwd": "/etc/nginx"
+							}
+					}
+                    },
+					"ExportCertificatestoIAM" : {
+						"commands": {
+							"export certificates to IAM": {
+								"command": "sudo aws iam upload-server-certificate --server-certificate-name InquisitiveBookwormClubCert --certificate-body file://inquisitivebookwormclub.crt --private-key file://inquisitivebookwormclub.key",
 								"cwd": "/etc/nginx"
 							}
 					}
