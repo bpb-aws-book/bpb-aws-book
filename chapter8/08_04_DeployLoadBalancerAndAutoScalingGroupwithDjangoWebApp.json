@@ -183,9 +183,7 @@
 			  ],
 			  "VpcId":{
 				"Fn::ImportValue": "BPBBookVPCForLearning"
-			  },
-			  "TargetType":"instance",
-			  "Targets":[{"Id":{"Ref":"EC2WebServer"},"Port":80}]
+			  }
 			}
 		  },
 		"DjangoWebAppLoadBalancerListener":{
