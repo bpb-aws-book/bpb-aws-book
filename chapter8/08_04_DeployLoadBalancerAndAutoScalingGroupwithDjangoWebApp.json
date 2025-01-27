@@ -5,7 +5,7 @@
 		"LatestAmiId": {
 			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
 			"Type": "String",
-			"Default": "ami-0f3214ef9fdb0a03e"
+			"Default": "ami-067e5532aa1072d31"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
@@ -70,11 +70,8 @@
 			"ConstraintDescription": "must be a valid EC2 instance type."
 		},
 		"CertificateArn": {
-			"Description": "The arn of the self signed certificate",
-			"Type": "String",
-			"Default": {
-			    "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:server-certificate/InquisitiveBookwormClubCert"
-			}
+			"Description": "The arn of the self signed certificate. Required. Will be in the format arn:aws:iam::YOUR_AWS_Account:server-certificate/InquisitiveBookwormClubCert",
+			"Type": "String"
 		}
 	},
 	"Metadata": {
@@ -370,6 +367,9 @@
 				"TargetGroupARNs":[
 					{
 					  "Ref":"EC2TargetGroup"
+					},
+					{
+					  "Ref":"EC2TargetGroupHttps"
 					}
 				  ],
 				  "Tags":
