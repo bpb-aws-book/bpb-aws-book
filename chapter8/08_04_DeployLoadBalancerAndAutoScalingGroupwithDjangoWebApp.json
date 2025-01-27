@@ -193,6 +193,31 @@
 			  }
 			}
 		  },
+		  "EC2TargetGroupHttps":{
+			"Type":"AWS::ElasticLoadBalancingV2::TargetGroup",
+			"Properties":{
+			  "HealthCheckIntervalSeconds":15,
+			  "HealthCheckProtocol":"HTTPS",
+			  "HealthCheckTimeoutSeconds":10,
+			  "HealthyThresholdCount":3,
+			  "Matcher":{
+				"HttpCode":"200"
+			  },
+			  "UnhealthyThresholdCount":3,
+			  "Name":"EC2TargetGroupHttps",
+			  "Port":443,
+			  "Protocol":"HTTPS",
+			  "TargetGroupAttributes":[
+				{
+				  "Key":"deregistration_delay.timeout_seconds",
+				  "Value":"20"
+				}
+			  ],
+			  "VpcId":{
+				"Fn::ImportValue": "BPBBookVPCForLearning"
+			  }
+			}
+		  },
 		"DjangoWebAppLoadBalancerListener":{
 			"Type":"AWS::ElasticLoadBalancingV2::Listener",
 			"Properties":{
@@ -218,7 +243,7 @@
 					{
 						"Type": "forward",
 						"TargetGroupArn": {
-							"Ref": "EC2TargetGroup"
+							"Ref": "EC2TargetGroupHttps"
 						}
 					}
 				],
