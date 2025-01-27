@@ -68,6 +68,13 @@
 				"cg1.4xlarge"
 			],
 			"ConstraintDescription": "must be a valid EC2 instance type."
+		},
+		"CertificateArn": {
+			"Description": "The arn of the self signed certificate",
+			"Type": "String",
+			"Default": {
+			    "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:server-certificate/InquisitiveBookwormClubCert"
+			}
 		}
 	},
 	"Metadata": {
@@ -204,6 +211,32 @@
 			  "Protocol":"HTTP"
 			}
 		  },
+          "DjangoWebAppLoadBalancerHttpsListener": {
+			"Type": "AWS::ElasticLoadBalancingV2::Listener",
+			"Properties": {
+				"DefaultActions": [
+					{
+						"Type": "forward",
+						"TargetGroupArn": {
+							"Ref": "EC2TargetGroup"
+						}
+					}
+				],
+				"LoadBalancerArn": {
+					"Ref": "DjangoWebAppLoadBalancer"
+				},
+				"Port": 443,
+				"Protocol": "HTTPS",
+				"Certificates": [
+					{
+						"CertificateArn": {
+							"Ref": "CertificateArn"
+						}
+					}
+				],
+				"SslPolicy": "ELBSecurityPolicy-2016-08"
+			}
+		},
 		"DjangoWebAppLoadBalancer":{
 			"Type":"AWS::ElasticLoadBalancingV2::LoadBalancer",
 			"Properties":{
