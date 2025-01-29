@@ -190,11 +190,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter7BastionServer"
+						"Value": "Chapter10DockerBuildServer"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Six"
+						"Value": "Ten"
 					}
 				],
 				"UserData": {
