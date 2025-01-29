@@ -1,5 +1,5 @@
 {
-	"Description": "This CloudFormation Template creates a bastion server in a public subnet of the VPC created by CloudFormation template 07_01. Use for building docker image and for testing database connectivity",
+	"Description": "This CloudFormation Template creates an EC2 instance server in a private subnet of the VPC created by CloudFormation template 10_01. Use for building docker image and for testing database connectivity",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
 		"LatestAmiId": {
