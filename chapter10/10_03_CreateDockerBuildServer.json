@@ -8,7 +8,7 @@
 			"Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 		},
 		"InstanceType": {
-			"Description": "BastionServer EC2 instance type",
+			"Description": "DockerBuildServer EC2 instance type",
 			"Type": "String",
 			"Default": "t2.small",
 			"AllowedValues": [
@@ -97,7 +97,7 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoBastionServer",
+                "RoleName": "SSMIAMRoleForDjangoDockerBuildServer",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
@@ -161,7 +161,7 @@
                 ]
             }
         },
-		"BastionServer": {
+		"DockerBuildServer": {
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
 				"ImageId": {
@@ -174,7 +174,7 @@
                "Ref": "SSMIAMInstanceProfile"
             	},
 				"SecurityGroupIds": [
-					{"Fn::ImportValue": "BPBBookBastionServerSecurityGroup"}
+					{"Fn::ImportValue": "BPBBookDockerBuildServerSecurityGroup"}
 				],
 				"AvailabilityZone": {
 					"Fn::Select": [
@@ -210,7 +210,7 @@
 								{
 									"Ref": "AWS::StackName"
 								},
-								"         --resource BastionServer ",
+								"         --resource DockerBuildServer ",
 								"         --configsets All",
 								"         --region ",
 								{
@@ -223,7 +223,7 @@
 								{
 									"Ref": "AWS::StackName"
 								},
-								"         --resource BastionServer ",
+								"         --resource DockerBuildServer ",
 								"         --region ",
 								{
 									"Ref": "AWS::Region"
