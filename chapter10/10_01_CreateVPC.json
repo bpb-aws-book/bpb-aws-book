@@ -439,24 +439,24 @@
                 "Comment": "Associates the private subnet with the private route table"
             }
         },
-        "BastionServerSecurityGroup" : {
+        "DockerBuildServerSecurityGroup" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "BastionServerSecurityGroup"
+                        "Value": "DockerBuildServerSecurityGroup"
                     },
                     {
                         "Key": "Chapter",
                         "Value": "Ten"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
-                "GroupName" : "BastionServerSecurityGroup",
+                "GroupName" : "DockerBuildServerSecurityGroup",
                 "VpcId" : {"Ref" : "VPC"}
                     },
             "Metadata": {
-                "Comment": "Used by the bastion server"
+                "Comment": "Used by the docker build server"
             }
         },
         "RDSSecurityGroup": {
@@ -482,7 +482,7 @@
                         "FromPort": "5432",
                         "ToPort": "5432",
                         "SourceSecurityGroupId": {
-                            "Ref": "BastionServerSecurityGroup"
+                            "Ref": "DockerBuildServerSecurityGroup"
                         }
                     }
                 ]
@@ -499,13 +499,13 @@
                 "Name": "BPBBookVPCForLearning"
             }
         },
-        "BastionServerSecurityGroup": {
-            "Description": "A reference to the security group to be used by the bastion server",
+        "DockerBuildServerSecurityGroup": {
+            "Description": "A reference to the security group to be used by the docker build server",
             "Value": {
-                "Ref": "BastionServerSecurityGroup"
+                "Ref": "DockerBuildServerSecurityGroup"
             },
             "Export": {
-                "Name": "BPBBookBastionServerSecurityGroup"
+                "Name": "BPBBookDockerBuildServerSecurityGroup"
             }
         },
         "RDSSecurityGroup": {
