@@ -231,7 +231,7 @@
 									"ecr:ListImages"
 								],
 								"Resource": {
-									"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/InquisitiveBookwormClubRepo"
+									"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
 								}
 							},
 							{
