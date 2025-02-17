@@ -287,7 +287,7 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter10DockerBuildServer"
+						"Value": "Chapter11DockerBuildServer"
 					},
 					{
 						"Key": "Chapter",
@@ -357,23 +357,23 @@
                                 "cwd": "/home/ec2-user"
                             },
 							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter10/inquisitive_bookworm_club .",
+                                "command": "cp -r bpb-aws-book/chapter11/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
 							"copy docker build files":{
-                                "command": "cp -r bpb-aws-book/chapter10/Dockerfile .",
+                                "command": "cp -r bpb-aws-book/chapter11/Dockerfile .",
                                 "cwd": "/home/ec2-user"
                             },
 							"copy dependency installation script file":{
-                                "command": "cp -r bpb-aws-book/chapter10/setup.sh .",
+                                "command": "cp -r bpb-aws-book/chapter11/setup.sh .",
                                 "cwd": "/home/ec2-user"
                             },
 							"copy docker entrypoint script file":{
-                                "command": "cp -r bpb-aws-book/chapter10/entrypoint.sh .",
+                                "command": "cp -r bpb-aws-book/chapter11/entrypoint.sh .",
                                 "cwd": "/home/ec2-user"
                             },
 							"copy nginx configuration file":{
-                                "command": "cp -r bpb-aws-book/chapter10/inquisitivebookwormclubsite.conf .",
+                                "command": "cp -r bpb-aws-book/chapter11/inquisitivebookwormclubsite.conf .",
                                 "cwd": "/home/ec2-user"
                             },
 							 "remove the cloned repository": {
