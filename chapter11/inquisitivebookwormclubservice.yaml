@@ -20,7 +20,7 @@ spec:
         image: nginx:stable
         ports:
         - containerPort: 80
-          name: nginx-container-port
+          name: container-port
         
 ---
 apiVersion: v1
@@ -48,4 +48,4 @@ spec:
   - name: inquisitivebookwormclubservice-port
     protocol: TCP
     port: 80
-    targetPort: nginx-container-port
+    targetPort: container-port
