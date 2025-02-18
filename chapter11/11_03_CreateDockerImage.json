@@ -96,6 +96,7 @@
 	"Resources": {
 			"ECRRepository": {
 				"Type": "AWS::ECR::Repository",
+				"DeletionPolicy": "Retain",
 				"Properties": {
 					"RepositoryName": "bpbbook/inquisitivebookwormclubrepo",
 					"ImageScanningConfiguration": {
