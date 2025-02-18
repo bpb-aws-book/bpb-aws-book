@@ -11,7 +11,7 @@ spec:
     image: nginx:stable
     ports:
       - containerPort: 80
-        name: simplenginx-svc
+        name: nginx-svc
 
 ---
 apiVersion: v1
@@ -26,4 +26,4 @@ spec:
   - name: name-of-service-port
     protocol: TCP
     port: 80
-    targetPort: simplenginx-svc
+    targetPort: nginx-svc
