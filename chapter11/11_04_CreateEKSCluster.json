@@ -231,7 +231,7 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoDockerBuildServer",
+                "RoleName": "SSMIAMRoleForEKSWorkerNodes",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
@@ -277,6 +277,29 @@
 								"Effect": "Allow",
 								"Action": ["cloudformation:ListExports"],
 								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:BatchGetImage",
+									"ecr:BatchCheckLayerAvailability",
+									"ecr:CompleteLayerUpload",
+									"ecr:GetDownloadUrlForLayer",
+									"ecr:InitiateLayerUpload",
+									"ecr:PutImage",
+									"ecr:UploadLayerPart",
+									"ecr:ListImages"
+								],
+								"Resource": {
+									"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
+								}
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:GetAuthorizationToken"
+								],
+								"Resource": ["*"]
 							}
 						]
 					}
@@ -296,4 +319,4 @@
             }
         }
 	}
-	}
+}
