@@ -1,3 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inquisitivebookwormclub
+  labels:
+    app: inquisitivebookwormclub
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inquisitivebookwormclub
+  template:
+    metadata:
+      labels:
+        app: inquisitivebookwormclub
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,11 +59,19 @@ kind: Ingress
 metadata:
   name: inquisitivebookwormclub-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/load-balancer-name: inquisitive-bookworm-alb
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/group.name: inquisitive-bookworm
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
 spec:
+  ingressClassName: alb
   rules:
     - http:
         paths:
