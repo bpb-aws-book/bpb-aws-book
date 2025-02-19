@@ -9,8 +9,8 @@
 		},
 		"KubernetesVersion": {
 			"Type": "String",
-			"Default": "1.28",
-			"Description": "Kubernetes version for the EKS Cluster"
+			"Default": "1.31",
+			"Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
 		},
 		"LatestAmiId": {
 			"Description": "The latest AMI id. Default is Amazon Linux 2023",
@@ -194,8 +194,66 @@
 				"ManagedPolicyArns": [
 					"arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
 					"arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-					"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-				]
+					"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+					"arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+				],
+				"Policies": [{
+					"PolicyName": "AdditionalPermissionsPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [
+							{
+								"Effect": "Allow",
+								"Action": ["secretsmanager:GetResourcePolicy",
+											"secretsmanager:GetSecretValue",
+											"secretsmanager:DescribeSecret",
+											"secretsmanager:ListSecretVersionIds"],
+								"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+							},
+							{
+								"Effect": "Allow",
+								"Action": ["secretsmanager:ListSecrets"],
+								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"kms:Decrypt"
+								],
+								"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
+							},
+							{
+								"Effect": "Allow",
+								"Action": ["cloudformation:ListExports"],
+								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:BatchGetImage",
+									"ecr:BatchCheckLayerAvailability",
+									"ecr:CompleteLayerUpload",
+									"ecr:GetDownloadUrlForLayer",
+									"ecr:InitiateLayerUpload",
+									"ecr:PutImage",
+									"ecr:UploadLayerPart",
+									"ecr:ListImages"
+								],
+								"Resource": {
+									"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
+								}
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:GetAuthorizationToken"
+								],
+								"Resource": ["*"]
+							}
+						]
+					}
+				}]
+
 			}
 		},
 		"NodeGroup": {
@@ -317,6 +375,148 @@
                     }
                 ]
             }
-        }
+        },
+		"AWSLoadBalancerControllerRole": {
+      	"Type": "AWS::IAM::Role",
+      	"Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": {
+					"Fn::Sub": "arn:aws:iam::${AWS::AccountId}:oidc-provider/${!Select [1, !Split ['https://', ${EKSCluster.OpenIdConnectIssuerUrl}]]}"
+                }
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "${EKSCluster.OpenIdConnectIssuerUrl#slice(8)}:aud": "sts.amazonaws.com",
+				  "${EKSCluster.OpenIdConnectIssuerUrl#slice(8)}:sub": "system:serviceaccount:kube-system:aws-load-balancer-controller"}}
+            }]}
+			}
+		},
+		"AWSLoadBalancerControllerPolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+			  "PolicyName": "AWSLoadBalancerControllerPolicy",
+			  "PolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "iam:CreateServiceLinkedRole",
+					  "ec2:DescribeAccountAttributes",
+					  "ec2:DescribeAddresses",
+					  "ec2:DescribeAvailabilityZones",
+					  "ec2:DescribeInternetGateways",
+					  "ec2:DescribeVpcs",
+					  "ec2:DescribeSubnets",
+					  "ec2:DescribeSecurityGroups",
+					  "ec2:DescribeInstances",
+					  "ec2:DescribeNetworkInterfaces",
+					  "ec2:DescribeTags",
+					  "ec2:GetCoipPoolUsage",
+					  "ec2:DescribeCoipPools",
+					  "elasticloadbalancing:DescribeLoadBalancers",
+					  "elasticloadbalancing:DescribeLoadBalancerAttributes",
+					  "elasticloadbalancing:DescribeListeners",
+					  "elasticloadbalancing:DescribeListenerCertificates",
+					  "elasticloadbalancing:DescribeSSLPolicies",
+					  "elasticloadbalancing:DescribeRules",
+					  "elasticloadbalancing:DescribeTargetGroups",
+					  "elasticloadbalancing:DescribeTargetGroupAttributes",
+					  "elasticloadbalancing:DescribeTargetHealth",
+					  "elasticloadbalancing:DescribeTags"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "cognito-idp:DescribeUserPoolClient",
+					  "acm:ListCertificates",
+					  "acm:DescribeCertificate",
+					  "iam:ListServerCertificates",
+					  "iam:GetServerCertificate",
+					  "waf-regional:GetWebACL",
+					  "waf-regional:GetWebACLForResource",
+					  "waf-regional:AssociateWebACL",
+					  "waf-regional:DisassociateWebACL",
+					  "wafv2:GetWebACL",
+					  "wafv2:GetWebACLForResource",
+					  "wafv2:AssociateWebACL",
+					  "wafv2:DisassociateWebACL",
+					  "shield:GetSubscriptionState",
+					  "shield:DescribeProtection",
+					  "shield:CreateProtection",
+					  "shield:DeleteProtection"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "ec2:AuthorizeSecurityGroupIngress",
+					  "ec2:RevokeSecurityGroupIngress"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "elasticloadbalancing:CreateListener",
+					  "elasticloadbalancing:DeleteListener",
+					  "elasticloadbalancing:CreateRule",
+					  "elasticloadbalancing:DeleteRule",
+					  "elasticloadbalancing:AddTags",
+					  "elasticloadbalancing:RemoveTags"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "elasticloadbalancing:ModifyLoadBalancerAttributes",
+					  "elasticloadbalancing:SetIpAddressType",
+					  "elasticloadbalancing:SetSecurityGroups",
+					  "elasticloadbalancing:SetSubnets",
+					  "elasticloadbalancing:DeleteLoadBalancer",
+					  "elasticloadbalancing:ModifyTargetGroup",
+					  "elasticloadbalancing:ModifyTargetGroupAttributes",
+					  "elasticloadbalancing:DeleteTargetGroup"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "elasticloadbalancing:RegisterTargets",
+					  "elasticloadbalancing:DeregisterTargets"
+					],
+					"Resource": "*"
+				  },
+				  {
+					"Effect": "Allow",
+					"Action": [
+					  "elasticloadbalancing:SetWebAcl",
+					  "elasticloadbalancing:ModifyListener",
+					  "elasticloadbalancing:AddListenerCertificates",
+					  "elasticloadbalancing:RemoveListenerCertificates",
+					  "elasticloadbalancing:ModifyRule"
+					],
+					"Resource": "*"
+				  }
+				]
+			  },
+			  "Roles": [
+				{
+				  "Ref": "AWSLoadBalancerControllerRole"
+				}
+			  ]
+			}
+		  }
 	}
 }
