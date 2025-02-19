@@ -1,7 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bpb-aws-book
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: inquisitivebookwormclub
+  namespace: bpb-aws-book
   labels:
     app: inquisitivebookwormclub
 spec:
@@ -44,6 +51,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: inquisitivebookwormclub-service
+  namespace: bpb-aws-book
 spec:
   type: NodePort 
   ports:
@@ -58,6 +66,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: inquisitivebookwormclub-ingress
+  namespace: bpb-aws-book
   annotations:
     alb.ingress.kubernetes.io/load-balancer-name: inquisitive-bookworm-alb
     alb.ingress.kubernetes.io/target-type: ip
