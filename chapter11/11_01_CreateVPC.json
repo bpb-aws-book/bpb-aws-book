@@ -120,6 +120,10 @@
                     {
                         "Key": "Chapter",
                         "Value": "Eleven"
+                    },
+                    {
+                        "Key": "kubernetes.io/role/elb",
+                        "Value": "1"
                     }
                 ]
             }
@@ -150,6 +154,10 @@
                     {
                         "Key": "Chapter",
                         "Value": "Eleven"
+                    },
+                    {
+                        "Key": "kubernetes.io/role/elb",
+                        "Value": "1"
                     }
                 ]
             }
