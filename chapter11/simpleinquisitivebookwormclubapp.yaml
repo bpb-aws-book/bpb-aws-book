@@ -6,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: proxy
 spec:
+  serviceAccountName: default
   containers:
   - name: inquisitivebookwormclub
     image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
