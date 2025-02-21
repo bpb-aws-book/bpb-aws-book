@@ -249,6 +249,13 @@
 									"ecr:GetAuthorizationToken"
 								],
 								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"eks-auth:AssumeRoleForPodIdentity"
+								],
+								"Resource": "*"
 							}
 						]
 					}
@@ -286,26 +293,22 @@
 				]
 			}
 		},
-		"SSMIAMRole": {
+		"EKSPodRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForEKSWorkerNodes",
+                "RoleName": "EKSPodRole",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
                         {
                             "Effect": "Allow",
                             "Principal": {
-                                "Service": "ec2.amazonaws.com"
+                                "Service": "pods.eks.amazonaws.com"
                             },
-                            "Action": "sts:AssumeRole"
+                            "Action": ["sts:AssumeRole", "sts:TagSession"]
                         }
                     ]
                 },
-                "Path": "/",
-                "ManagedPolicyArns": [
-                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
-                ],
 				"Policies": [{
 					"PolicyName": "AdditionalPermissionsPolicy",
 					"PolicyDocument": {
@@ -363,17 +366,6 @@
 					}
 				}]
 
-            }
-        },
-		"SSMIAMInstanceProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "Properties": {
-                "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "SSMIAMRole"
-                    }
-                ]
             }
         }
 	},
