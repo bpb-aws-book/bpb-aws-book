@@ -385,16 +385,8 @@
 								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
-							"retrieve public ip from instance metadata": {
-								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
-							},
 							"retrieve current AWS region from instance metadata": {
 								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/placement/region -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > awsregion",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
-							},
-							 "update settings file allowed host with public ip of the web server": {
-								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update settings file AWS region with the current AWS region": {
