@@ -16,8 +16,8 @@ spec:
         app: inquisitivebookwormclub
     spec:
       containers:
-        - name: nginx
-          image: nginx:stable
+        - name: inquisitivebookwormclubcontainer
+          image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
           ports:
             - containerPort: 80    
           resources:
