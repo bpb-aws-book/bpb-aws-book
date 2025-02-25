@@ -1,0 +1,360 @@
+{
+  "Description": "This CloudFormation Template creates an EC2 instance server in a private subnet of the VPC created by CloudFormation template 10_01. Use for building docker image and for testing database connectivity",
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "ClusterName": {
+      "Type": "String",
+      "Description": "Name of the EKS cluster",
+      "Default": "bpb-eks-cluster"
+    },
+    "KubernetesVersion": {
+      "Type": "String",
+      "Default": "1.31",
+      "Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
+    },
+    "LatestAmiId": {
+      "Description": "The latest AMI id. Default is Amazon Linux 2023",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+    },
+    "InstanceType": {
+      "Description": "DockerBuildServer EC2 instance type",
+      "Type": "String",
+      "Default": "t2.small",
+      "AllowedValues": [
+        "t1.micro",
+        "t2.nano",
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "m1.small",
+        "m1.medium",
+        "m1.large",
+        "m1.xlarge",
+        "m2.xlarge",
+        "m2.2xlarge",
+        "m2.4xlarge",
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "m4.large",
+        "m4.xlarge",
+        "m4.2xlarge",
+        "m4.4xlarge",
+        "m4.10xlarge",
+        "c1.medium",
+        "c1.xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge",
+        "c3.4xlarge",
+        "c3.8xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c4.4xlarge",
+        "c4.8xlarge",
+        "g2.2xlarge",
+        "g2.8xlarge",
+        "r3.large",
+        "r3.xlarge",
+        "r3.2xlarge",
+        "r3.4xlarge",
+        "r3.8xlarge",
+        "i2.xlarge",
+        "i2.2xlarge",
+        "i2.4xlarge",
+        "i2.8xlarge",
+        "d2.xlarge",
+        "d2.2xlarge",
+        "d2.4xlarge",
+        "d2.8xlarge",
+        "hi1.4xlarge",
+        "hs1.8xlarge",
+        "cr1.8xlarge",
+        "cc2.8xlarge",
+        "cg1.4xlarge"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    }
+  },
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Your IP and EC2 Configuration"
+          },
+          "Parameters": [
+            "KubernetesVersion",
+            "ClusterName",
+            "LatestAmiId",
+            "InstanceType"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "KubernetesVersion": {
+          "default": "Kubernetes Version"
+        },
+        "LatestAmiId": {
+          "default": "Amazon Linux 2 AMI ID"
+        },
+        "InstanceType": {
+          "default": "Instance Type"
+        },
+        "ClusterName": {
+          "default": "EKS Cluster Name"
+        }
+      }
+    }
+  },
+  "Resources": {
+    "EKSClusterRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "eks.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+        ]
+      }
+    },
+    "EKSCluster": {
+      "Type": "AWS::EKS::Cluster",
+      "Properties": {
+        "Name": {
+          "Ref": "ClusterName"
+        },
+        "Version": {
+          "Ref": "KubernetesVersion"
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "EKSClusterRole",
+            "Arn"
+          ]
+        },
+        "ResourcesVpcConfig": {
+          "SubnetIds": [
+            {
+              "Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+            },
+            {
+              "Fn::ImportValue": "BPBBookVPCSecondPublicSubnet"
+            }
+          ],
+          "EndpointPublicAccess": true,
+          "EndpointPrivateAccess": true
+        },
+        "Logging": {
+          "ClusterLogging": {
+            "EnabledTypes": [
+              {
+                "Type": "api"
+              },
+              {
+                "Type": "audit"
+              },
+              {
+                "Type": "authenticator"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "NodeInstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+          "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+          "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+          "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "AdditionalPermissionsPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "secretsmanager:ListSecrets"
+                  ],
+                  "Resource": [
+                    "*"
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudformation:ListExports"
+                  ],
+                  "Resource": [
+                    "*"
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "eks-auth:AssumeRoleForPodIdentity"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "NodeGroup": {
+      "Type": "AWS::EKS::Nodegroup",
+      "Properties": {
+        "ClusterName": {
+          "Ref": "EKSCluster"
+        },
+        "NodeRole": {
+          "Fn::GetAtt": [
+            "NodeInstanceRole",
+            "Arn"
+          ]
+        },
+        "ScalingConfig": {
+          "MinSize": 1,
+          "DesiredSize": 2,
+          "MaxSize": 5
+        },
+        "Labels": {
+          "cluster-autoscaler": "enabled",
+          "nodegroup": "autoscaled"
+        },
+        "Tags": {
+          "k8s.io/cluster-autoscaler/enabled": "true",
+          "k8s.io/cluster-autoscaler/bpb-eks-cluster": "owned"
+        },
+        "Subnets": [
+          {
+            "Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+          },
+          {
+            "Fn::ImportValue": "BPBBookVPCSecondPublicSubnet"
+          }
+        ],
+        "InstanceTypes": [
+          "t3.medium"
+        ]
+      }
+    },
+    "EKSPodRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "EKSPodRole",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "pods.eks.amazonaws.com"
+              },
+              "Action": [
+                "sts:AssumeRole",
+                "sts:TagSession"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AdditionalPermissionsPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudformation:ListExports"
+                  ],
+                  "Resource": [
+                    "*"
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:GetAuthorizationToken"
+                  ],
+                  "Resource": [
+                    "*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "OIDCProviderID": {
+      "Description": "EKS Cluster OIDC Provider ID",
+      "Value": {
+        "Fn::Select": [
+          4,
+          {
+            "Fn::Split": [
+              "/",
+              {
+                "Fn::GetAtt": [
+                  "EKSCluster",
+                  "OpenIdConnectIssuerUrl"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "OIDCIssuerURL": {
+      "Description": "EKS Cluster OIDC Issuer URL",
+      "Value": {
+        "Fn::GetAtt": [
+          "EKSCluster",
+          "OpenIdConnectIssuerUrl"
+        ]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-OpenIdConnectIssuerUrl"
+        }
+      }
+    }
+  }
+}
