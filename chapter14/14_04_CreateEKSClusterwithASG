@@ -173,7 +173,7 @@
         },
         "ScalingConfig": {
           "MinSize": 1,
-          "DesiredSize": 2,
+          "DesiredSize": 1,
           "MaxSize": 5
         },
         "Labels": {
