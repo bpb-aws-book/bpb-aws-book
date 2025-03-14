@@ -296,7 +296,7 @@
 		"EKSPodRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "EKSPodRole",
+                "RoleName": "Chapter11-EKSPodRole",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
