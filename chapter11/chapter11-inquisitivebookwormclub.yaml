@@ -13,7 +13,7 @@ spec:
       labels:
         app: inquisitivebookwormclub-app
     spec:
-      serviceAccountName: bpb-aws-book
+      serviceAccountName: bpb-aws-book-sa
       containers:
       - name: inquisitivebookwormclubcontainer
         image: <Your AWS Account>.dkr.ecr.<AWS REGION>.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
