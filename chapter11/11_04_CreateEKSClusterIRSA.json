@@ -176,6 +176,37 @@
 				}
 			}
 		},
+		"OIDCIAMPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"ManagedPolicyName": "OIDCIAMPolicy",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": ["secretsmanager:GetResourcePolicy",
+										"secretsmanager:GetSecretValue",
+										"secretsmanager:DescribeSecret",
+										"secretsmanager:ListSecretVersionIds"],
+							"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+						},
+						{
+							"Effect": "Allow",
+							"Action": ["secretsmanager:ListSecrets"],
+							"Resource": ["*"]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"kms:Decrypt"
+							],
+							"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
+						}
+					]
+				}
+			}
+		},
 		"NodeInstanceRole": {
 			"Type": "AWS::IAM::Role",
 			"Properties": {
@@ -202,26 +233,6 @@
 					"PolicyDocument": {
 						"Version": "2012-10-17",
 						"Statement": [
-							{
-								"Effect": "Allow",
-								"Action": ["secretsmanager:GetResourcePolicy",
-											"secretsmanager:GetSecretValue",
-											"secretsmanager:DescribeSecret",
-											"secretsmanager:ListSecretVersionIds"],
-								"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
-							},
-							{
-								"Effect": "Allow",
-								"Action": ["secretsmanager:ListSecrets"],
-								"Resource": ["*"]
-							},
-							{
-								"Effect": "Allow",
-								"Action": [
-									"kms:Decrypt"
-								],
-								"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
-							},
 							{
 								"Effect": "Allow",
 								"Action": ["cloudformation:ListExports"],
