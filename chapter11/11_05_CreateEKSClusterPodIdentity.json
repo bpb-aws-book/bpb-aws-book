@@ -325,29 +325,5 @@
 
             }
         }
-	},
-	"Outputs": {
-	    "OIDCProviderID": {
-	        "Description": "EKS Cluster OIDC Provider ID",
-	        "Value": {
-	            "Fn::Select": [
-	                4,
-	                {
-	                    "Fn::Split": [
-	                        "/",
-	                        { "Fn::GetAtt": ["EKSCluster", "OpenIdConnectIssuerUrl"] }
-	                    ]
-	                }
-	            ]
-	        }
-	    },
-	    "OIDCIssuerURL": {
-	        "Description": "EKS Cluster OIDC Issuer URL",
-	        "Value": { "Fn::GetAtt": ["EKSCluster", "OpenIdConnectIssuerUrl"] },
-			"Export": {
-                "Name": { "Fn::Sub": "${AWS::StackName}-OpenIdConnectIssuerUrl" }
-            }
-	    }
 	}
-	
 }
