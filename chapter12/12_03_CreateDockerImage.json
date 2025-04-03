@@ -261,6 +261,7 @@
         },
 		"DockerBuildServer": {
 			"Type": "AWS::EC2::Instance",
+			"DependsOn": "ECRRepository",
 			"Properties": {
 				"ImageId": {
 					"Ref": "LatestAmiId"
@@ -432,6 +433,21 @@
 							"install docker and add user to the docker group": {
 								"command": "sudo yum update -y && sudo yum install -y docker && sudo service docker start && sudo usermod -a -G docker ec2-user",
 								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							}
+						}
+					},
+					"CreateImage" : {
+						"commands": {
+							"Build and Tag Image": {
+								"command": "docker build -t inquisitivebookwormclubsiteimage . && docker tag inquisitivebookwormclubsiteimage:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/bpbbook/inquisitivebookwormclubrepo",
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							}
+						}
+					},
+					"DockerLoginAndPush": {
+						"commands": {
+							"Login and Push to ECR": {
+								"command": "aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com && docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest"
 							}
 						}
 					}
