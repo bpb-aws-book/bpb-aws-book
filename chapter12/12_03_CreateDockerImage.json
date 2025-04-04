@@ -337,7 +337,7 @@
 				"AWS::CloudFormation::Init": {
 					"configSets": {
 						"All": [
-							"InstallSSMAgent", "InstallAdditionalPackages", "PopulateData", "InstallDocker"
+							"InstallSSMAgent", "InstallAdditionalPackages", "PopulateData", "InstallDocker", "CreateImage", "DockerLoginAndPush"
 						]
 					},
 					"InstallSSMAgent" : {
