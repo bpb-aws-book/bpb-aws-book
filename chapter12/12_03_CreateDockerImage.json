@@ -439,15 +439,38 @@
 					"CreateImage" : {
 						"commands": {
 							"Build and Tag Image": {
-								"command": "docker build -t inquisitivebookwormclubsiteimage . && docker tag inquisitivebookwormclubsiteimage:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/bpbbook/inquisitivebookwormclubrepo",
-								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+								"command": {
+								    "Fn::Join": ["", [
+								        "docker build -t inquisitivebookwormclubsiteimage . && docker tag inquisitivebookwormclubsiteimage:latest ",
+								        { "Ref": "AWS::AccountId" },
+								        ".dkr.ecr.",
+								        { "Ref": "AWS::Region" },
+								        ".amazonaws.com/bpbbook/inquisitivebookwormclubrepo"
+								    ]]
+								},
+								"cwd": "/home/ec2-user"
 							}
 						}
 					},
 					"DockerLoginAndPush": {
 						"commands": {
 							"Login and Push to ECR": {
-								"command": "aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com && docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest"
+								"command": {
+									"Fn::Join": ["", [
+										"aws ecr get-login-password --region ",
+										{"Ref": "AWS::Region"},
+										" | docker login --username AWS --password-stdin ",
+										{"Ref": "AWS::AccountId"},
+										".dkr.ecr.",
+										{"Ref": "AWS::Region"},
+										".amazonaws.com && docker push ",
+										{"Ref": "AWS::AccountId"},
+										".dkr.ecr.",
+										{"Ref": "AWS::Region"},
+										".amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest"
+									]]
+								},
+								"cwd": "/home/ec2-user"
 							}
 						}
 					}
