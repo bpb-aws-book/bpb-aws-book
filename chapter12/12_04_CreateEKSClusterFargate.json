@@ -283,9 +283,11 @@
 		        "Selectors": [
 		            {
 		                "Namespace": "kube-system",
-		                "Labels": {
-		                    "k8s-app": "kube-dns"
-		                }
+		                "Labels": [
+							{
+								"k8s-app": "kube-dns"
+							}
+						]
 		            }
 		        ],
 		        "Subnets": [
