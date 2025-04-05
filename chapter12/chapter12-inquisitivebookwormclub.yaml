@@ -14,25 +14,15 @@ spec:
         app: inquisitivebookwormclub-app
     spec:
       serviceAccountName: bpb-aws-book-sa
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        nameservers:
+          - 169.254.20.10  # VPC DNS
+        searches:
+          - us-east-1.compute.internal
       containers:
       - name: inquisitivebookwormclubcontainer
         image: <Your AWS Account>.dkr.ecr.<AWS REGION>.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
         ports:
         - containerPort: 80
           name: containerport
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: inquisitivebookwormclub-app
-  namespace: bpb-aws-book
-spec:
-  type: NodePort
-  selector:
-    app: inquisitivebookwormclub-app
-  ports:
-  - name: inquisitivebookwormclub-service-port
-    protocol: TCP
-    port: 80
-    targetPort: containerport
