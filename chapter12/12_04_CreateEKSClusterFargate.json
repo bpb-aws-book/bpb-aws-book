@@ -267,7 +267,13 @@
                                 ]]
                             }
                         },
-                        "Action": "sts:AssumeRoleWithWebIdentity"                     
+                        "Action": "sts:AssumeRoleWithWebIdentity",
+						"Condition": {
+								"StringEquals": {
+									"Fn::Sub": "oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSCluster.OpenIdConnectIssuerUrl#https://oidc.eks.*.amazonaws.com/id/}:sub": "system:serviceaccount:bpb-aws-book:bpb-aws-book-sa"
+								}
+							}
+                     
                     }]
                 },
                 "ManagedPolicyArns": [
@@ -285,7 +291,8 @@
 		                "Namespace": "kube-system",
 		                "Labels": [
 							{
-								"k8s-app": "kube-dns"
+								"Key":"k8s-app",
+								"Value": "kube-dns"
 							}
 						]
 		            }
