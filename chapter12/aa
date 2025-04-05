@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bpb-aws-book-sa
+  namespace: bpb-aws-book
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/<Your OIDC Role Name>
