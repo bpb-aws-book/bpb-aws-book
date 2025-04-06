@@ -28,7 +28,7 @@ metadata:
   name: inquisitivebookwormclub-app
   namespace: bpb-aws-book
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: inquisitivebookwormclub-app
   ports:
