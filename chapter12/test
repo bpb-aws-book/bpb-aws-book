@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inquisitivebookwormclub-deployment
+  namespace: bpb-aws-book
+  labels:
+    app: inquisitivebookwormclub-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inquisitivebookwormclub-app
+  template:
+    metadata:
+      labels:
+        app: inquisitivebookwormclub-app
+    spec:
+      serviceAccountName: bpb-aws-book-sa
+      containers:
+      - name: inquisitivebookwormclub-container
+        image: 111111111111.dkr.ecr.region.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
+        ports:
+        - containerPort: 80
