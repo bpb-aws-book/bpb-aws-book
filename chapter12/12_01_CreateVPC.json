@@ -467,48 +467,6 @@
                 "Comment": "Used by the docker build server"
             }
         },
-        "EKSClusterSecurityGroup": {
-            "Type": "AWS::EC2::SecurityGroup",
-            "Properties": {
-                "GroupDescription": "Security group for EKS cluster",
-                "VpcId": {
-                    "Ref": "VPC"
-                },
-                "SecurityGroupEgress": [
-                    {
-                        "IpProtocol": "-1",
-                        "FromPort": -1,
-                        "ToPort": -1,
-                        "CidrIp": "0.0.0.0/0",
-                        "Description": "Allow all outbound traffic"
-                    }
-                ],
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": {
-                            "Fn::Sub": "bpb-eks-cluster-sg"
-                        }
-                    }
-                ]
-            }
-        },
-
-        "EKSClusterSecurityGroupSelfIngress": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Properties": {
-                "GroupId": {
-                    "Ref": "EKSClusterSecurityGroup"
-                },
-                "IpProtocol": "-1",
-                "FromPort": -1,
-                "ToPort": -1,
-                "SourceSecurityGroupId": {
-                    "Ref": "EKSClusterSecurityGroup"
-                },
-                "Description": "Allow all traffic from self"
-            }
-        },
         "RDSSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties" : {
@@ -533,14 +491,6 @@
                         "ToPort": "5432",
                         "SourceSecurityGroupId": {
                             "Ref": "DockerBuildServerSecurityGroup"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "5432",
-                        "ToPort": "5432",
-                        "SourceSecurityGroupId": {
-                            "Ref": "EKSClusterSecurityGroup"
                         }
                     }
                 ]
@@ -573,15 +523,6 @@
             },
             "Export": {
                 "Name": "BPBBookRDSSecurityGroup"
-            }
-        },
-        "EKSClusterSecurityGroup": {
-            "Description": "A reference to the EKS cluster security group",
-            "Value": {
-                "Ref": "EKSClusterSecurityGroup"
-            },
-            "Export": {
-                "Name": "BPBBookEKSClusterSecurityGroup"
             }
         },
         "FirstPublicSubnet": {
