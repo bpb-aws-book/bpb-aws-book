@@ -150,25 +150,6 @@
                 ]
             }
 		},
-		"FargateProfile": {
-            "Type": "AWS::EKS::FargateProfile",
-            "Properties": {
-                "ClusterName": {"Ref": "EKSCluster"},
-                "PodExecutionRoleArn": {"Fn::GetAtt": ["FargatePodExecutionRole", "Arn"]},
-                "Selectors": [
-                    {
-                        "Namespace": "default"
-                    },
-                    {
-                        "Namespace": "kube-system"
-                    }
-                ],
-                "Subnets": [
-					{"Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet"},
-					{"Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet"}
-                ]
-            }
-        },
 		"EKSCluster": {
 			"Type": "AWS::EKS::Cluster",
 			"Properties": {
@@ -192,6 +173,11 @@
 					    {
 					        "Fn::ImportValue": "BPBBookVPCSecondPublicSubnet"
 					    }
+					],
+					"SecurityGroupIds": [
+						{
+							"Fn::ImportValue": "BPBBookEKSClusterSecurityGroup"
+						}
 					],
 					"EndpointPublicAccess": true,
 					"EndpointPrivateAccess": true
@@ -267,13 +253,7 @@
                                 ]]
                             }
                         },
-                        "Action": "sts:AssumeRoleWithWebIdentity",
-						"Condition": {
-								"StringEquals": {
-									"Fn::Sub": "oidc.eks.${AWS::Region}.amazonaws.com/id/${EKSCluster.OpenIdConnectIssuerUrl#https://oidc.eks.*.amazonaws.com/id/}:sub": "system:serviceaccount:bpb-aws-book:bpb-aws-book-sa"
-								}
-							}
-                     
+                        "Action": "sts:AssumeRoleWithWebIdentity"
                     }]
                 },
                 "ManagedPolicyArns": [
@@ -302,7 +282,50 @@
 		            {"Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet"}
 		        ]
 		    }
-		}
+		},
+		"FargateProfile": {
+            "Type": "AWS::EKS::FargateProfile",
+			"DependsOn": "CoreDNSFargateProfile",
+            "Properties": {
+                "ClusterName": {"Ref": "EKSCluster"},
+                "PodExecutionRoleArn": {"Fn::GetAtt": ["FargatePodExecutionRole", "Arn"]},
+                "Selectors": [
+                    {
+                        "Namespace": "default"
+                    },
+                    {
+                        "Namespace": "kube-system"
+                    },
+					{
+                        "Namespace": "bpb-aws-book"
+                    }
+                ],
+                "Subnets": [
+					{"Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet"},
+					{"Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet"}
+                ]
+            }
+        },
+		"EKSClusterOIDCProvider": {
+            "Type": "AWS::IAM::OIDCProvider",
+			"DependsOn" : "EKSCluster",
+            "Properties": {
+                "Url": {
+                    "Fn::GetAtt": ["EKSCluster", "OpenIdConnectIssuerUrl"]
+                },
+                "ClientIdList": [
+                    "sts.amazonaws.com"
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${ClusterName}-oidc-provider"
+                        }
+                    }
+                ]
+            }
+        }
 	},
 	"Outputs": {
 	    "OIDCProviderID": {
