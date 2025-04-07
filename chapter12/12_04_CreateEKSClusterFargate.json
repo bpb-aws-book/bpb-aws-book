@@ -174,11 +174,6 @@
 					        "Fn::ImportValue": "BPBBookVPCSecondPublicSubnet"
 					    }
 					],
-					"SecurityGroupIds": [
-						{
-							"Fn::ImportValue": "BPBBookEKSClusterSecurityGroup"
-						}
-					],
 					"EndpointPublicAccess": true,
 					"EndpointPrivateAccess": true
 				},
