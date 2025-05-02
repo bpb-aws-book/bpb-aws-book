@@ -15,6 +15,7 @@ spec:
       labels:
         app: inquisitivebookwormclub
     spec:
+      serviceAccountName: bpb-aws-book-sa
       containers:
         - name: inquisitivebookwormclubcontainer
           image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
