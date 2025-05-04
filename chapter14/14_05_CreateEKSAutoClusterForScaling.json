@@ -1,0 +1,315 @@
+{
+	"Description": "This CloudFormation Template creates an EKS Cluster with a managed nodegroup and an auto scaling group. ",
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Parameters": {
+	  "ClusterName": {
+		"Type": "String",
+		"Description": "Name of the EKS cluster",
+		"Default": "bpb-eks-cluster"
+	  },
+	  "KubernetesVersion": {
+		"Type": "String",
+		"Default": "1.31",
+		"Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
+	  },
+	  "PodIdentityVersion": {
+		"Type": "String",
+		"Default": "v1.2.0-eksbuild.1",
+		"Description": "Version of the EKS Pod Identity Agent add-on"
+	}
+	},
+	"Metadata": {
+	  "AWS::CloudFormation::Interface": {
+		"ParameterGroups": [
+		  {
+			"Label": {
+			  "default": "Your IP and EC2 Configuration"
+			},
+			"Parameters": [
+			  "KubernetesVersion",
+			  "ClusterName"
+			]
+		  }
+		],
+		"ParameterLabels": {
+		  "KubernetesVersion": {
+			"default": "Kubernetes Version"
+		  },
+		  "PodIdentityVersion": {
+			"default": "Pod Identity Version"
+		  },
+		  "LatestAmiId": {
+			"default": "Amazon Linux 2 AMI ID"
+		  }
+		}
+	  }
+	},
+	"Resources": {
+	  "EKSClusterRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+		  "AssumeRolePolicyDocument": {
+			"Version": "2012-10-17",
+			"Statement": [
+			  {
+				"Effect": "Allow",
+				"Principal": {
+				  "Service": "eks.amazonaws.com"
+				},
+				"Action": "sts:AssumeRole"
+			  }
+			]
+		  },
+		  "ManagedPolicyArns": [
+			"arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+		  ]
+		}
+	  },
+	  "EKSCluster": {
+		"Type": "AWS::EKS::Cluster",
+		"Properties": {
+			"Name": {
+			"Ref": "ClusterName"
+			},
+			"Version": {
+			"Ref": "KubernetesVersion"
+			},
+			"RoleArn": {
+			"Fn::GetAtt": [
+				"EKSClusterRole",
+				"Arn"
+			]
+			},
+			"ResourcesVpcConfig": {
+			"SubnetIds": [
+				{
+				"Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+				},
+				{
+				"Fn::ImportValue": "BPBBookVPCSecondPublicSubnet"
+				}
+			],
+			"EndpointPublicAccess": true,
+			"EndpointPrivateAccess": true
+			},
+			"Logging": {
+			"ClusterLogging": {
+				"EnabledTypes": [
+				{
+					"Type": "api"
+				},
+				{
+					"Type": "audit"
+				},
+				{
+					"Type": "authenticator"
+				}
+				]
+			}
+			}
+		}
+		},
+	  "NodeInstanceRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+			"AssumeRolePolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "ec2.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}
+				]
+			},
+			"ManagedPolicyArns": [
+				"arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+				"arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+				"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+				"arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+			],
+			"Policies": [{
+				"PolicyName": "AdditionalPermissionsPolicy",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": ["cloudformation:ListExports"],
+							"Resource": ["*"]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"ecr:BatchGetImage",
+								"ecr:BatchCheckLayerAvailability",
+								"ecr:CompleteLayerUpload",
+								"ecr:GetDownloadUrlForLayer",
+								"ecr:InitiateLayerUpload",
+								"ecr:PutImage",
+								"ecr:UploadLayerPart",
+								"ecr:ListImages"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"ecr:GetAuthorizationToken"
+							],
+							"Resource": ["*"]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"eks-auth:AssumeRoleForPodIdentity"
+							],
+							"Resource": "*"
+						}
+					]
+				}
+			}]
+
+		}
+	},
+	  "EKSPodRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+		  "RoleName": "EKSPodRole",
+		  "AssumeRolePolicyDocument": {
+			"Version": "2012-10-17",
+			"Statement": [
+			  {
+				"Effect": "Allow",
+				"Principal": {
+				  "Service": "pods.eks.amazonaws.com"
+				},
+				"Action": [
+				  "sts:AssumeRole",
+				  "sts:TagSession"
+				]
+			  }
+			]
+		  },
+		  "Policies": [
+			{
+			  "PolicyName": "AdditionalPermissionsPolicy",
+			  "PolicyDocument": {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Action": ["secretsmanager:GetResourcePolicy",
+									"secretsmanager:GetSecretValue",
+									"secretsmanager:DescribeSecret",
+									"secretsmanager:ListSecretVersionIds"],
+						"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+					},
+					{
+						"Effect": "Allow",
+						"Action": ["secretsmanager:ListSecrets"],
+						"Resource": ["*"]
+					},
+					{
+						"Effect": "Allow",
+						"Action": [
+							"kms:Decrypt"
+						],
+						"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
+					},
+				  	{
+						"Effect": "Allow",
+						"Action": [
+					  	"cloudformation:ListExports"
+						],
+						"Resource": [
+					  	"*"
+						]
+				  	},
+				  	{
+						"Effect": "Allow",
+						"Action": [
+					  	"ecr:GetAuthorizationToken"
+						],
+						"Resource": [
+					  	"*"
+						]
+				    }
+				]
+			  }
+			}
+		  ]
+		}
+	  },
+	  "EKSPodRoleMapping": {
+		"Type": "AWS::EKS::PodIdentityAssociation",
+		"Properties": {
+			"ClusterName": {
+				"Ref": "EKSCluster"
+			},
+			"Namespace": "bpb-aws-book",
+			"ServiceAccount": "bpb-aws-book-sa",
+			"RoleArn": {
+				"Fn::GetAtt": [
+					"EKSPodRole",
+					"Arn"
+				]
+			}
+		},
+		"DependsOn": ["PodIdentityAddon"]
+	},
+	"PodIdentityAddon": {
+		"Type": "AWS::EKS::Addon",
+		"Properties": {
+			"AddonName": "eks-pod-identity-agent",
+			"AddonVersion": {
+				"Ref": "PodIdentityVersion"
+			},
+			"ClusterName": {
+				"Ref": "ClusterName"
+			},
+			"ResolveConflicts": "OVERWRITE"
+		},
+		"DependsOn": ["EKSCluster"]
+	}
+	},
+	"Outputs": {
+	  "OIDCProviderID": {
+		"Description": "EKS Cluster OIDC Provider ID",
+		"Value": {
+		  "Fn::Select": [
+			4,
+			{
+			  "Fn::Split": [
+				"/",
+				{
+				  "Fn::GetAtt": [
+					"EKSCluster",
+					"OpenIdConnectIssuerUrl"
+				  ]
+				}
+			  ]
+			}
+		  ]
+		}
+	  },
+	  "OIDCIssuerURL": {
+		"Description": "EKS Cluster OIDC Issuer URL",
+		"Value": {
+		  "Fn::GetAtt": [
+			"EKSCluster",
+			"OpenIdConnectIssuerUrl"
+		  ]
+		},
+		"Export": {
+		  "Name": {
+			"Fn::Sub": "${AWS::StackName}-OpenIdConnectIssuerUrl"
+		  }
+		}
+	  }
+	}
+  }
