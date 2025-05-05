@@ -11,12 +11,7 @@
 		"Type": "String",
 		"Default": "1.31",
 		"Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
-	  },
-	  "PodIdentityVersion": {
-		"Type": "String",
-		"Default": "v1.2.0-eksbuild.1",
-		"Description": "Version of the EKS Pod Identity Agent add-on"
-	}
+	  }
 	},
 	"Metadata": {
 	  "AWS::CloudFormation::Interface": {
@@ -34,9 +29,6 @@
 		"ParameterLabels": {
 		  "KubernetesVersion": {
 			"default": "Kubernetes Version"
-		  },
-		  "PodIdentityVersion": {
-			"default": "Pod Identity Version"
 		  },
 		  "LatestAmiId": {
 			"default": "Amazon Linux 2 AMI ID"
@@ -56,12 +48,23 @@
 				"Principal": {
 				  "Service": "eks.amazonaws.com"
 				},
-				"Action": "sts:AssumeRole"
+				"Action": ["sts:AssumeRole",
+						   "sts:TagSession"]
 			  }
 			]
 		  },
 		  "ManagedPolicyArns": [
-			"arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+			"arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+			"arn:aws:iam::aws:policy/AmazonEKSComputePolicy",
+			"arn:aws:iam::aws:policy/AmazonEKSBlockStoragePolicy",
+			"arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy",
+			"arn:aws:iam::aws:policy/AmazonEKSNetworkingPolicy"
+		  ],
+		  "Tags": [
+			{
+			  "Key": "Name",
+			  "Value": "Chapter14-EKSClusterRole"
+			}
 		  ]
 		}
 	  },
@@ -106,6 +109,10 @@
 				}
 				]
 			}
+			},
+			"AccessConfig": {
+				"AuthenticationMode": "API_AND_CONFIG_MAP",
+				"BootstrapClusterCreatorAdminPermissions": true
 			}
 		}
 		},
@@ -126,6 +133,7 @@
 			},
 			"ManagedPolicyArns": [
 				"arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+				"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly",
 				"arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
 				"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
 				"arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
@@ -172,8 +180,13 @@
 						}
 					]
 				}
-			}]
-
+			}],
+			"Tags": [
+				{
+					"Key": "Name",
+					"Value": "Chapter14-EKSNodeRole"
+				}
+			]
 		}
 	},
 	  "EKSPodRole": {
@@ -259,57 +272,7 @@
 					"Arn"
 				]
 			}
-		},
-		"DependsOn": ["PodIdentityAddon"]
-	},
-	"PodIdentityAddon": {
-		"Type": "AWS::EKS::Addon",
-		"Properties": {
-			"AddonName": "eks-pod-identity-agent",
-			"AddonVersion": {
-				"Ref": "PodIdentityVersion"
-			},
-			"ClusterName": {
-				"Ref": "ClusterName"
-			},
-			"ResolveConflicts": "OVERWRITE"
-		},
-		"DependsOn": ["EKSCluster"]
-	}
-	},
-	"Outputs": {
-	  "OIDCProviderID": {
-		"Description": "EKS Cluster OIDC Provider ID",
-		"Value": {
-		  "Fn::Select": [
-			4,
-			{
-			  "Fn::Split": [
-				"/",
-				{
-				  "Fn::GetAtt": [
-					"EKSCluster",
-					"OpenIdConnectIssuerUrl"
-				  ]
-				}
-			  ]
-			}
-		  ]
 		}
-	  },
-	  "OIDCIssuerURL": {
-		"Description": "EKS Cluster OIDC Issuer URL",
-		"Value": {
-		  "Fn::GetAtt": [
-			"EKSCluster",
-			"OpenIdConnectIssuerUrl"
-		  ]
-		},
-		"Export": {
-		  "Name": {
-			"Fn::Sub": "${AWS::StackName}-OpenIdConnectIssuerUrl"
-		  }
-		}
-	  }
+	  }	
 	}
   }
