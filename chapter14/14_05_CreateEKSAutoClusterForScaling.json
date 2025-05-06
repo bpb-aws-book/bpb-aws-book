@@ -70,6 +70,7 @@
 	  },
 	  "EKSCluster": {
 		"Type": "AWS::EKS::Cluster",
+		"DependsOn": "NodeInstanceRole",
 		"Properties": {
 			"Name": {
 			"Ref": "ClusterName"
