@@ -117,6 +117,17 @@
 			}
 		}
 		},
+		"NodeInstanceProfile": {
+		  "Type": "AWS::IAM::InstanceProfile",
+		  "Properties": {
+		    "Path": "/",
+		    "Roles": [
+		      {
+		        "Ref": "NodeInstanceRole"
+		      }
+		    ]
+		  }
+		},
 	  "NodeInstanceRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
