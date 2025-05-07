@@ -11,12 +11,7 @@
 		"Type": "String",
 		"Default": "1.31",
 		"Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
-	  },
-	  "PodIdentityVersion": {
-		"Type": "String",
-		"Default": "v1.2.0-eksbuild.1",
-		"Description": "Version of the EKS Pod Identity Agent add-on"
-	}
+	  }
 	},
 	"Metadata": {
 	  "AWS::CloudFormation::Interface": {
@@ -45,6 +40,46 @@
 	  }
 	},
 	"Resources": {
+	  "BPBClusterAutoscalerPolicy": {
+		"Type": "AWS::IAM::ManagedPolicy",
+		"Properties": {
+		  "ManagedPolicyName": "BPBClusterAutoscalerPolicy",
+		  "PolicyDocument": {
+			"Version": "2012-10-17",
+			"Statement": [
+			  {
+				"Effect": "Allow",
+				"Action": [
+				  "autoscaling:DescribeAutoScalingGroups",
+				  "autoscaling:DescribeAutoScalingInstances",
+				  "autoscaling:DescribeLaunchConfigurations",
+				  "autoscaling:DescribeScalingActivities",
+				  "ec2:DescribeImages",
+				  "ec2:DescribeInstanceTypes",
+				  "ec2:DescribeLaunchTemplateVersions",
+				  "ec2:GetInstanceTypesFromInstanceRequirements",
+				  "eks:DescribeNodegroup"
+				],
+				"Resource": ["*"]
+			  },
+			  {
+				"Effect": "Allow",
+				"Action": [
+				  "autoscaling:SetDesiredCapacity",
+				  "autoscaling:TerminateInstanceInAutoScalingGroup"
+				],
+				"Resource": ["*"],
+				"Condition": {
+                "StringEquals": {
+                    "aws:ResourceTag/k8s.io/cluster-autoscaler/enabled": "true",
+                    "aws:ResourceTag/k8s.io/cluster-autoscaler/bpb-eks-cluster": "owned"
+                	}
+            	}
+			  }
+			]
+		  }
+		}
+	  },
 	  "EKSClusterRole": {
 		"Type": "AWS::IAM::Role",
 		"Properties": {
@@ -295,25 +330,10 @@
 				"Fn::GetAtt": [
 					"EKSPodRole",
 					"Arn"
-				]
-			}
-		},
-		"DependsOn": ["PodIdentityAddon"]
-	},
-	"PodIdentityAddon": {
-		"Type": "AWS::EKS::Addon",
-		"Properties": {
-			"AddonName": "eks-pod-identity-agent",
-			"AddonVersion": {
-				"Ref": "PodIdentityVersion"
-			},
-			"ClusterName": {
-				"Ref": "ClusterName"
-			},
-			"ResolveConflicts": "OVERWRITE"
-		},
-		"DependsOn": ["EKSCluster"]
-	}
+				 ]
+			 }
+		 }
+ 	 }
 	},
 	"Outputs": {
 	  "OIDCProviderID": {
