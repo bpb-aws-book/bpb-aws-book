@@ -6,7 +6,7 @@ metadata:
   labels:
     app: inquisitivebookwormclub
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: inquisitivebookwormclub
