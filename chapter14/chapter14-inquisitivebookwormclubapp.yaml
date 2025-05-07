@@ -18,7 +18,7 @@ spec:
       serviceAccountName: bpb-aws-book-sa
       containers:
         - name: inquisitivebookwormclubcontainer
-          image: 111111111111.dkr.ecr.us-east-1.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
+          image: 111111111111.dkr.ecr.AWS-REGION.amazonaws.com/bpbbook/inquisitivebookwormclubrepo:latest
           ports:
             - containerPort: 80    
           resources:
