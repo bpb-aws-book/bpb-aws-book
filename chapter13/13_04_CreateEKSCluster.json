@@ -12,11 +12,6 @@
 			"Default": "1.31", 	
 			"Description": "Kubernetes version for the EKS Cluster. Change version to use one of the last two latest versions per AWS documentation."
 		},
-		"PodIdentityVersion": {
-			"Type": "String",
-			"Default": "v1.2.0-eksbuild.1",
-			"Description": "Version of the EKS Pod Identity Agent add-on"
-		},
 		"LatestAmiId": {
 			"Description": "The latest AMI id. Default is Amazon Linux 2023",
 			"Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
@@ -103,9 +98,6 @@
 			"ParameterLabels": {
 				"KubernetesVersion": {
 					"default": "Kubernetes Version"
-				},
-				"PodIdentityVersion": {
-					"default": "Pod Identity Version"
 				},
 				"LatestAmiId": {
 					"default": "Amazon Linux 2 AMI ID"
@@ -347,22 +339,37 @@
 		                "Arn"
 		            ]
 		        }
-		    },
-		    "DependsOn": ["PodIdentityAddon"]
+		    }
+		}
+	},
+	"Outputs": {
+		"OIDCProviderID": {
+		  "Description": "EKS Cluster OIDC Provider ID",
+		  "Value": {
+			"Fn::Select": [
+			  4,
+			  {
+				"Fn::Split": [
+				  "/",
+				  {
+					"Fn::GetAtt": [
+					  "EKSCluster",
+					  "OpenIdConnectIssuerUrl"
+					]
+				  }
+				]
+			  }
+			]
+		  }
 		},
-		"PodIdentityAddon": {
-		    "Type": "AWS::EKS::Addon",
-		    "Properties": {
-		        "AddonName": "eks-pod-identity-agent",
-		        "AddonVersion": {
-		            "Ref": "PodIdentityVersion"
-		        },
-		        "ClusterName": {
-		            "Ref": "ClusterName"
-		        },
-		        "ResolveConflicts": "OVERWRITE"
-		    },
-		    "DependsOn": ["EKSCluster"]
+		"OIDCIssuerURL": {
+		  "Description": "EKS Cluster OIDC Issuer URL",
+		  "Value": {
+			"Fn::GetAtt": [
+			  "EKSCluster",
+			  "OpenIdConnectIssuerUrl"
+			]
+		  }
 		}
 	}
 }
