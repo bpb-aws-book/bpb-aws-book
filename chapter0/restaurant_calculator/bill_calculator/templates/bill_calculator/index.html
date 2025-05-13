@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Eat More Cucumbers Restaurant</title>
+</head>
+<body>
+    <h2>Eat More Cucumbers Restaurant Freshville</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>Bill Amount:</td>
+                <td>{{ form.billamount }}</td>
+            </tr>
+            <tr>
+                <td>Tax Rate:</td>
+                <td>{{ form.taxrate }}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <br>
+                    <input type="submit" id="mybutton" value="Calculate Final Bill">
+                </td>
+            </tr>
+        </table>
+    </form>
+    
+    {% if result %}
+    <h3>
+        Initial Bill is: ${{ result.bill_amount }}<br>
+        Tax Rate is: {{ result.tax_rate }}%<br>
+        Final Bill Amount is: ${{ result.final_bill }}<br>
+    </h3>
+    {% endif %}
+</body>
+</html>
