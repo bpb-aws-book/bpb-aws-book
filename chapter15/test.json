@@ -1,0 +1,31 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template to create an SSM Session Manager document",
+  "Resources": {
+    "SSMSessionDocument": {
+      "Type": "AWS::SSM::Document",
+      "Properties": {
+        "Name": "CustomSessionManagerSettings",
+        "DocumentType": "Session",
+        "Content": {
+          "schemaVersion": "1.0",
+          "description": "Document to hold regional settings for Session Manager",
+          "sessionType": "Standard_Stream",
+          "inputs": {
+            "runAsEnabled": true,
+            "runAsDefaultUser": "ec2-user",
+            "shellProfile": {
+              "linux": "cd && mkdir test123 && cd test123 && bash"
+            }
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "DocumentName": {
+      "Description": "The name of the SSM Session document",
+      "Value": {"Ref": "SSMSessionDocument"}
+    }
+  }
+}
