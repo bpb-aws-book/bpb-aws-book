@@ -1,0 +1,128 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Lambda function that connects to PostgreSQL RDS using Secrets Manager",
+  
+  "Parameters": {
+    "DatabaseName": {
+      "Type": "String",
+      "Default": "mydb",
+      "Description": "Name of the database"
+    },
+    "DatabaseSecretArn": {
+      "Type": "String",
+      "Description": "ARN of the imported database secret"
+    },
+    "PostgreSQLInstanceId": {
+      "Type": "String",
+      "Description": "ID of the imported PostgreSQL instance"
+    },
+    "SubnetId1": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "First subnet ID for Lambda VPC configuration"
+    },
+    "SubnetId2": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Second subnet ID for Lambda VPC configuration"
+    }
+  },
+  
+  "Resources": {
+    "DatabaseSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for RDS PostgreSQL instance",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "SourceSecurityGroupId": { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
+          }
+        ]
+      }
+    },
+    
+    "LambdaSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for Lambda function",
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "DestinationSecurityGroupId": { "Fn::GetAtt": ["DatabaseSecurityGroup", "GroupId"] }
+          }
+        ]
+      }
+    },
+    
+    "PostgreSQLLambdaFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "./src/",
+        "Handler": "app.lambda_handler",
+        "Runtime": "python3.9",
+        "Timeout": 30,
+        "MemorySize": 128,
+        "Environment": {
+          "Variables": {
+            "SECRET_ARN": { "Ref": "DatabaseSecretArn" },
+            "DB_NAME": { "Ref": "DatabaseName" },
+            "DB_HOST": { 
+              "Fn::ImportValue": {
+                "Fn::Sub": "${PostgreSQLInstanceId}-Address"
+              }
+            },
+            "DB_PORT": { 
+              "Fn::ImportValue": {
+                "Fn::Sub": "${PostgreSQLInstanceId}-Port"
+              }
+            }
+          }
+        },
+        "Policies": [
+          { "VPCAccessPolicy": {} },
+          { 
+            "AWSSecretsManagerGetSecretValuePolicy": {
+              "SecretArn": { "Ref": "DatabaseSecretArn" }
+            }
+          },
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "kms:Decrypt"
+                ],
+                "Resource": { "Fn::Sub": "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*" },
+                "Condition": {
+                  "StringEquals": {
+                    "kms:ViaService": { "Fn::Sub": "secretsmanager.${AWS::Region}.amazonaws.com" }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
+          ],
+          "SubnetIds": [
+            { "Ref": "SubnetId1" },
+            { "Ref": "SubnetId2" }
+          ]
+        }
+      }
+    }
+  },
+  
+  "Outputs": {
+    "PostgreSQLLambdaFunction": {
+      "Description": "PostgreSQL Lambda Function ARN",
+      "Value": { "Fn::GetAtt": ["PostgreSQLLambdaFunction", "Arn"] }
+    }
+  }
+}
