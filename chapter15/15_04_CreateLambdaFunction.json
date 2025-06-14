@@ -1,0 +1,99 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Lambda function that connects to PostgreSQL RDS using Secrets Manager",
+  
+  "Parameters": {
+  },
+  
+  "Resources": {
+    "DatabaseSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for RDS PostgreSQL instance",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "SourceSecurityGroupId": { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
+          }
+        ]
+      }
+    },
+    
+    "LambdaSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for Lambda function",
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "DestinationSecurityGroupId": { "Fn::GetAtt": ["DatabaseSecurityGroup", "GroupId"] }
+          }
+        ]
+      }
+    },
+    
+    "PostgreSQLLambdaFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "./src/",
+        "Handler": "app.lambda_handler",
+        "Runtime": "python3.12",
+        "Timeout": 30,
+        "MemorySize": 128,
+        "Environment": {
+          "Variables": {
+            "SECRET_ARN": { "Fn::ImportValue": "BPBBookRDSSecretARN" },
+            "DB_NAME": "bpbbookdb",
+            "DB_HOST": { "Fn::ImportValue": "BPBBookRDSDBAddress" },
+            "DB_PORT": "5432"
+          }
+        },
+        "Policies": [
+          { "VPCAccessPolicy": {} },
+          { 
+            "AWSSecretsManagerGetSecretValuePolicy": {
+              "SecretArn": { "Fn::ImportValue": "BPBBookRDSSecretARN" }
+            }
+          },
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "kms:Decrypt"
+                ],
+                "Resource": { "Fn::ImportValue": "BPBBookKMSKeyARN" },
+                "Condition": {
+                  "StringEquals": {
+                    "kms:ViaService": { "Fn::Sub": "secretsmanager.${AWS::Region}.amazonaws.com" }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
+          ],
+          "SubnetIds": [
+            { "Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet" },
+            { "Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet" }
+          ]
+        }
+      }
+    }
+  },
+  
+  "Outputs": {
+    "PostgreSQLLambdaFunction": {
+      "Description": "PostgreSQL Lambda Function ARN",
+      "Value": { "Fn::GetAtt": ["PostgreSQLLambdaFunction", "Arn"] }
+    }
+  }
+}
