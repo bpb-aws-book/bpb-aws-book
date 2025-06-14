@@ -11,6 +11,7 @@
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "GroupDescription": "Security group for Lambda function",
+        "VpcId": { "Fn::ImportValue": "BPBBookVPCId" },
         "SecurityGroupEgress": [
           {
             "IpProtocol": "tcp",
