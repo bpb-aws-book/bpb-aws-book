@@ -23,6 +23,16 @@
       }
     },
     
+    "PostgreSQLLambdaLayer": {
+      "Type": "AWS::Serverless::LayerVersion",
+      "Properties": {
+        "LayerName": "postgresql-layer",
+        "Description": "Layer containing psycopg2 for PostgreSQL connections",
+        "ContentUri": "./src/",
+        "CompatibleRuntimes": ["python3.12"]
+      }
+    },
+    
     "PostgreSQLLambdaFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
@@ -31,6 +41,9 @@
         "Runtime": "python3.12",
         "Timeout": 30,
         "MemorySize": 128,
+        "Layers": [
+          {"Ref": "PostgreSQLLambdaLayer"}
+        ],
         "Environment": {
           "Variables": {
             "SECRET_ARN": { "Fn::ImportValue": "BPBBookRDSSecretARN" },
