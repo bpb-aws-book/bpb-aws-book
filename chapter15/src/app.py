@@ -35,11 +35,13 @@ def lambda_handler(event, context):
         data = event.get('data', {})
         name = data.get('name', 'Default Name')
         description = data.get('description', 'Default Description')
+        author = data.get('author', 'Default Author')
+        price = data.get('price', 0)
         
         # Execute SQL query to insert a record
         cursor.execute(
-            "INSERT INTO items (name, description) VALUES (%s, %s) RETURNING id",
-            (name, description)
+            "INSERT INTO bpbbookdb.books_book (name, description, author, price) VALUES (%s, %s) RETURNING id",
+            (name, description, author, price)
         )
         
         # Get the ID of the inserted record
