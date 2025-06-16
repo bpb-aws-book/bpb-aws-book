@@ -36,7 +36,8 @@
         "Description": "Layer containing pg8000 for PostgreSQL connections",
         "ContentUri": "./src/",
         "CompatibleRuntimes": ["python3.12"]
-      }
+      },
+      "DeletionPolicy": "Delete"    
     },
     
     "PostgreSQLLambdaFunction": {
@@ -45,7 +46,7 @@
         "CodeUri": "./src/",
         "Handler": "app.lambda_handler",
         "Runtime": "python3.12",
-        "Timeout": 30,
+        "Timeout": 60,
         "MemorySize": 128,
         "Layers": [
           {"Ref": "PG8000LambdaLayer"}
