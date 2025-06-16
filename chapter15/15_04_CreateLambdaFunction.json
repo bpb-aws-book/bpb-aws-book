@@ -23,11 +23,11 @@
       }
     },
     
-    "PostgreSQLLambdaLayer": {
+    "PG8000LambdaLayer": {
       "Type": "AWS::Serverless::LayerVersion",
       "Properties": {
-        "LayerName": "postgresql-layer",
-        "Description": "Layer containing psycopg2 for PostgreSQL connections",
+        "LayerName": "pg8000-layer",
+        "Description": "Layer containing pg8000 for PostgreSQL connections",
         "ContentUri": "./src/",
         "CompatibleRuntimes": ["python3.12"]
       }
@@ -42,7 +42,7 @@
         "Timeout": 30,
         "MemorySize": 128,
         "Layers": [
-          {"Ref": "PostgreSQLLambdaLayer"}
+          {"Ref": "PG8000LambdaLayer"}
         ],
         "Environment": {
           "Variables": {
@@ -72,6 +72,17 @@
                     "kms:ViaService": { "Fn::Sub": "secretsmanager.${AWS::Region}.amazonaws.com" }
                   }
                 }
+              }
+            ]
+          },
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "lambda:GetLayerVersion"
+                ],
+                "Resource": { "Ref": "PG8000LambdaLayer" }
               }
             ]
           }
