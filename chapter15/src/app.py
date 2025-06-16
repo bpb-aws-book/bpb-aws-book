@@ -1,7 +1,7 @@
 import json
 import os
 import boto3
-import psycopg2
+import pg8000
 from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
@@ -19,10 +19,10 @@ def lambda_handler(event, context):
     credentials = get_secret(secret_arn)
     
     try:
-        # Connect to PostgreSQL
-        conn = psycopg2.connect(
+        # Connect to PostgreSQL using pg8000
+        conn = pg8000.connect(
             host=db_host,
-            port=db_port,
+            port=int(db_port),
             database=db_name,
             user=credentials['username'],
             password=credentials['password']
@@ -40,7 +40,7 @@ def lambda_handler(event, context):
         
         # Execute SQL query to insert a record
         cursor.execute(
-            "INSERT INTO bpbbookdb.books_book (name, description, author, price) VALUES (%s, %s) RETURNING id",
+            "INSERT INTO bpbbookdb.books_book (name, description, author, price) VALUES (?, ?, ?, ?) RETURNING id",
             (name, description, author, price)
         )
         
