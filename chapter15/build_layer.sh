@@ -18,13 +18,12 @@ cd ./layer
 zip -r ../pg8000-layer.zip .
 cd ..
 
-#if we add a layer manually, we could ignore the rest of the script
 # Verify zip file was created and is not empty
 if [ ! -s ./pg8000-layer.zip ]; then
   echo "Error: Generated zip file is empty."
   exit 1
 fi
-
+#if we add a layer manually, we could ignore the rest of the script
 # Copy the layer to the src directory
 mkdir -p ./src/python
 cp -r ./layer/python/* ./src/python/
