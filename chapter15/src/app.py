@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 import pg8000
+import datetime
 from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
@@ -37,10 +38,11 @@ def lambda_handler(event, context):
         description = data.get('description', 'Default Description')
         author = data.get('author', 'Default Author')
         price = data.get('price', 0)
+        current_date = datetime.datetime.now().date()
         
         # Execute SQL query to insert a record
         cursor.execute(
-            "INSERT INTO bpbbookdb.books_book (name, description, author, price) VALUES (?, ?, ?, ?) RETURNING id",
+            "INSERT INTO books_book (name, description, author, price, is_rented, created_at, updated_at) VALUES ($1, $2, $3, $4, 'false', current_date, current_date) RETURNING id",
             (name, description, author, price)
         )
         
