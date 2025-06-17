@@ -1,0 +1,42 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Lambda function that sleeps for 30 seconds",
+  
+  "Resources": {
+    "LambdaFunctionWithSleep": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "InlineCode": {
+          "Fn::Join": [
+            "\n",
+            [
+              "import json",
+              "import time",
+              "",
+              "def lambda_handler(event, context):",
+              "    # Sleep for 30 seconds",
+              "    time.sleep(30)",
+              "    ",
+              "    return {",
+              "        'statusCode': 200,",
+              "        'body': 'Function executed successfully'",
+              "    }"
+            ]
+          ]
+        },
+        "Handler": "index.lambda_handler",
+        "Runtime": "python3.12",
+        "Timeout": 60,
+        "MemorySize": 128
+      }
+    }
+  },
+  
+  "Outputs": {
+    "SleepLambdaFunction": {
+      "Description": "Sleep Lambda Function ARN",
+      "Value": { "Fn::GetAtt": ["SleepLambdaFunction", "Arn"] }
+    }
+  }
+}
