@@ -34,7 +34,7 @@
   },
   
   "Outputs": {
-    "SleepLambdaFunction": {
+    "LambdaFunctionWithSleep": {
       "Description": "Sleep Lambda Function ARN",
       "Value": { "Fn::GetAtt": ["SleepLambdaFunction", "Arn"] }
     }
