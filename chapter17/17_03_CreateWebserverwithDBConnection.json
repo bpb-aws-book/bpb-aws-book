@@ -76,6 +76,11 @@
 		"CognitoClientId": {
 			"Description": "Cognito App Client ID for authentication",
 			"Type": "String"
+		},
+		"CognitoClientSecret": {
+			"Description": "Cognito App Client Secret for authentication",
+			"Type": "String",
+			"NoEcho": true
 		}
 	},
 	"Metadata": {
@@ -89,7 +94,8 @@
 						"LatestAmiId",
 						"InstanceType",
 						"CognitoUserPoolId",
-						"CognitoClientId"
+						"CognitoClientId",
+						"CognitoClientSecret"
 					]
 				}
 			],
@@ -105,6 +111,9 @@
 				},
 				"CognitoClientId": {
 					"default": "Cognito App Client ID"
+				},
+				"CognitoClientSecret": {
+					"default": "Cognito App Client Secret"
 				}
 			}
 		}
@@ -341,7 +350,7 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update cognito settings": {
-								"command": {"Fn::Sub": "sed -i 's/YOUR_USER_POOL_ID/${CognitoUserPoolId}/g' settings.py && sed -i 's/YOUR_CLIENT_ID/${CognitoClientId}/g' settings.py"},
+								"command": {"Fn::Sub": "sed -i 's/YOUR_USER_POOL_ID/${CognitoUserPoolId}/g' settings.py && sed -i 's/YOUR_CLIENT_ID/${CognitoClientId}/g' settings.py && sed -i 's/YOUR_CLIENT_SECRET/${CognitoClientSecret}/g' settings.py"},
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							}
 						}
