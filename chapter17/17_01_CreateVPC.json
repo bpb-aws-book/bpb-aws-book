@@ -1,0 +1,670 @@
+{
+    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "YourPublicIPAddress": {
+            "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
+            "Type": "String"
+        },
+        "VpcCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for this VPC",
+            "Type": "String",
+            "Default": "10.0.0.0/16"
+        },
+        "FirstPublicSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone",
+            "Type": "String",
+            "Default": "10.0.1.0/24"
+        },
+        "SecondPublicSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone",
+            "Type": "String",
+            "Default": "10.0.2.0/24"
+        },
+        "FirstPrivateSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone",
+            "Type": "String",
+            "Default": "10.0.3.0/24"
+        },
+        "SecondPrivateSubnetCIDR": {
+            "Description": "Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone",
+            "Type": "String",
+            "Default": "10.0.4.0/24"
+        }
+    },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+          "ParameterGroups" : [
+            {
+              "Label" : { "default": "VPC Configuration" },
+              "Parameters" : [ "YourPublicIPAddress", "VpcCIDR","FirstPublicSubnetCIDR", "SecondPublicSubnetCIDR", "FirstPrivateSubnetCIDR", "SecondPrivateSubnetCIDR" ]
+            }
+          ],
+          "ParameterLabels" : {
+            "YourPublicIPAddress" : { "default" : "Your public IP Address"},
+            "VpcCIDR" : { "default" : "CIDR of the VPC where the web server will be deployed" }
+          }
+        }
+      },
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Ref": "VpcCIDR"
+                },
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Custom VPC for learning"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    } 
+                ]
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Metadata": {
+                "Comment": "The internet gateway allows resources a route out to the internet"
+            },
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "ChapterSeventeen-IGW"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "InternetGatewayAttachment": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                },
+                "VpcId": {
+                    "Ref": "VPC"
+                }
+            },
+            "Metadata": {
+                "Comment": "Attaches the internet gateway to the VPC"
+            }
+        },
+        "FirstPublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "FirstPublicSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Public Subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "SecondPublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        1,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "SecondPublicSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Public Subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "FirstPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "FirstPrivateSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Private Subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "SecondPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        1,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "SecondPrivateSubnetCIDR"
+                },
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Private Subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "FirstNATGatewayEIP": {
+            "Type": "AWS::EC2::EIP",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Metadata": {
+                "Comment": "Allocates an Elastic IP address for the gateway"
+            }
+        },
+        "SecondNATGatewayEIP": {
+            "Type": "AWS::EC2::EIP",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Metadata": {
+                "Comment": "Allocates an Elastic IP address for the gateway"
+            }
+        },
+        "FirstNATGateway": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "FirstNATGatewayEIP",
+                        "AllocationId"
+                    ]
+                },
+                "SubnetId": {
+                    "Ref": "FirstPublicSubnet"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NAT Gateway associated with the private subnet in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+
+            }
+        },
+        "SecondNATGateway": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": [
+                        "SecondNATGatewayEIP",
+                        "AllocationId"
+                    ]
+                },
+                "SubnetId": {
+                    "Ref": "SecondPublicSubnet"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NAT Gateway associated with the private subnet in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Public Route Table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "InternetGatewayAttachment",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the IGW"
+            }
+        },
+        "FirstPublicSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "FirstPublicSubnet"
+                }
+            },
+            "Metadata": {
+                "Comment": "Associates the first public subnet with the public route table"
+            }
+        },
+        "SecondPublicSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "SecondPublicSubnet"
+                }
+            },
+            "Metadata": {
+                "Comment": "Associates the second public subnet with the public route table"
+            }
+        },
+        "FirstPrivateRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen First Private Route Table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "FirstPrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "FirstPrivateRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "FirstNATGateway"
+                }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the NAT gateway"
+            }
+        },
+        "FirstPrivateSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "FirstPrivateRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "FirstPrivateSubnet"
+                }
+            },
+            "Metadata": {
+                "Comment": "Associates the private subnet with the private route table"
+            }
+        },
+        "SecondPrivateRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Seventeen Second Private Route Table"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }
+                ]
+            }
+        },
+        "SecondPrivateRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "SecondPrivateRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "SecondNATGateway"
+                }
+            },
+            "Metadata": {
+                "Comment": "Routes all traffic through the NAT gateway"
+            }
+        },
+        "SecondPrivateSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "SecondPrivateRouteTable"
+                },
+                "SubnetId": {
+                    "Ref": "SecondPrivateSubnet"
+                }
+            },
+            "Metadata": {
+                "Comment": "Associates the private subnet with the private route table"
+            }
+        },
+        "ELBSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "ELBSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }] ,
+                "GroupDescription" : "Allow http to client host",
+                "GroupName" : "ELBSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 80,
+                    "ToPort" : 80,
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                        },
+                        {
+                            "IpProtocol" : "tcp",
+                            "FromPort" : 443,
+                            "ToPort" : 443,
+                            "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                        }]
+                    },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address"
+            }
+        },
+        "WebServerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "WebServerSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }] ,
+                "GroupDescription" : "Allow http to client host",
+                "GroupName" : "WebServerSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "SourceSecurityGroupId": {
+                            "Ref": "ELBSecurityGroup"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "443",
+                        "ToPort": "443",
+                        "SourceSecurityGroupId": {
+                            "Ref": "ELBSecurityGroup"
+                        }
+                    }
+                ]
+                    },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address"
+            }
+        },
+        "StandaloneWebServerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "StandaloneWebServerSecurityGroup"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Seventeen"
+                    }] ,
+                "GroupDescription" : "Allow http to client host",
+                "GroupName" : "StandaloneWebServerSecurityGroup",
+                "VpcId" : {"Ref" : "VPC"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 80,
+                    "ToPort" : 80,
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                        },
+                        {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : 443,
+                    "ToPort" : 443,
+                    "CidrIp" : {"Ref" : "YourPublicIPAddress"}
+                                }]
+                    },
+            "Metadata": {
+                "Comment": "Allows inbound HTTP traffic from your public IP address. Used by standalone web server for image creation"
+            }
+        },
+        "RDSSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                    "Tags": [
+                        {
+                            "Key": "Name",
+                            "Value": "RDSSecurityGroup"
+                        },
+                        {
+                            "Key": "Chapter",
+                            "Value": "Seventeen"
+                        }],
+                "GroupDescription": "Allow web server security group to access database",
+                "GroupName" : "RDSSecurityGroup",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "5432",
+                        "ToPort": "5432",
+                        "SourceSecurityGroupId": {
+                            "Ref": "WebServerSecurityGroup"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "5432",
+                        "ToPort": "5432",
+                        "SourceSecurityGroupId": {
+                            "Ref": "StandaloneWebServerSecurityGroup"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "VPC": {
+            "Description": "A reference to the created VPC",
+            "Value": {
+                "Ref": "VPC"
+            },
+            "Export": {
+                "Name": "BPBBookVPCForLearning"
+            }
+        },
+        "ELBSecurityGroup": {
+            "Description": "A reference to the ELB security group",
+            "Value": {
+                "Ref": "ELBSecurityGroup"
+            },
+            "Export": {
+                "Name": "BPBBookELBSecurityGroup"
+            }
+        },
+        "WebServerSecurityGroup": {
+            "Description": "A reference to the web server security group to be used by auto scaling group instances",
+            "Value": {
+                "Ref": "WebServerSecurityGroup"
+            },
+            "Export": {
+                "Name": "BPBBookWebServerSecurityGroup"
+            }
+        },
+        "StandaloneWebServerSecurityGroup": {
+            "Description": "A reference to the web server security group to be used by the web server for creating images",
+            "Value": {
+                "Ref": "StandaloneWebServerSecurityGroup"
+            },
+            "Export": {
+                "Name": "BPBBookStandaloneWebServerSecurityGroup"
+            }
+        },
+        "RDSSecurityGroup": {
+            "Description": "A reference to the database security group",
+            "Value": {
+                "Ref": "RDSSecurityGroup"
+            },
+            "Export": {
+                "Name": "BPBBookRDSSecurityGroup"
+            }
+        },
+        "FirstPublicSubnet": {
+            "Description": "A reference to the public subnet in the 1st Availability Zone",
+            "Value": {
+                "Ref": "FirstPublicSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCFirstPublicSubnet"
+            }
+        },
+        "SecondPublicSubnet": {
+            "Description": "A reference to the public subnet in the 2nd Availability Zone",
+            "Value": {
+                "Ref": "SecondPublicSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCSecondPublicSubnet"
+            }
+        },
+        "FirstPrivateSubnet": {
+            "Description": "A reference to the private subnet in the 1st Availability Zone",
+            "Value": {
+                "Ref": "FirstPrivateSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCFirstPrivateSubnet"
+            }
+        },
+        "SecondPrivateSubnet": {
+            "Description": "A reference to the private subnet in the 2nd Availability Zone",
+            "Value": {
+                "Ref": "SecondPrivateSubnet"
+            },
+            "Export": {
+                "Name": "BPBBookVPCSecondPrivateSubnet"
+            }
+        }
+    }
+}
