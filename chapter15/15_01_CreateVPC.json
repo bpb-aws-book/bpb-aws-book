@@ -62,7 +62,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     } 
                 ]
             }
@@ -76,11 +76,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "ChapterFifteenen-IGW"
+                        "Value": "ChapterFifteen-IGW"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -120,11 +120,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Public Subnet in the first AZ"
+                        "Value": "Chapter Fifteen Public Subnet in the first AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -150,11 +150,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Public Subnet in the second AZ"
+                        "Value": "Chapter Fifteen Public Subnet in the second AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -180,11 +180,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Private Subnet in the first AZ"
+                        "Value": "Chapter Fifteen Private Subnet in the first AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -210,11 +210,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Private Subnet in the second AZ"
+                        "Value": "Chapter Fifteen Private Subnet in the second AZ"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -258,7 +258,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
 
@@ -283,7 +283,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -297,11 +297,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Public Route Table"
+                        "Value": "Chapter Fifteen Public Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -359,11 +359,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen First Private Route Table"
+                        "Value": "Chapter Fifteen First Private Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -406,11 +406,11 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Chapter Fifteenen Second Private Route Table"
+                        "Value": "Chapter Fifteen Second Private Route Table"
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }
                 ]
             }
@@ -454,7 +454,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
                 "GroupName" : "ELBSecurityGroup",
@@ -486,7 +486,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
                 "GroupName" : "WebServerSecurityGroup",
@@ -524,7 +524,7 @@
                     },
                     {
                         "Key": "Chapter",
-                        "Value": "Fifteenen"
+                        "Value": "Fifteen"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
                 "GroupName" : "StandaloneWebServerSecurityGroup",
@@ -556,7 +556,7 @@
                         },
                         {
                             "Key": "Chapter",
-                            "Value": "Fifteenen"
+                            "Value": "Fifteen"
                         }],
                 "GroupDescription": "Allow web server security group to access database",
                 "GroupName" : "RDSSecurityGroup",
