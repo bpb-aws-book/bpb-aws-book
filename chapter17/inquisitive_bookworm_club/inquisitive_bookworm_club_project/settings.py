@@ -78,7 +78,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "inquisitive_bookworm_club_project.wsgi.application"
 
-client = botocore.session.get_session().create_client('secretsmanager','AWS_REGION')
+client = botocore.session.get_session().create_client('secretsmanager','AWSREGION')
 cache_config = SecretCacheConfig()
 cache = SecretCache( config = cache_config, client = client)
 
