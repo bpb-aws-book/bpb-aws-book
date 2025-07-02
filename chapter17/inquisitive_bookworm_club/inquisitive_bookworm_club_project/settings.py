@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']
 AWS_REGION = 'us-east-1'  # Replace with your region
 COGNITO_USER_POOL_ID = 'YOUR_USER_POOL_ID'  # Replace with your User Pool ID
 COGNITO_CLIENT_ID = 'YOUR_CLIENT_ID'  # Replace with your App Client ID
+COGNITO_CLIENT_SECRET = 'YOUR_CLIENT_SECRET'  # Add this if your app client has a secret
 
 # Application definition
 
@@ -78,7 +79,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "inquisitive_bookworm_club_project.wsgi.application"
 
-client = botocore.session.get_session().create_client('secretsmanager','AWSREGION')
+client = botocore.session.get_session().create_client('secretsmanager', AWS_REGION)
 cache_config = SecretCacheConfig()
 cache = SecretCache( config = cache_config, client = client)
 

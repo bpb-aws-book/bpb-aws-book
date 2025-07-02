@@ -2,8 +2,11 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 import socket
+import logging
 from .models import book
 from .cognito_auth import CognitoAuth
+
+logger = logging.getLogger(__name__)
 
 
 def login_view(request):
@@ -22,7 +25,8 @@ def login_view(request):
             request.session['username'] = username
             return redirect('home')
         else:
-            return render(request, 'login.html', {'error': 'Invalid credentials'})
+            logger.error(f'Authentication failed for user {username}: {result}')
+            return render(request, 'login.html', {'error': f'Authentication failed: {result}'})
     
     return render(request, 'login.html')
 
