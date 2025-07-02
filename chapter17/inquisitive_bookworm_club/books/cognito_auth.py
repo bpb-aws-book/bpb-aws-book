@@ -10,10 +10,6 @@ class CognitoAuth:
         self.user_pool_id = settings.COGNITO_USER_POOL_ID
         self.client_id = settings.COGNITO_CLIENT_ID
         self.client_secret = getattr(settings, 'COGNITO_CLIENT_SECRET', None)
-        print(f"DEBUG: AWS_REGION={settings.AWS_REGION}")
-        print(f"DEBUG: USER_POOL_ID={self.user_pool_id}")
-        print(f"DEBUG: CLIENT_ID={self.client_id}")
-        print(f"DEBUG: HAS_SECRET={self.client_secret is not None}")
     
     def get_secret_hash(self, username):
         if not self.client_secret:
@@ -48,13 +44,9 @@ class CognitoAuth:
             else:
                 return False, 'Authentication failed'
                 
-        except self.client.exceptions.NotAuthorizedException as e:
-            print(f"DEBUG: NotAuthorizedException: {str(e)}")
-            return False, f'NotAuthorized: {str(e)}'
-        except self.client.exceptions.UserNotFoundException as e:
-            print(f"DEBUG: UserNotFoundException: {str(e)}")
-            return False, f'UserNotFound: {str(e)}'
+        except self.client.exceptions.NotAuthorizedException:
+            return False, 'Invalid username or password'
+        except self.client.exceptions.UserNotFoundException:
+            return False, 'User not found'
         except Exception as e:
-            print(f"DEBUG: General Exception: {str(e)}")
-            print(f"DEBUG: Exception type: {type(e)}")
-            return False, f'Error: {str(e)}'
+            return False, f'Authentication error: {str(e)}'
