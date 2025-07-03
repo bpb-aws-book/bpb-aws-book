@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         
         # Execute SQL query to retrieve a record
         cursor.execute(
-            "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM books_book WHERE id = $1",
+            "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM public.books_book WHERE id = $1",
             (book_id,)
         )
         
