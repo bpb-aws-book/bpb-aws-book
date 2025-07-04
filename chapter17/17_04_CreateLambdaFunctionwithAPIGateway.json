@@ -10,19 +10,20 @@
     }
   },
   
-  "Resources": {
-    "CognitoAuthorizer": {
-      "Type": "AWS::ApiGateway::Authorizer",
-      "Properties": {
-        "Name": "CognitoAuthorizer",
-        "Type": "COGNITO_USER_POOLS",
-        "IdentitySource": "method.request.header.Authorization",
-        "RestApiId": { "Ref": "ServerlessRestApi" },
-        "ProviderARNs": [
-          { "Fn::Sub": "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}" }
-        ]
+  "Globals": {
+    "Api": {
+      "Auth": {
+        "DefaultAuthorizer": "CognitoAuthorizer",
+        "Authorizers": {
+          "CognitoAuthorizer": {
+            "UserPoolArn": { "Fn::Sub": "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}" }
+          }
+        }
       }
-    },
+    }
+  },
+  
+  "Resources": {
     "LambdaSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
