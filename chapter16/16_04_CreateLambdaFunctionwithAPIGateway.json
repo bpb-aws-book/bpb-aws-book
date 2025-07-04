@@ -1,174 +1,106 @@
-{
-  "AWSTemplateFormatVersion": "2010-09-09",
-  "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "Lambda function that connects to PostgreSQL RDS using Secrets Manager",
-  
-  "Parameters": {
-  },
-  
-  "Resources": {
-    "LambdaSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": "Security group for Lambda function",
-        "VpcId": { "Fn::ImportValue": "BPBBookVPCForLearning" },
-        "SecurityGroupEgress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 5432,
-            "ToPort": 5432,
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 443,
-            "ToPort": 443,
-            "CidrIp": "0.0.0.0/0"
-          }
-        ]
-      }
-    },
+import json
+import os
+import boto3
+import pg8000
+import datetime
+from botocore.exceptions import ClientError
+
+def lambda_handler(event, context):
+    """
+    Lambda function that connects to PostgreSQL RDS using credentials from Secrets Manager
+    and adds a record to a table.
+    """
+    # Get environment variables
+    secret_arn = os.environ['SECRET_ARN']
+    db_name = os.environ['DB_NAME']
+    db_host = os.environ['DB_HOST']
+    db_port = os.environ['DB_PORT']
     
-    "PG8000LambdaLayer": {
-      "Type": "AWS::Serverless::LayerVersion",
-      "Properties": {
-        "LayerName": "pg8000-layer",
-        "Description": "Layer containing pg8000 for PostgreSQL connections",
-        "ContentUri": "./src/",
-        "CompatibleRuntimes": ["python3.12"]
-      },
-      "DeletionPolicy": "Delete"    
-    },
+    # Get database credentials from Secrets Manager
+    credentials = get_secret(secret_arn)
     
-    "PostgreSQLLambdaFunction": {
-      "Type": "AWS::Serverless::Function",
-      "Properties": {
-        "CodeUri": "./src/",
-        "Handler": "app.lambda_handler",
-        "Runtime": "python3.12",
-        "Timeout": 60,
-        "MemorySize": 128,
-        "Layers": [
-          {"Ref": "PG8000LambdaLayer"}
-        ],
-        "Environment": {
-          "Variables": {
-            "SECRET_ARN": { "Fn::ImportValue": "BPBBookRDSSecretARN" },
-            "DB_NAME": "bpbbookdb",
-            "DB_HOST": { "Fn::ImportValue": "BPBBookRDSDBAddress" },
-            "DB_PORT": "5432"
-          }
-        },
-        "Policies": [
-          { "VPCAccessPolicy": {} },
-          { 
-            "AWSSecretsManagerGetSecretValuePolicy": {
-              "SecretArn": { "Fn::ImportValue": "BPBBookRDSSecretARN" }
+    try:
+        # Connect to PostgreSQL using pg8000
+        conn = pg8000.connect(
+            host=db_host,
+            port=int(db_port),
+            database=db_name,
+            user=credentials['username'],
+            password=credentials['password']
+        )
+        
+        # Create a cursor
+        cursor = conn.cursor()
+        
+        # Extract ID from the event (API Gateway path parameter)
+        book_id = event.get('pathParameters', {}).get('id') if event.get('pathParameters') else event.get('id')
+        if not book_id:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({
+                    'message': 'ID is required'
+                })
             }
-          },
-          {
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Action": [
-                  "kms:Decrypt"
-                ],
-                "Resource": { "Fn::ImportValue": "BPBBookKMSKeyARN" },
-                "Condition": {
-                  "StringEquals": {
-                    "kms:ViaService": { "Fn::Sub": "secretsmanager.${AWS::Region}.amazonaws.com" }
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Action": [
-                  "lambda:GetLayerVersion"
-                ],
-                "Resource": { "Ref": "PG8000LambdaLayer" }
-              }
-            ]
-          },
-          {
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Action": ["secretsmanager:GetResourcePolicy", "secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret", "secretsmanager:ListSecretVersionIds"],
-                "Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
-              },
-              {
-                "Effect": "Allow",
-                "Action": ["secretsmanager:ListSecrets"],
-                "Resource": ["*"]
-              },
-              {
-                "Effect": "Allow",
-                "Action": ["kms:Decrypt"],
-                "Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
-              },
-              {
-                "Effect": "Allow",
-                "Action": ["cloudformation:ListExports"],
-                "Resource": ["*"]
-              }
-            ]
-          }
-        ],
-        "VpcConfig": {
-          "SecurityGroupIds": [
-            { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
-          ],
-          "SubnetIds": [
-            { "Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet" },
-            { "Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet" }
-          ]
-        },
-        "Events": {
-          "GetBook": {
-            "Type": "Api",
-            "Properties": {
-              "RestApiId": { "Ref": "BookAPI" },
-              "Path": "/books/{id}",
-              "Method": "GET"
+        
+        # Execute SQL query to retrieve a record
+        cursor.execute(
+            "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM public.books_book WHERE id = $1",
+            (book_id,)
+        )
+        
+        # Get the record
+        record = cursor.fetchone()
+        
+        if not record:
+            return {
+                'statusCode': 404,
+                'body': json.dumps({
+                    'message': 'Book not found'
+                })
             }
-          }
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'id': record[0],
+                'name': record[1],
+                'description': record[2],
+                'author': record[3],
+                'price': float(record[4]),
+                'is_rented': record[5],
+                'created_at': record[6].isoformat() if record[6] else None,
+                'updated_at': record[7].isoformat() if record[7] else None
+            })
         }
-      }
-    },
     
-    "RDSIngressRule": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Properties": {
-        "GroupId": { "Fn::ImportValue": "BPBBookRDSSecurityGroup" },
-        "IpProtocol": "tcp",
-        "FromPort": 5432,
-        "ToPort": 5432,
-        "SourceSecurityGroupId": { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
-      }
-    },    
-    "BookAPI": {
-      "Type": "AWS::Serverless::Api",
-      "Properties": {
-        "StageName": "prod",
-        "EndpointConfiguration": {
-          "Type": "REGIONAL"
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'message': f'Error: {str(e)}'
+            })
         }
-      }
-    }
-  },
-  
-  "Outputs": {
-    "PostgreSQLLambdaFunction": {
-      "Description": "PostgreSQL Lambda Function ARN",
-      "Value": { "Fn::GetAtt": ["PostgreSQLLambdaFunction", "Arn"] }
-    },
-    "BookAPIEndpoint": {
-      "Description": "API Gateway endpoint URL",
-      "Value": { "Fn::Sub": "https://${BookAPI}.execute-api.${AWS::Region}.amazonaws.com/prod" }
-    }
-  }
-}
+    
+    finally:
+        # Close the cursor and connection
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+def get_secret(secret_arn):
+    """
+    Retrieve and decrypt the secret from AWS Secrets Manager
+    """
+    session = boto3.session.Session()
+    client = session.client(service_name='secretsmanager')
+    
+    try:
+        get_secret_value_response = client.get_secret_value(SecretId=secret_arn)
+    except ClientError as e:
+        raise e
+    
+    # Decrypts secret using the associated KMS key
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
