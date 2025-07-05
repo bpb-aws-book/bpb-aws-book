@@ -34,12 +34,17 @@ def lambda_handler(event, context):
         
         # Determine operation based on HTTP method
         http_method = event.get('httpMethod')
+        print(f"Event: {json.dumps(event)}")
+        
+        # If direct invocation without httpMethod, check for body to determine if it's a POST
+        if not http_method and event.get('body'):
+            http_method = 'POST'
         
         if http_method == 'POST':
             # Handle POST request to create a new book
             try:
                 # Parse request body
-                body = json.loads(event.get('body', '{}'))
+                body = json.loads(event.get('body', '{}')) if isinstance(event.get('body'), str) else event.get('body', {})
                 name = body.get('name')
                 description = body.get('description')
                 author = body.get('author')
