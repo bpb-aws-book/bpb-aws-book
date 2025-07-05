@@ -126,16 +126,8 @@
             { "Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet" },
             { "Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet" }
           ]
-        },
-        "Events": {
-          "GetBook": {
-            "Type": "Api",
-            "Properties": {
-              "Path": "/books/{id}",
-              "Method": "GET"
-            }
-          }
         }
+
       }
     },
     
@@ -148,7 +140,133 @@
         "ToPort": 5432,
         "SourceSecurityGroupId": { "Fn::GetAtt": ["LambdaSecurityGroup", "GroupId"] }
       }
-    }   
+    },
+    
+    "VPCEndpointSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for API Gateway VPC endpoint",
+        "VpcId": { "Fn::ImportValue": "BPBBookVPCForLearning" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "10.0.0.0/16"
+          }
+        ]
+      }
+    },
+    
+    "APIGatewayVPCEndpoint": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "BPBBookVPCForLearning" },
+        "ServiceName": { "Fn::Sub": "com.amazonaws.${AWS::Region}.execute-api" },
+        "VpcEndpointType": "Interface",
+        "SubnetIds": [
+          { "Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet" },
+          { "Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet" }
+        ],
+        "SecurityGroupIds": [
+          { "Ref": "VPCEndpointSecurityGroup" }
+        ],
+        "PrivateDnsEnabled": true
+      }
+    },
+    
+    "PrivateRestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "PrivateBookAPI",
+        "EndpointConfiguration": {
+          "Types": ["PRIVATE"],
+          "VpcEndpointIds": [{ "Ref": "APIGatewayVPCEndpoint" }]
+        },
+        "Policy": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "execute-api:Invoke",
+              "Resource": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:sourceVpce": { "Ref": "APIGatewayVPCEndpoint" }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    
+    "BooksResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "PrivateRestApi" },
+        "ParentId": { "Fn::GetAtt": ["PrivateRestApi", "RootResourceId"] },
+        "PathPart": "books"
+      }
+    },
+    
+    "BookIdResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "PrivateRestApi" },
+        "ParentId": { "Ref": "BooksResource" },
+        "PathPart": "{id}"
+      }
+    },
+    
+    "GetBookMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "PrivateRestApi" },
+        "ResourceId": { "Ref": "BookIdResource" },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": { "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostgreSQLLambdaFunction.Arn}/invocations" }
+        }
+      }
+    },
+    
+    "LambdaInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "PostgreSQLLambdaFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": { "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PrivateRestApi}/*/*" }
+      }
+    },
+    
+    "PostBookMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "PrivateRestApi" },
+        "ResourceId": { "Ref": "BooksResource" },
+        "HttpMethod": "POST",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": { "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostgreSQLLambdaFunction.Arn}/invocations" }
+        }
+      }
+    },
+    
+    "ApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": ["GetBookMethod", "PostBookMethod"],
+      "Properties": {
+        "RestApiId": { "Ref": "PrivateRestApi" },
+        "StageName": "prod"
+      }
+    }
 
   },
   
@@ -157,9 +275,13 @@
       "Description": "PostgreSQL Lambda Function ARN",
       "Value": { "Fn::GetAtt": ["PostgreSQLLambdaFunction", "Arn"] }
     },
-    "BookAPIEndpoint": {
-      "Description": "API Gateway endpoint URL",
-      "Value": { "Fn::Sub": "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod" }
+    "PrivateAPIEndpoint": {
+      "Description": "Private API Gateway endpoint URL",
+      "Value": { "Fn::Sub": "https://${PrivateRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod" }
+    },
+    "VPCEndpointId": {
+      "Description": "VPC Endpoint ID for API Gateway",
+      "Value": { "Ref": "APIGatewayVPCEndpoint" }
     }
   }
 }
