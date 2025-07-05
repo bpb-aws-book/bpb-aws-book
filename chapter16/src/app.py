@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 def lambda_handler(event, context):
     """
     Lambda function that connects to PostgreSQL RDS using credentials from Secrets Manager
-    and adds a record to a table.
+    and performs operations on books table.
     """
     # Get environment variables
     secret_arn = os.environ['SECRET_ARN']
@@ -32,46 +32,97 @@ def lambda_handler(event, context):
         # Create a cursor
         cursor = conn.cursor()
         
-        # Extract ID from the event (API Gateway path parameter)
-        book_id = event.get('pathParameters', {}).get('id') if event.get('pathParameters') else event.get('id')
-        if not book_id:
+        # Determine operation based on HTTP method
+        http_method = event.get('httpMethod')
+        
+        if http_method == 'POST':
+            # Handle POST request to create a new book
+            try:
+                # Parse request body
+                body = json.loads(event.get('body', '{}'))
+                name = body.get('name')
+                description = body.get('description')
+                author = body.get('author')
+                price = body.get('price')
+                
+                # Validate required fields
+                if not all([name, author, price]):
+                    return {
+                        'statusCode': 400,
+                        'body': json.dumps({
+                            'message': 'Name, author, and price are required fields'
+                        })
+                    }
+                
+                # Execute SQL query to insert a record
+                cursor.execute(
+                    "INSERT INTO public.books_book (name, description, author, price, is_rented, created_at, updated_at) VALUES ($1, $2, $3, $4, 'false', current_date, current_date) RETURNING id",
+                    (name, description, author, price)
+                )
+                
+                # Get the ID of the inserted record
+                record_id = cursor.fetchone()[0]
+                
+                # Commit the transaction
+                conn.commit()
+                
+                return {
+                    'statusCode': 201,
+                    'body': json.dumps({
+                        'message': 'Book created successfully',
+                        'id': record_id
+                    })
+                }
+            except Exception as e:
+                conn.rollback()
+                print(f"Error creating book: {str(e)}")
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({
+                        'message': f'Error creating book: {str(e)}'
+                    })
+                }
+        else:  # Default to GET
+            # Extract ID from the event (API Gateway path parameter)
+            book_id = event.get('pathParameters', {}).get('id') if event.get('pathParameters') else event.get('id')
+            if not book_id:
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({
+                        'message': 'ID is required'
+                    })
+                }
+            
+            # Execute SQL query to retrieve a record
+            cursor.execute(
+                "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM public.books_book WHERE id = $1",
+                (book_id,)
+            )
+            
+            # Get the record
+            record = cursor.fetchone()
+            
+            if not record:
+                return {
+                    'statusCode': 404,
+                    'body': json.dumps({
+                        'message': 'Book not found'
+                    })
+                }
+            
             return {
-                'statusCode': 400,
+                'statusCode': 200,
                 'body': json.dumps({
-                    'message': 'ID is required'
+                    'id': record[0],
+                    'name': record[1],
+                    'description': record[2],
+                    'author': record[3],
+                    'price': float(record[4]),
+                    'is_rented': record[5],
+                    'created_at': record[6].isoformat() if record[6] else None,
+                    'updated_at': record[7].isoformat() if record[7] else None
                 })
             }
-        
-        # Execute SQL query to retrieve a record
-        cursor.execute(
-            "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM public.books_book WHERE id = $1",
-            (book_id,)
-        )
-        
-        # Get the record
-        record = cursor.fetchone()
-        
-        if not record:
-            return {
-                'statusCode': 404,
-                'body': json.dumps({
-                    'message': 'Book not found'
-                })
-            }
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'id': record[0],
-                'name': record[1],
-                'description': record[2],
-                'author': record[3],
-                'price': float(record[4]),
-                'is_rented': record[5],
-                'created_at': record[6].isoformat() if record[6] else None,
-                'updated_at': record[7].isoformat() if record[7] else None
-            })
-        }
     
     except Exception as e:
         print(f"Error: {str(e)}")
