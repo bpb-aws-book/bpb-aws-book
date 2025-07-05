@@ -1,1 +1,1 @@
-API Gateway
+Private API Gateway
