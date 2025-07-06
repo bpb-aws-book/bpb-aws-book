@@ -1,0 +1,107 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Lambda function to invoke protected API Gateway with Cognito authentication",
+  
+  "Parameters": {
+    "CognitoClientId": {
+      "Description": "Cognito User Pool App Client ID",
+      "Type": "String"
+    },
+    "CognitoUsername": {
+      "Description": "Cognito username for authentication",
+      "Type": "String"
+    },
+    "ProtectedAPIBaseURL": {
+      "Description": "Base URL of the protected API Gateway",
+      "Type": "String"
+    }
+  },
+  
+  "Resources": {
+    "CognitoCredentialsSecret": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "Name": "cognito-api-credentials",
+        "Description": "Cognito password and client secret for API authentication",
+        "SecretString": {
+          "Fn::Sub": "{\"password\":\"your_password_here\",\"client_secret\":\"your_client_secret_here\"}"
+        }
+      }
+    },
+    
+    "RequestsLambdaLayer": {
+      "Type": "AWS::Serverless::LayerVersion",
+      "Properties": {
+        "LayerName": "requests-layer",
+        "Description": "Layer containing requests library",
+        "ContentUri": "./layers/requests/",
+        "CompatibleRuntimes": ["python3.12"]
+      }
+    },
+    
+    "APIClientLambdaFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "./src/",
+        "Handler": "get_jwt_token.lambda_handler",
+        "Runtime": "python3.12",
+        "Timeout": 60,
+        "MemorySize": 128,
+        "Layers": [
+          {"Ref": "RequestsLambdaLayer"}
+        ],
+        "Environment": {
+          "Variables": {
+            "COGNITO_CLIENT_ID": {"Ref": "CognitoClientId"},
+            "COGNITO_USERNAME": {"Ref": "CognitoUsername"},
+            "API_BASE_URL": {"Ref": "ProtectedAPIBaseURL"},
+            "SECRET_ARN": {"Ref": "CognitoCredentialsSecret"}
+          }
+        },
+        "Policies": [
+          {
+            "AWSSecretsManagerGetSecretValuePolicy": {
+              "SecretArn": {"Ref": "CognitoCredentialsSecret"}
+            }
+          },
+          {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cognito-idp:InitiateAuth"
+                ],
+                "Resource": "*"
+              }
+            ]
+          }
+        ],
+        "Events": {
+          "InvokeAPI": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/invoke/{id}",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    }
+  },
+  
+  "Outputs": {
+    "APIClientLambdaFunction": {
+      "Description": "API Client Lambda Function ARN",
+      "Value": {"Fn::GetAtt": ["APIClientLambdaFunction", "Arn"]}
+    },
+    "APIClientEndpoint": {
+      "Description": "API Gateway endpoint URL for invoking the client",
+      "Value": {"Fn::Sub": "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"}
+    },
+    "SecretsManagerArn": {
+      "Description": "Secrets Manager ARN for Cognito credentials",
+      "Value": {"Ref": "CognitoCredentialsSecret"}
+    }
+  }
+}
