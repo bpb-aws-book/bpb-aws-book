@@ -43,7 +43,7 @@
     "APIClientLambdaFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
-        "CodeUri": "./src/",
+        "CodeUri": "./jwt_lambda_src/",
         "Handler": "get_jwt_token.lambda_handler",
         "Runtime": "python3.12",
         "Timeout": 60,
