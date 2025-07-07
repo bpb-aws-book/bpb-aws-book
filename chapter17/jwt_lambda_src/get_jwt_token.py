@@ -27,7 +27,10 @@ def lambda_handler(event, context):
         
         # Authenticate with Cognito
         jwt_token = authenticate_cognito(username, password, client_id, client_secret)
-        
+        print("API Base URL")
+        print(api_base_url)
+        print("JWT Token: \n")
+        print(jwt_token)
         # Call protected API
         result = call_protected_api(api_base_url, jwt_token, book_id)
         
