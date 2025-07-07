@@ -20,6 +20,11 @@ class CognitoAuth:
 
     def authenticate(self, username, password):
         try:
+            # Check user status first
+            status_success, user_status = self.get_user_status(username)
+            if status_success and user_status == 'FORCE_CHANGE_PASSWORD':
+                return 'FORCE_CHANGE_PASSWORD', username
+            
             auth_params = {
                 'USERNAME': username,
                 'PASSWORD': password
@@ -37,7 +42,7 @@ class CognitoAuth:
             
             # Handle password change challenge
             if 'ChallengeName' in response and response['ChallengeName'] == 'NEW_PASSWORD_REQUIRED':
-                return False, 'Password change required. Please contact administrator.'
+                return 'PASSWORD_RESET_REQUIRED', response['Session']
             
             if 'AuthenticationResult' in response:
                 return True, response['AuthenticationResult']
@@ -50,3 +55,52 @@ class CognitoAuth:
             return False, 'User not found'
         except Exception as e:
             return False, f'Authentication error: {str(e)}'
+    
+    def get_user_status(self, username):
+        try:
+            response = self.client.admin_get_user(
+                UserPoolId=self.user_pool_id,
+                Username=username
+            )
+            return True, response.get('UserStatus', 'UNKNOWN')
+        except Exception as e:
+            return False, f'Error getting user status: {str(e)}'
+    
+    def reset_password(self, username, new_password, session):
+        try:
+            challenge_params = {
+                'USERNAME': username,
+                'NEW_PASSWORD': new_password,
+                'PASSWORD_PERMANENT': 'true'
+            }
+            
+            if self.client_secret:
+                challenge_params['SECRET_HASH'] = self.get_secret_hash(username)
+            
+            response = self.client.admin_respond_to_auth_challenge(
+                UserPoolId=self.user_pool_id,
+                ClientId=self.client_id,
+                ChallengeName='NEW_PASSWORD_REQUIRED',
+                Session=session,
+                ChallengeResponses=challenge_params
+            )
+            
+            if 'AuthenticationResult' in response:
+                return True, response['AuthenticationResult']
+            else:
+                return False, 'Password reset failed'
+                
+        except Exception as e:
+            return False, f'Password reset error: {str(e)}'
+    
+    def admin_set_permanent_password(self, username, password):
+        try:
+            self.client.admin_set_user_password(
+                UserPoolId=self.user_pool_id,
+                Username=username,
+                Password=password,
+                Permanent=True
+            )
+            return True, 'Password set as permanent'
+        except Exception as e:
+            return False, f'Error setting permanent password: {str(e)}'
