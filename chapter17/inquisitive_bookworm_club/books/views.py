@@ -3,6 +3,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 import socket
 import logging
+import subprocess
+import json
 from .models import book
 from .cognito_auth import CognitoAuth
 
@@ -128,3 +130,59 @@ def about(request):
         return redirect('login')
     HostName = socket.gethostname()
     return render(request, 'about.html', {'HostName':HostName})
+
+def api_test(request):
+    if not request.session.get('authenticated'):
+        return redirect('login')
+    
+    context = {}
+    
+    if request.method == 'POST':
+        api_url = request.POST.get('api_url')
+        jwt_token = request.POST.get('jwt_token')
+        
+        # Create curl command
+        curl_command = f'curl -X GET "{api_url}" -H "Authorization: Bearer {jwt_token}"'
+        
+        try:
+            # Execute curl command
+            result = subprocess.run(
+                ['curl', '-X', 'GET', api_url, '-H', f'Authorization: Bearer {jwt_token}'],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                try:
+                    # Try to format JSON response
+                    json_response = json.loads(result.stdout)
+                    api_result = json.dumps(json_response, indent=2)
+                except json.JSONDecodeError:
+                    api_result = result.stdout
+            else:
+                api_result = f"Error: {result.stderr}"
+            
+            context.update({
+                'api_url': api_url,
+                'jwt_token': jwt_token,
+                'api_result': api_result,
+                'curl_command': curl_command
+            })
+            
+        except subprocess.TimeoutExpired:
+            context.update({
+                'api_url': api_url,
+                'jwt_token': jwt_token,
+                'error': 'Request timed out after 30 seconds',
+                'curl_command': curl_command
+            })
+        except Exception as e:
+            context.update({
+                'api_url': api_url,
+                'jwt_token': jwt_token,
+                'error': str(e),
+                'curl_command': curl_command
+            })
+    
+    return render(request, 'api_test.html', context)

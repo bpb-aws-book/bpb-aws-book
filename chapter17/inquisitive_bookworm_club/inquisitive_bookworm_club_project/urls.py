@@ -30,4 +30,5 @@ urlpatterns = [
     path("details/<int:pk>/", views.details, name="details"),
     path("rentbook/<int:pk>/", views.rentbook, name="rentbook"),
     path("returnbook/<int:pk>/", views.returnbook, name="returnbook"),
-    path("about/", views.about, name="about")]
+    path("about/", views.about, name="about"),
+    path("api-test/", views.api_test, name="api_test")]
