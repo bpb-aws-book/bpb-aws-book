@@ -182,7 +182,9 @@
 								"Effect": "Allow",
 								"Action": [
 									"cognito-idp:AdminInitiateAuth",
-									"cognito-idp:AdminGetUser"
+									"cognito-idp:AdminGetUser",
+									"cognito-idp:AdminSetUserPassword",
+									"cognito-idp:AdminRespondToAuthChallenge"
 								],
 								"Resource": ["*"]
 							}					
