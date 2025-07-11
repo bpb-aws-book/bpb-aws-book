@@ -36,7 +36,7 @@ class CognitoAuth:
             response = self.client.admin_initiate_auth(
                 UserPoolId=self.user_pool_id,
                 ClientId=self.client_id,
-                AuthFlow='ADMIN_NO_SRP_AUTH',
+                AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters=auth_params
             )
             
