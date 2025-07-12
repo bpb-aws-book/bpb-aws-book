@@ -3,7 +3,6 @@ import hmac
 import hashlib
 import base64
 from django.conf import settings
-from warrant import Cognito
 
 class CognitoAuth:
     def __init__(self):
@@ -21,27 +20,33 @@ class CognitoAuth:
 
     def authenticate(self, username, password):
         try:
-            cognito = Cognito(
-                user_pool_id=self.user_pool_id,
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                username=username
+            auth_params = {
+                'USERNAME': username,
+                'PASSWORD': password
+            }
+            
+            if self.client_secret:
+                auth_params['SECRET_HASH'] = self.get_secret_hash(username)
+            
+            response = self.client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters=auth_params
             )
             
-            cognito.authenticate(password=password)
-            
-            if cognito.access_token:
-                return True, {'AccessToken': cognito.access_token}
+            if 'AuthenticationResult' in response:
+                return True, response['AuthenticationResult']
             else:
                 return False, 'Authentication failed'
                 
+        except self.client.exceptions.NotAuthorizedException:
+            return False, 'Invalid username or password'
+        except self.client.exceptions.UserNotFoundException:
+            return False, 'User not found'
+        except self.client.exceptions.PasswordResetRequiredException:
+            return 'PASSWORD_RESET_REQUIRED', username
         except Exception as e:
-            error_msg = str(e)
-            if 'PasswordResetRequiredException' in error_msg:
-                return 'PASSWORD_RESET_REQUIRED', username
-            elif 'UserNotConfirmedException' in error_msg:
-                return 'FORCE_CHANGE_PASSWORD', username
-            return False, f'Authentication error: {error_msg}'
+            return False, f'Authentication error: {str(e)}'
     
     def initiate_forgot_password(self, username):
         try:
