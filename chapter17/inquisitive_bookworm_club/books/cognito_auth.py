@@ -28,9 +28,10 @@ class CognitoAuth:
             if self.client_secret:
                 auth_params['SECRET_HASH'] = self.get_secret_hash(username)
             
-            response = self.client.initiate_auth(
+            response = self.client.admin_initiate_auth(
+                UserPoolId=self.user_pool_id,
                 ClientId=self.client_id,
-                AuthFlow='USER_PASSWORD_AUTH',
+                AuthFlow='ADMIN_NO_SRP_AUTH',
                 AuthParameters=auth_params
             )
             
@@ -65,7 +66,8 @@ class CognitoAuth:
             if self.client_secret:
                 challenge_params['SECRET_HASH'] = self.get_secret_hash(username)
             
-            response = self.client.respond_to_auth_challenge(
+            response = self.client.admin_respond_to_auth_challenge(
+                UserPoolId=self.user_pool_id,
                 ClientId=self.client_id,
                 ChallengeName='NEW_PASSWORD_REQUIRED',
                 Session=session,
