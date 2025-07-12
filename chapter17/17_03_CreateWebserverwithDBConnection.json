@@ -147,9 +147,9 @@
 							{
 								"Effect": "Allow",
 								"Action": ["secretsmanager:GetResourcePolicy",
-											"secretsmanager:GetSecretValue",
-											"secretsmanager:DescribeSecret",
-											"secretsmanager:ListSecretVersionIds"],
+									"secretsmanager:GetSecretValue",
+									"secretsmanager:DescribeSecret",
+									"secretsmanager:ListSecretVersionIds"],
 								"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
 							},
 							{
@@ -410,14 +410,6 @@
 						"enable gunicorn": {
 							"command": "sudo systemctl enable gunicorn.socket",
 							"cwd": "/home/ec2-user"
-						},
-						"perform migrations": {
-							"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
-							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
-						},
-						"populate sample data": {
-							"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
-							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
 						}
 					}
 				},
