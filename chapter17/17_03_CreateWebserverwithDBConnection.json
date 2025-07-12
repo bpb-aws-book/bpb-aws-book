@@ -184,7 +184,11 @@
 									"cognito-idp:AdminInitiateAuth",
 									"cognito-idp:AdminGetUser",
 									"cognito-idp:AdminSetUserPassword",
-									"cognito-idp:AdminRespondToAuthChallenge"
+									"cognito-idp:AdminRespondToAuthChallenge",
+									"cognito-idp:InitiateAuth",
+                					"cognito-idp:RespondToAuthChallenge",
+                					"cognito-idp:ForgotPassword",
+                					"cognito-idp:ConfirmForgotPassword"
 								],
 								"Resource": ["*"]
 							}					
