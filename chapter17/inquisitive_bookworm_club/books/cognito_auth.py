@@ -18,42 +18,42 @@ class CognitoAuth:
         dig = hmac.new(self.client_secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
         return base64.b64encode(dig).decode()
 
-def authenticate(self, username, password):
-    try:
-        auth_params = {
-            'USERNAME': username,
-            'PASSWORD': password
-        }
-        
-        if self.client_secret:
-            auth_params['SECRET_HASH'] = self.get_secret_hash(username)
-        
-        response = self.client.initiate_auth(
-            ClientId=self.client_id,
-            AuthFlow='USER_PASSWORD_AUTH',
-            AuthParameters=auth_params
-        )
-        
-        # Handle password change challenge
-        if 'ChallengeName' in response and response['ChallengeName'] == 'NEW_PASSWORD_REQUIRED':
-            return 'PASSWORD_RESET_REQUIRED', response['Session']
-        
-        if 'AuthenticationResult' in response:
-            return True, response['AuthenticationResult']
-        else:
-            return False, 'Authentication failed'
+    def authenticate(self, username, password):
+        try:
+            auth_params = {
+                'USERNAME': username,
+                'PASSWORD': password
+            }
             
-    except self.client.exceptions.NotAuthorizedException as e:
-        error_msg = str(e)
-        if 'Password attempts exceeded' in error_msg or 'Temporary password has expired' in error_msg:
-            return 'FORCE_CHANGE_PASSWORD', username
-        return False, 'Invalid username or password'
-    except self.client.exceptions.UserNotFoundException:
-        return False, 'User not found'
-    except self.client.exceptions.PasswordResetRequiredException:
-        return 'PASSWORD_RESET_REQUIRED', username
-    except Exception as e:
-        return False, f'Authentication error: {str(e)}'
+            if self.client_secret:
+                auth_params['SECRET_HASH'] = self.get_secret_hash(username)
+            
+            response = self.client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters=auth_params
+            )
+            
+            # Handle password change challenge
+            if 'ChallengeName' in response and response['ChallengeName'] == 'NEW_PASSWORD_REQUIRED':
+                return 'PASSWORD_RESET_REQUIRED', response['Session']
+            
+            if 'AuthenticationResult' in response:
+                return True, response['AuthenticationResult']
+            else:
+                return False, 'Authentication failed'
+                
+        except self.client.exceptions.NotAuthorizedException as e:
+            error_msg = str(e)
+            if 'Password attempts exceeded' in error_msg or 'Temporary password has expired' in error_msg:
+                return 'FORCE_CHANGE_PASSWORD', username
+            return False, 'Invalid username or password'
+        except self.client.exceptions.UserNotFoundException:
+            return False, 'User not found'
+        except self.client.exceptions.PasswordResetRequiredException:
+            return 'PASSWORD_RESET_REQUIRED', username
+        except Exception as e:
+            return False, f'Authentication error: {str(e)}'
     
     def initiate_forgot_password(self, username):
         try:
