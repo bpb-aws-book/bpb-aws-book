@@ -20,11 +20,6 @@ class CognitoAuth:
 
     def authenticate(self, username, password):
         try:
-            # Check user status first
-            status_success, user_status = self.get_user_status(username)
-            if status_success and user_status == 'FORCE_CHANGE_PASSWORD':
-                return 'FORCE_CHANGE_PASSWORD', username
-            
             auth_params = {
                 'USERNAME': username,
                 'PASSWORD': password
@@ -33,8 +28,7 @@ class CognitoAuth:
             if self.client_secret:
                 auth_params['SECRET_HASH'] = self.get_secret_hash(username)
             
-            response = self.client.admin_initiate_auth(
-                UserPoolId=self.user_pool_id,
+            response = self.client.initiate_auth(
                 ClientId=self.client_id,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters=auth_params
@@ -49,7 +43,9 @@ class CognitoAuth:
             else:
                 return False, 'Authentication failed'
                 
-        except self.client.exceptions.NotAuthorizedException:
+        except self.client.exceptions.NotAuthorizedException as e:
+            if 'Password attempts exceeded' in str(e) or 'Temporary password has expired' in str(e):
+                return 'FORCE_CHANGE_PASSWORD', username
             return False, 'Invalid username or password'
         except self.client.exceptions.UserNotFoundException:
             return False, 'User not found'
@@ -58,11 +54,25 @@ class CognitoAuth:
     
     def get_user_status(self, username):
         try:
-            response = self.client.admin_get_user(
-                UserPoolId=self.user_pool_id,
-                Username=username
+            # Try to authenticate first to check status
+            auth_params = {
+                'USERNAME': username,
+                'PASSWORD': 'dummy_password'  # This will fail but reveal status
+            }
+            
+            if self.client_secret:
+                auth_params['SECRET_HASH'] = self.get_secret_hash(username)
+            
+            self.client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters=auth_params
             )
-            return True, response.get('UserStatus', 'UNKNOWN')
+            return True, 'CONFIRMED'
+        except self.client.exceptions.NotAuthorizedException as e:
+            if 'Password attempts exceeded' in str(e):
+                return True, 'FORCE_CHANGE_PASSWORD'
+            return True, 'CONFIRMED'
         except Exception as e:
             return False, f'Error getting user status: {str(e)}'
     
@@ -77,8 +87,7 @@ class CognitoAuth:
             if self.client_secret:
                 challenge_params['SECRET_HASH'] = self.get_secret_hash(username)
             
-            response = self.client.admin_respond_to_auth_challenge(
-                UserPoolId=self.user_pool_id,
+            response = self.client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName='NEW_PASSWORD_REQUIRED',
                 Session=session,
