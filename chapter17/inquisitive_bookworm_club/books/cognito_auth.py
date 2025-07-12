@@ -52,29 +52,7 @@ class CognitoAuth:
         except Exception as e:
             return False, f'Authentication error: {str(e)}'
     
-    def get_user_status(self, username):
-        try:
-            # Try to authenticate first to check status
-            auth_params = {
-                'USERNAME': username,
-                'PASSWORD': 'dummy_password'  # This will fail but reveal status
-            }
-            
-            if self.client_secret:
-                auth_params['SECRET_HASH'] = self.get_secret_hash(username)
-            
-            self.client.initiate_auth(
-                ClientId=self.client_id,
-                AuthFlow='USER_PASSWORD_AUTH',
-                AuthParameters=auth_params
-            )
-            return True, 'CONFIRMED'
-        except self.client.exceptions.NotAuthorizedException as e:
-            if 'Password attempts exceeded' in str(e):
-                return True, 'FORCE_CHANGE_PASSWORD'
-            return True, 'CONFIRMED'
-        except Exception as e:
-            return False, f'Error getting user status: {str(e)}'
+
     
     def reset_password(self, username, new_password, session):
         try:
