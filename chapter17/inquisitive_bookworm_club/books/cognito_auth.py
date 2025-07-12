@@ -3,6 +3,7 @@ import hmac
 import hashlib
 import base64
 from django.conf import settings
+from warrant import Cognito
 
 class CognitoAuth:
     def __init__(self):
@@ -20,76 +21,56 @@ class CognitoAuth:
 
     def authenticate(self, username, password):
         try:
-            auth_params = {
-                'USERNAME': username,
-                'PASSWORD': password
-            }
-            
-            if self.client_secret:
-                auth_params['SECRET_HASH'] = self.get_secret_hash(username)
-            
-            response = self.client.admin_initiate_auth(
-                UserPoolId=self.user_pool_id,
-                ClientId=self.client_id,
-                AuthFlow='ADMIN_NO_SRP_AUTH',
-                AuthParameters=auth_params
+            cognito = Cognito(
+                user_pool_id=self.user_pool_id,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                username=username
             )
             
-            # Handle password change challenge
-            if 'ChallengeName' in response and response['ChallengeName'] == 'NEW_PASSWORD_REQUIRED':
-                return 'PASSWORD_RESET_REQUIRED', response['Session']
+            cognito.authenticate(password=password)
             
-            if 'AuthenticationResult' in response:
-                return True, response['AuthenticationResult']
+            if cognito.access_token:
+                return True, {'AccessToken': cognito.access_token}
             else:
                 return False, 'Authentication failed'
                 
-        except self.client.exceptions.NotAuthorizedException as e:
-            if 'Password attempts exceeded' in str(e) or 'Temporary password has expired' in str(e):
-                return 'FORCE_CHANGE_PASSWORD', username
-            return False, 'Invalid username or password'
-        except self.client.exceptions.UserNotFoundException:
-            return False, 'User not found'
         except Exception as e:
-            return False, f'Authentication error: {str(e)}'
+            error_msg = str(e)
+            if 'PasswordResetRequiredException' in error_msg:
+                return 'PASSWORD_RESET_REQUIRED', username
+            elif 'UserNotConfirmedException' in error_msg:
+                return 'FORCE_CHANGE_PASSWORD', username
+            return False, f'Authentication error: {error_msg}'
     
-
-    
-    def reset_password(self, username, new_password, session):
+    def initiate_forgot_password(self, username):
         try:
-            challenge_params = {
-                'USERNAME': username,
-                'NEW_PASSWORD': new_password,
-                'PASSWORD_PERMANENT': 'true'
-            }
-            
+            params = {'Username': username}
             if self.client_secret:
-                challenge_params['SECRET_HASH'] = self.get_secret_hash(username)
+                params['SecretHash'] = self.get_secret_hash(username)
             
-            response = self.client.admin_respond_to_auth_challenge(
-                UserPoolId=self.user_pool_id,
+            self.client.forgot_password(
                 ClientId=self.client_id,
-                ChallengeName='NEW_PASSWORD_REQUIRED',
-                Session=session,
-                ChallengeResponses=challenge_params
+                **params
             )
+            return True, 'Password reset email sent'
+        except Exception as e:
+            return False, f'Error sending reset email: {str(e)}'
+    
+    def confirm_forgot_password(self, username, confirmation_code, new_password):
+        try:
+            params = {
+                'Username': username,
+                'ConfirmationCode': confirmation_code,
+                'Password': new_password
+            }
+            if self.client_secret:
+                params['SecretHash'] = self.get_secret_hash(username)
             
-            if 'AuthenticationResult' in response:
-                return True, response['AuthenticationResult']
-            else:
-                return False, 'Password reset failed'
-                
+            self.client.confirm_forgot_password(
+                ClientId=self.client_id,
+                **params
+            )
+            return True, 'Password reset successful'
         except Exception as e:
             return False, f'Password reset error: {str(e)}'
-    
-    def admin_set_permanent_password(self, username, password):
-        try:
-            self.client.admin_set_user_password(
-                UserPoolId=self.user_pool_id,
-                Username=username,
-                Password=password,
-                Permanent=True
-            )
-            return True, 'Password set as permanent'
-        except Exception as e:
-            return False, f'Error setting permanent password: {str(e)}'
