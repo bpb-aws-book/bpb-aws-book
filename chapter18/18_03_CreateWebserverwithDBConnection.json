@@ -139,7 +139,10 @@
 										"secretsmanager:DescribeSecret",
 										"secretsmanager:ListSecretVersionIds"
 									],
-									"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+									"Resource": [
+										{"Fn::ImportValue": "BPBBookRDSSecretARN"},
+										{"Ref": "CognitoSecret"}
+									]
 								},
 								{
 									"Effect": "Allow",
@@ -174,6 +177,15 @@
 										"cognito-idp:ConfirmForgotPassword"
 									],
 									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"dynamodb:PutItem",
+										"dynamodb:Query",
+										"dynamodb:GetItem"
+									],
+									"Resource": [{"Fn::GetAtt": ["UserLoginAuditTable", "Arn"]}]
 								}
 							]
 						}
@@ -239,6 +251,111 @@
 					}
 				],
 				"MessageAction": "SUPPRESS"
+			}
+		},
+		"CognitoSecret": {
+			"Type": "AWS::SecretsManager::Secret",
+			"Properties": {
+				"Name": "CognitoClientSecret",
+				"Description": "Cognito User Pool Client configuration",
+				"SecretString": {
+					"Fn::Sub": [
+						"{\"client_id\": \"${ClientId}\", \"client_secret\": \"${ClientSecret}\", \"user_pool_id\": \"${UserPoolId}\"}",
+						{
+							"ClientId": {"Ref": "CognitoUserPoolClient"},
+							"ClientSecret": {"Fn::GetAtt": ["CognitoUserPoolClient", "ClientSecret"]},
+							"UserPoolId": {"Ref": "CognitoUserPool"}
+						}
+					]
+				},
+				"KmsKeyId": {"Fn::ImportValue": "BPBBookKMSKeyARN"}
+			}
+		},
+		"UserLoginAuditTable": {
+			"Type": "AWS::DynamoDB::Table",
+			"Properties": {
+				"TableName": "UserLoginAudit",
+				"BillingMode": "PROVISIONED",
+				"ProvisionedThroughput": {
+					"ReadCapacityUnits": 1,
+					"WriteCapacityUnits": 1
+				},
+				"AttributeDefinitions": [
+					{
+						"AttributeName": "user_id",
+						"AttributeType": "S"
+					},
+					{
+						"AttributeName": "login_timestamp",
+						"AttributeType": "S"
+					},
+					{
+						"AttributeName": "login_date",
+						"AttributeType": "S"
+					},
+					{
+						"AttributeName": "ip_address",
+						"AttributeType": "S"
+					}
+				],
+				"KeySchema": [
+					{
+						"AttributeName": "user_id",
+						"KeyType": "HASH"
+					},
+					{
+						"AttributeName": "login_timestamp",
+						"KeyType": "RANGE"
+					}
+				],
+				"GlobalSecondaryIndexes": [
+					{
+						"IndexName": "LoginDateIndex",
+						"KeySchema": [
+							{
+								"AttributeName": "login_date",
+								"KeyType": "HASH"
+							},
+							{
+								"AttributeName": "login_timestamp",
+								"KeyType": "RANGE"
+							}
+						],
+						"Projection": {"ProjectionType": "ALL"},
+						"ProvisionedThroughput": {
+							"ReadCapacityUnits": 1,
+							"WriteCapacityUnits": 1
+						}
+					},
+					{
+						"IndexName": "IPAddressIndex",
+						"KeySchema": [
+							{
+								"AttributeName": "ip_address",
+								"KeyType": "HASH"
+							},
+							{
+								"AttributeName": "login_timestamp",
+								"KeyType": "RANGE"
+							}
+						],
+						"Projection": {"ProjectionType": "ALL"},
+						"ProvisionedThroughput": {
+							"ReadCapacityUnits": 1,
+							"WriteCapacityUnits": 1
+						}
+					}
+				],
+				"TimeToLiveSpecification": {
+					"AttributeName": "ttl",
+					"Enabled": true
+				},
+				"PointInTimeRecoverySpecification": {
+					"PointInTimeRecoveryEnabled": true
+				},
+				"SSESpecification": {
+					"SSEEnabled": true
+				}
 			}
 		},
 		"WebServer": {
@@ -388,7 +505,7 @@
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update cognito settings": {
-								"command": {"Fn::Sub": "sed -i 's/YOUR_USER_POOL_ID/${CognitoUserPool}/g' settings.py && sed -i 's/YOUR_CLIENT_ID/${CognitoUserPoolClient}/g' settings.py && sed -i 's/YOUR_CLIENT_SECRET/${CognitoUserPoolClient.ClientSecret}/g' settings.py"},
+								"command": {"Fn::Sub": "sed -i 's/COGNITO_SECRET_ARN/${CognitoSecret}/g' settings.py"},
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							}
 						}
@@ -533,6 +650,14 @@
 			"CognitoUserPoolClientId": {
 				"Value": {"Ref": "CognitoUserPoolClient"},
 				"Description": "Cognito User Pool Client ID"
+			},
+			"CognitoSecretArn": {
+				"Value": {"Ref": "CognitoSecret"},
+				"Description": "Cognito Secret ARN in Secrets Manager"
+			},
+			"LoginAuditTableName": {
+				"Value": {"Ref": "UserLoginAuditTable"},
+				"Description": "DynamoDB table name for login audit logs"
 			}
 		}
 	}
