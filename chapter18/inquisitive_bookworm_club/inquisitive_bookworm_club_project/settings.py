@@ -32,10 +32,24 @@ DEBUG = True
 ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']
 
 # AWS Cognito Configuration
-AWS_REGION = 'us-east-1'  # Replace with your region
-COGNITO_USER_POOL_ID = 'YOUR_USER_POOL_ID'  # Replace with your User Pool ID
-COGNITO_CLIENT_ID = 'YOUR_CLIENT_ID'  # Replace with your App Client ID
-COGNITO_CLIENT_SECRET = 'YOUR_CLIENT_SECRET'  # Add this if your app client has a secret
+AWS_REGION = 'AWSREGION'  # Replace with your region
+
+# Initialize Secrets Manager client and cache
+client = botocore.session.get_session().create_client('secretsmanager', AWS_REGION)
+cache_config = SecretCacheConfig()
+cache = SecretCache(config=cache_config, client=client)
+
+# Get Cognito configuration from Secrets Manager
+cognito_secret = cache.get_secret_string('COGNITO_SECRET_ARN')
+cognito_data = json.loads(cognito_secret)
+COGNITO_USER_POOL_ID = cognito_data['user_pool_id']
+COGNITO_CLIENT_ID = cognito_data['client_id']
+COGNITO_CLIENT_SECRET = cognito_data['client_secret']
+
+# Feature flags
+ENABLE_API_TEST = False
+ENABLE_PASSWORD_RESET = False
+ENABLE_FORCE_PASSWORD_RESET = False
 
 # Application definition
 
@@ -78,10 +92,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "inquisitive_bookworm_club_project.wsgi.application"
-
-client = botocore.session.get_session().create_client('secretsmanager', AWS_REGION)
-cache_config = SecretCacheConfig()
-cache = SecretCache( config = cache_config, client = client)
 
 secret = cache.get_secret_string('SECRETARN')
 secretdata = json.loads(secret)
