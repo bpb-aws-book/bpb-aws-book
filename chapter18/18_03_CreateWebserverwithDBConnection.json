@@ -1,0 +1,538 @@
+{
+	"Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Parameters": {
+		"LatestAmiId": {
+			"Description": "The latest AMI id. Default is Amazon Linux 2023",
+			"Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+			"Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+		},
+		"InstanceType": {
+			"Description": "WebServer EC2 instance type",
+			"Type": "String",
+			"Default": "t2.small",
+			"AllowedValues": [
+				"t1.micro",
+				"t2.nano",
+				"t2.micro",
+				"t2.small",
+				"t2.medium",
+				"t2.large",
+				"m1.small",
+				"m1.medium",
+				"m1.large",
+				"m1.xlarge",
+				"m2.xlarge",
+				"m2.2xlarge",
+				"m2.4xlarge",
+				"m3.medium",
+				"m3.large",
+				"m3.xlarge",
+				"m3.2xlarge",
+				"m4.large",
+				"m4.xlarge",
+				"m4.2xlarge",
+				"m4.4xlarge",
+				"m4.10xlarge",
+				"c1.medium",
+				"c1.xlarge",
+				"c3.large",
+				"c3.xlarge",
+				"c3.2xlarge",
+				"c3.4xlarge",
+				"c3.8xlarge",
+				"c4.large",
+				"c4.xlarge",
+				"c4.2xlarge",
+				"c4.4xlarge",
+				"c4.8xlarge",
+				"g2.2xlarge",
+				"g2.8xlarge",
+				"r3.large",
+				"r3.xlarge",
+				"r3.2xlarge",
+				"r3.4xlarge",
+				"r3.8xlarge",
+				"i2.xlarge",
+				"i2.2xlarge",
+				"i2.4xlarge",
+				"i2.8xlarge",
+				"d2.xlarge",
+				"d2.2xlarge",
+				"d2.4xlarge",
+				"d2.8xlarge",
+				"hi1.4xlarge",
+				"hs1.8xlarge",
+				"cr1.8xlarge",
+				"cc2.8xlarge",
+				"cg1.4xlarge"
+			],
+			"ConstraintDescription": "must be a valid EC2 instance type."
+		},
+
+
+		"UserEmail": {
+			"Description": "Please specify a valid email address for the Cognito user",
+			"Type": "String"
+		}
+	},
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [
+				{
+					"Label": {
+						"default": "Your IP and EC2 Configuration"
+					},
+					"Parameters": [
+						"LatestAmiId",
+						"InstanceType",
+						"UserEmail"
+					]
+				}
+			],
+			"ParameterLabels": {
+				"LatestAmiId": {
+					"default": "Amazon Linux 2 AMI ID"
+				},
+				"InstanceType": {
+					"default": "Instance Type"
+				},
+
+				"UserEmail": {
+					"default": "User Email Address"
+				}
+			}
+		}
+	},
+	"Resources": {
+		"SSMIAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "SSMIAMRoleForDjangoWebServer",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+                ],
+				"Policies": [
+					{
+						"PolicyName": "AdditionalPermissionsPolicy",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"secretsmanager:GetResourcePolicy",
+										"secretsmanager:GetSecretValue",
+										"secretsmanager:DescribeSecret",
+										"secretsmanager:ListSecretVersionIds"
+									],
+									"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["secretsmanager:ListSecrets"],
+									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["kms:Decrypt"],
+									"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["cloudformation:ListExports"],
+									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["iam:UploadServerCertificate"],
+									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"cognito-idp:AdminInitiateAuth",
+										"cognito-idp:AdminGetUser",
+										"cognito-idp:AdminSetUserPassword",
+										"cognito-idp:AdminRespondToAuthChallenge",
+										"cognito-idp:InitiateAuth",
+										"cognito-idp:RespondToAuthChallenge",
+										"cognito-idp:ForgotPassword",
+										"cognito-idp:ConfirmForgotPassword"
+									],
+									"Resource": ["*"]
+								}
+							]
+						}
+					}
+				]
+
+            }
+        },
+		"SSMIAMInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "SSMIAMRole"
+                    }
+                ]
+            }
+        },
+		"CognitoUserPool": {
+			"Type": "AWS::Cognito::UserPool",
+			"Properties": {
+				"UserPoolName": "InquisitiveBookwormClubUserPool",
+				"UsernameAttributes": ["email"],
+				"AutoVerifiedAttributes": ["email"],
+				"Policies": {
+					"PasswordPolicy": {
+						"MinimumLength": 8,
+						"RequireUppercase": true,
+						"RequireLowercase": true,
+						"RequireNumbers": true,
+						"RequireSymbols": false
+					}
+				}
+			}
+		},
+		"CognitoUserPoolClient": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"Properties": {
+				"ClientName": "InquisitiveBookwormClubClient",
+				"UserPoolId": {"Ref": "CognitoUserPool"},
+				"GenerateSecret": true,
+				"ExplicitAuthFlows": [
+					"ALLOW_USER_PASSWORD_AUTH",
+					"ALLOW_REFRESH_TOKEN_AUTH",
+					"ALLOW_ADMIN_USER_PASSWORD_AUTH"
+				]
+			}
+		},
+		"CognitoUser": {
+			"Type": "AWS::Cognito::UserPoolUser",
+			"Properties": {
+				"UserPoolId": {"Ref": "CognitoUserPool"},
+				"Username": {"Ref": "UserEmail"},
+				"UserAttributes": [
+					{
+						"Name": "email",
+						"Value": {"Ref": "UserEmail"}
+					},
+					{
+						"Name": "email_verified",
+						"Value": "true"
+					}
+				],
+				"MessageAction": "SUPPRESS"
+			}
+		},
+		"WebServer": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {
+					"Ref": "LatestAmiId"
+				},
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+               "Ref": "SSMIAMInstanceProfile"
+            	},
+				"SecurityGroupIds": [
+					{"Fn::ImportValue": "BPBBookStandaloneWebServerSecurityGroup"}
+				],
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"0",
+						{
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"SubnetId": {
+					"Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter18WebServer"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Eighteen"
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"",
+							[
+								"#!/bin/bash -xe\n",
+								"yum install -y aws-cfn-bootstrap\n",
+								"# Install the files and packages from the metadata\n",
+								"/opt/aws/bin/cfn-init -v ",
+								"         --stack ",
+								{
+									"Ref": "AWS::StackName"
+								},
+								"         --resource WebServer ",
+								"         --configsets All",
+								"         --region ",
+								{
+									"Ref": "AWS::Region"
+								},
+								"\n",
+								"# Signal the status from cfn-init\n",
+								"/opt/aws/bin/cfn-signal -e $? ",
+								"         --stack ",
+								{
+									"Ref": "AWS::StackName"
+								},
+								"         --resource WebServer ",
+								"         --region ",
+								{
+									"Ref": "AWS::Region"
+								},
+								"\n"
+							]
+						]
+					}
+				}
+			},
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"configSets": {
+						"All": [
+							"InstallSSMAgent","InstallDjangoApplication", "ConfigureGunicorn","InstallNginx","ExportCertificatestoIAM"
+						]
+					},
+					"InstallSSMAgent" : {
+                        "services" : {
+                        "sysvinit" : {  
+                            "amazon-ssm-agent"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        }
+                    },
+					"InstallDjangoApplication": {
+                        "packages" : {
+                            "yum" : {
+                                "git" : [], "jq" : []
+                            }
+                        },
+						"commands": {
+                            "clone the repository":{
+                                "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
+                                "cwd": "/home/ec2-user"
+                            },
+							"copy required files":{
+                                "command": "cp -r bpb-aws-book/chapter18/inquisitive_bookworm_club .",
+                                "cwd": "/home/ec2-user"
+                            },
+							 "remove the cloned repository": {
+                                "command": "rm -rf bpb-aws-book",
+                                "cwd": "/home/ec2-user"
+                            },
+							"get security token for reading metadata": {
+								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"retrieve public ip from instance metadata": {
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"retrieve current AWS region from instance metadata": {
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/placement/region -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > awsregion",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							 "update settings file allowed host with public ip of the web server": {
+								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"update settings file AWS region with the current AWS region": {
+								"command": "export AWS_REGION=$(cat awsregion) && sed -i 's/AWSREGION/'${AWS_REGION}'/g' settings.py && rm -r tokenfile",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},							
+							"create script file to upgrade and install pip and gunicorn": {
+								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"execute script file from the previous step": {
+								"command": "sh setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							 "install dependencies for postgresql access and boto3": {
+								"command": "sudo su && source env/bin/activate && python3 -m pip install boto3 psycopg2-binary aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"update settings file database endpoint url": {
+								"command": "sudo su && aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"update settings file secrets arn": {
+								"command": "sudo su && export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"update cognito settings": {
+								"command": {"Fn::Sub": "sed -i 's/YOUR_USER_POOL_ID/${CognitoUserPool}/g' settings.py && sed -i 's/YOUR_CLIENT_ID/${CognitoUserPoolClient}/g' settings.py && sed -i 's/YOUR_CLIENT_SECRET/${CognitoUserPoolClient.ClientSecret}/g' settings.py"},
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							}
+						}
+					},
+                    "ConfigureGunicorn" : {
+                    "files" : {
+                    "/etc/systemd/system/gunicorn.socket" : {
+                        "content" : { "Fn::Join" : [ "", [
+                            "[Unit] \n",
+                            "Description=gunicorn socket \n",
+                            "\n",
+                            "[Socket] \n",
+                            "ListenStream=/run/gunicorn.sock \n",
+                            "\n",
+                            "[Install] \n",
+                            "WantedBy=sockets.target"
+                        ]]},
+                        "mode"  : "000644",
+                        "owner" : "ec2-user",
+                        "group" : "ec2-user"
+                    },
+                    "/etc/systemd/system/gunicorn.service" : {
+                        "content" : { "Fn::Join" : [ "", [
+                            "[Unit] \n",
+                            "Description=gunicorn daemon\n",
+                            "Requires=gunicorn.socket\n",
+                            "After=network.target\n",
+                            "\n",
+                            "[Service]\n",
+                            "User=ec2-user\n",
+                            "Group=ec2-user\n",
+                            "WorkingDirectory=/home/ec2-user/inquisitive_bookworm_club\n",
+                            "ExecStart=/home/ec2-user/inquisitive_bookworm_club/env/bin/gunicorn \\\n",
+                            "--access-logfile - \\\n",
+                            "--workers 3 \\\n",
+                            "--bind unix:/run/gunicorn.sock \\\n",
+                            "inquisitive_bookworm_club_project.wsgi:application\n",
+                            "[Install]\n",
+                            "WantedBy=multi-user.target"
+                        ]]},
+                        "mode"  : "000644",
+                        "owner" : "ec2-user",
+                        "group" : "ec2-user"
+                    }
+                },
+					"commands": {
+						"start gunicorn": {
+							"command": "sudo systemctl start gunicorn.socket",
+							"cwd": "/home/ec2-user"
+						},
+						"enable gunicorn": {
+							"command": "sudo systemctl enable gunicorn.socket",
+							"cwd": "/home/ec2-user"
+						},
+						"perform migrations": {
+							"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
+							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+						},
+						"populate sample data": {
+							"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+							"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+						}
+					}
+				},
+                    "InstallNginx" : {
+                        "packages" : {
+                        "yum" : {
+                            "nginx" : []
+                        }
+                    },
+                        "services" : {
+                        "sysvinit" : {  
+                            "nginx"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        },
+						"files" : {
+							"/etc/nginx/default.d/inquisitebookwormclub.conf" : {
+								"content" : { "Fn::Join" : [ "", [
+									"location / {\n",
+									"    proxy_set_header Host $http_host;\n",
+									"    proxy_set_header X-Real-IP $remote_addr;\n",
+									"    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n",
+									"    proxy_set_header X-Forwarded-Proto $scheme;\n",
+									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
+									"}"
+								]]}
+							}
+						},
+						"commands": {
+							"take a backup of our nginx config file": {
+								"command": "sudo cp nginx.conf nginx.conf.original",
+								"cwd": "/etc/nginx"
+							},
+							"install openssl": {
+								"command": "sudo yum install openssl -y",
+								"cwd": "/etc/nginx"
+							},
+							"generate self signed certificates": {
+								"command": "sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout inquisitivebookwormclub.key -out inquisitivebookwormclub.crt -subj \"/C=US/ST=AnyState/L=Anycity/O=Inquisitive Bookworm Club/OU=ITDepartment/CN=None\"",
+								"cwd": "/etc/nginx"
+							},
+							"overwrite the SSL enabled nginx conf file": {
+								"command": "sudo cp /home/ec2-user/inquisitive_bookworm_club/nginx.conf ./nginx.conf",
+								"cwd": "/etc/nginx"
+							},
+							"restart nginx": {
+								"command": "sudo service nginx restart",
+								"cwd": "/etc/nginx"
+							}
+					}
+                    },
+					"ExportCertificatestoIAM" : {
+						"commands": {
+							"export certificates to IAM": {
+								"command": "sudo aws iam upload-server-certificate --server-certificate-name InquisitiveBookwormClubCert --certificate-body file://inquisitivebookwormclub.crt --private-key file://inquisitivebookwormclub.key",
+								"cwd": "/etc/nginx"
+							}
+					}
+                    }
+				}
+			},
+			"CreationPolicy": {
+				"ResourceSignal": {
+					"Timeout": "PT5M"
+				}
+			}
+		}},
+		"Outputs": {
+			"PublicIp": {
+				"Value": {
+					"Fn::GetAtt": [
+						"WebServer",
+						"PublicIp"
+					]
+				},
+				"Description": "Web Server's Public IP Address"
+			},
+			"CognitoUserPoolId": {
+				"Value": {"Ref": "CognitoUserPool"},
+				"Description": "Cognito User Pool ID"
+			},
+			"CognitoUserPoolClientId": {
+				"Value": {"Ref": "CognitoUserPoolClient"},
+				"Description": "Cognito User Pool Client ID"
+			}
+		}
+	}
