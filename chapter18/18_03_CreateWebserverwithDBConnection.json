@@ -209,7 +209,6 @@
 			"Type": "AWS::Cognito::UserPool",
 			"Properties": {
 				"UserPoolName": "InquisitiveBookwormClubUserPool",
-				"UsernameAttributes": ["email"],
 				"AutoVerifiedAttributes": ["email"],
 				"Policies": {
 					"PasswordPolicy": {
