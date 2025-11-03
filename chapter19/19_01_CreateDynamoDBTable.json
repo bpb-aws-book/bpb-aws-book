@@ -48,7 +48,7 @@
     "ReadCapacityScalableTarget": {
       "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
       "Properties": {
-        "MaxCapacity": 2,
+        "MaxCapacity": 10,
         "MinCapacity": 1,
         "ResourceId": {
           "Fn::Sub": "table/${ChatTable}"
@@ -63,7 +63,7 @@
     "WriteCapacityScalableTarget": {
       "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
       "Properties": {
-        "MaxCapacity": 2,
+        "MaxCapacity": 10,
         "MinCapacity": 1,
         "ResourceId": {
           "Fn::Sub": "table/${ChatTable}"
@@ -85,6 +85,8 @@
         },
         "TargetTrackingScalingPolicyConfiguration": {
           "TargetValue": 80.0,
+          "ScaleOutCooldown": 60,
+          "ScaleInCooldown": 300,
           "PredefinedMetricSpecification": {
             "PredefinedMetricType": "DynamoDBReadCapacityUtilization"
           }
@@ -101,6 +103,8 @@
         },
         "TargetTrackingScalingPolicyConfiguration": {
           "TargetValue": 80.0,
+          "ScaleOutCooldown": 60,
+          "ScaleInCooldown": 300,
           "PredefinedMetricSpecification": {
             "PredefinedMetricType": "DynamoDBWriteCapacityUtilization"
           }
