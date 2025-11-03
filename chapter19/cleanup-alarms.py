@@ -9,14 +9,16 @@ def delete_autoscaling_alarms(table_name):
         # Get all alarms
         response = cloudwatch.describe_alarms()
         
-        # Check if response has alarms
-        if 'Alarms' not in response or not response['Alarms']:
+        # Get alarms list safely
+        alarms = response.get('Alarms', [])
+        
+        if not alarms:
             print(f"No alarms found in the account")
             return
         
         # Filter alarms related to the table
         table_alarms = [
-            alarm['AlarmName'] for alarm in response['Alarms']
+            alarm['AlarmName'] for alarm in alarms
             if table_name in alarm['AlarmName'] and 
             ('TargetTracking' in alarm['AlarmName'] or 'DynamoDB' in alarm.get('Namespace', ''))
         ]
