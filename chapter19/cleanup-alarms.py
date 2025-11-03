@@ -7,11 +7,13 @@ def delete_autoscaling_alarms(table_name):
     
     try:
         # Check current region
-        print(f"Checking region: {cloudwatch.meta.region_name}")
+        print(f"Checking region: {cloudwatch._client_config.region_name}")
         
+        print("Calling describe_alarms...")
         response = cloudwatch.describe_alarms()
-        alarms = response.get('Alarms', [])
+        print(f"Response received: {type(response)}")
         
+        alarms = response.get('Alarms', [])
         print(f"Total alarms found: {len(alarms)}")
         
         if not alarms:
@@ -40,6 +42,8 @@ def delete_autoscaling_alarms(table_name):
             
     except Exception as e:
         print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     # You can specify region if needed
