@@ -3,12 +3,14 @@ import boto3
 
 def delete_autoscaling_alarms(table_name):
     """Delete CloudWatch alarms created by DynamoDB autoscaling"""
+    print(f"Deleting alarms for table {table_name}")
     cloudwatch = boto3.client('cloudwatch')
     
     try:
+        print("1")
         # Check current region
         print(f"Checking region: {cloudwatch._client_config.region_name}")
-        
+        print("2")
         print("Calling describe_alarms...")
         response = cloudwatch.describe_alarms()
         print(f"Response received: {type(response)}")
