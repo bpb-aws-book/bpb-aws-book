@@ -6,17 +6,13 @@ def delete_autoscaling_alarms(table_name):
     cloudwatch = boto3.client('cloudwatch')
     
     try:
-        # Get all alarms
         response = cloudwatch.describe_alarms()
-        
-        # Get alarms list safely
         alarms = response.get('Alarms', [])
         
         if not alarms:
-            print(f"No alarms found in the account")
+            print("No alarms found in the account")
             return
         
-        # Filter alarms related to the table
         table_alarms = [
             alarm['AlarmName'] for alarm in alarms
             if table_name in alarm['AlarmName'] and 
@@ -33,7 +29,4 @@ def delete_autoscaling_alarms(table_name):
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    try:
-        delete_autoscaling_alarms("ChatMessages")
-    except Exception as e:
-        print(f"Script error: {e}")
+    delete_autoscaling_alarms("ChatMessages")
