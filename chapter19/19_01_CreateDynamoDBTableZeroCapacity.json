@@ -1,0 +1,66 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "DynamoDB table for real-time chat between user and AI agent",
+  "Resources": {
+    "ChatTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "ChatMessages",
+        "BillingMode": "PROVISIONED",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 0,
+          "WriteCapacityUnits": 0
+        },
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "SessionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "Timestamp",
+            "AttributeType": "N"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "SessionId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "Timestamp",
+            "KeyType": "RANGE"
+          }
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Purpose",
+            "Value": "ChatStorage"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "TableName": {
+      "Description": "Name of the DynamoDB table",
+      "Value": {
+        "Ref": "ChatTable"
+      }
+    },
+    "TableArn": {
+      "Description": "ARN of the DynamoDB table",
+      "Value": {
+        "Fn::GetAtt": [
+          "ChatTable",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
