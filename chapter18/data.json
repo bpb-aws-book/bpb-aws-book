@@ -7,5 +7,5 @@
     "login_successful": {"BOOL": true},
     "session_id": {"S": "uuid-generated-session-id"},
     "error_message": {"S": "Invalid Username or password"},   
-    "ttl": {"N": "1735689045"}
+    "ttl": {"N": "1920059552"}
 }
