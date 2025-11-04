@@ -1,0 +1,11 @@
+{
+    "user_id": {"S": "john@acme.com"},
+    "login_timestamp": {"S": "2024-01-15T10:30:45.123Z"},
+    "login_date": {"S": "2024-01-15"},
+    "ip_address": {"S": "192.168.1.100"},
+    "user_agent": {"S": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+    "login_successful": {"BOOL": true},
+    "session_id": {"S": "uuid-generated-session-id"},
+    "error_message": {"S": "Invalid Username or password"},   
+    "ttl": {"N": "1735689045"}
+}
