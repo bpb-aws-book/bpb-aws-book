@@ -8,8 +8,8 @@
         "TableName": "ChatMessages",
         "BillingMode": "PROVISIONED",
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 0,
-          "WriteCapacityUnits": 0
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
         },
         "AttributeDefinitions": [
           {
