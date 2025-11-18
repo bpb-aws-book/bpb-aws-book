@@ -1,1 +1,254 @@
-
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template for AWS Glue Visual ETL Job with Lambda custom resource",
+  "Resources": {
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "GlueUpdatePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "glue:UpdateJob",
+                    "glue:GetJob"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "iam:PassRole",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "GlueJobRole",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${DataBucket.Arn}/*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "UploadScriptFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-upload-script"
+        },
+        "Runtime": "python3.11",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 60,
+        "Code": {
+          "ZipFile": "import boto3\nimport cfnresponse\n\ns3 = boto3.client('s3')\n\nPLACEHOLDER_SCRIPT = '''import sys\nfrom awsglue.transforms import *\nfrom awsglue.utils import getResolvedOptions\nfrom pyspark.context import SparkContext\nfrom awsglue.context import GlueContext\nfrom awsglue.job import Job\n\nargs = getResolvedOptions(sys.argv, ['JOB_NAME'])\nsc = SparkContext()\nglueContext = GlueContext(sc)\nspark = glueContext.spark_session\njob = Job(glueContext)\njob.init(args['JOB_NAME'], args)\n\njob.commit()\n'''\n\ndef handler(event, context):\n    try:\n        request_type = event['RequestType']\n        bucket_name = event['ResourceProperties']['BucketName']\n        \n        if request_type == 'Delete':\n            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})\n            return\n        \n        if request_type in ['Create', 'Update']:\n            s3.put_object(\n                Bucket=bucket_name,\n                Key='scripts/placeholder.py',\n                Body=PLACEHOLDER_SCRIPT.encode('utf-8')\n            )\n            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})\n        \n    except Exception as e:\n        print(f'Error: {str(e)}')\n        cfnresponse.send(event, context, cfnresponse.FAILED, {'Message': str(e)})\n"
+        }
+      }
+    },
+    "UploadScript": {
+      "Type": "Custom::UploadScript",
+      "DependsOn": "DataBucket",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "UploadScriptFunction",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "DataBucket"
+        }
+      }
+    },
+    "GlueVisualJobFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-glue-visual-config"
+        },
+        "Runtime": "python3.11",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 60,
+        "Code": {
+          "ZipFile": "import json\nimport boto3\nimport cfnresponse\nimport traceback\n\nglue = boto3.client('glue')\n\ndef handler(event, context):\n    print(f'Event: {json.dumps(event)}')\n    try:\n        request_type = event['RequestType']\n        job_name = event['ResourceProperties']['JobName']\n        \n        if request_type == 'Delete':\n            cfnresponse.send(event, context, cfnresponse.SUCCESS, {})\n            return\n        \n        if request_type in ['Create', 'Update']:\n            code_gen_nodes = json.loads(event['ResourceProperties']['CodeGenConfigurationNodes'])\n            print(f'Updating job {job_name} with visual config')\n            \n            # Get current job to preserve settings\n            current_job = glue.get_job(JobName=job_name)\n            job_def = current_job['Job']\n            \n            # Keep the command as-is, Glue will auto-generate script from visual config\n            command = job_def['Command'].copy()\n            \n            # Update with visual configuration\n            response = glue.update_job(\n                JobName=job_name,\n                JobUpdate={\n                    'Role': job_def['Role'],\n                    'Command': command,\n                    'DefaultArguments': job_def.get('DefaultArguments', {}),\n                    'MaxRetries': job_def.get('MaxRetries', 0),\n                    'Timeout': job_def.get('Timeout', 60),\n                    'GlueVersion': job_def.get('GlueVersion', '4.0'),\n                    'NumberOfWorkers': job_def.get('NumberOfWorkers', 2),\n                    'WorkerType': job_def.get('WorkerType', 'G.1X'),\n                    'CodeGenConfigurationNodes': code_gen_nodes\n                }\n            )\n            \n            print(f'Successfully updated job: {response}')\n            cfnresponse.send(event, context, cfnresponse.SUCCESS, {\n                'JobName': job_name,\n                'Message': 'Visual ETL configuration applied'\n            })\n        \n    except Exception as e:\n        error_msg = f'Error: {str(e)}\\n{traceback.format_exc()}'\n        print(error_msg)\n        cfnresponse.send(event, context, cfnresponse.FAILED, {\n            'Message': str(e)\n        })\n"
+        }
+      }
+    },
+    "DataBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "${AWS::StackName}-data-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "GlueJobRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "glue.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "S3AccessPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
+                    "s3:ListBucket"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "DataBucket",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Sub": "${DataBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "GlueJob": {
+      "Type": "AWS::Glue::Job",
+      "DependsOn": "UploadScript",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-glue-job"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "GlueJobRole",
+            "Arn"
+          ]
+        },
+        "Command": {
+          "Name": "glueetl",
+          "ScriptLocation": {
+            "Fn::Sub": "s3://${DataBucket}/scripts/placeholder.py"
+          },
+          "PythonVersion": "3"
+        },
+        "JobMode": "VISUAL",
+        "DefaultArguments": {
+          "--job-bookmark-option": "job-bookmark-enable",
+          "--enable-metrics": "",
+          "--enable-continuous-cloudwatch-log": "true",
+          "--TempDir": {
+            "Fn::Sub": "s3://${DataBucket}/temp/"
+          }
+        },
+        "MaxRetries": 0,
+        "NumberOfWorkers": 2,
+        "WorkerType": "G.1X",
+        "Timeout": 60,
+        "GlueVersion": "4.0"
+      }
+    },
+    "GlueVisualJobConfig": {
+      "Type": "Custom::GlueVisualJob",
+      "DependsOn": "GlueJob",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "GlueVisualJobFunction",
+            "Arn"
+          ]
+        },
+        "JobName": {
+          "Ref": "GlueJob"
+        },
+        "CodeGenConfigurationNodes": {
+          "Fn::Sub": "{\"node-1\":{\"S3CsvSource\":{\"Name\":\"S3 CSV Source\",\"Paths\":[\"s3://${DataBucket}/input/students.csv\"],\"Separator\":\"comma\",\"QuoteChar\":\"quote\",\"WithHeader\":true,\"Escaper\":\"\",\"Recurse\":true,\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"id\",\"Type\":\"string\"},{\"Name\":\"first_name\",\"Type\":\"string\"},{\"Name\":\"last_name\",\"Type\":\"string\"},{\"Name\":\"date_of_birth\",\"Type\":\"string\"},{\"Name\":\"subject\",\"Type\":\"string\"},{\"Name\":\"grade\",\"Type\":\"string\"}]}]}},\"node-2\":{\"Filter\":{\"Name\":\"Filter Valid Grades\",\"Inputs\":[\"node-1\"],\"LogicalOperator\":\"AND\",\"Filters\":[{\"Operation\":\"REGEX\",\"Negated\":false,\"Values\":[{\"Type\":\"COLUMNEXTRACTED\",\"Value\":[\"grade\"]},{\"Type\":\"CONSTANT\",\"Value\":[\"^(A\\\\+|A|A-|B\\\\+|B|B-|C\\\\+|C|C-|D)$\"]}]}]}},\"node-3\":{\"DropDuplicates\":{\"Name\":\"Remove Duplicates\",\"Inputs\":[\"node-2\"],\"Columns\":[[\"first_name\"],[\"last_name\"],[\"date_of_birth\"],[\"subject\"],[\"grade\"]]}},\"node-4\":{\"CustomCode\":{\"Name\":\"Coalesce to 1 File\",\"Inputs\":[\"node-3\"],\"Code\":\"from awsglue.dynamicframe import DynamicFrame\\ncoalesced_df = dfc.select(list(dfc.keys())[0]).toDF().coalesce(1)\\nCoalesceto1File_node4 = DynamicFrame.fromDF(coalesced_df, glueContext, \\\"Coalesceto1File_node4\\\")\",\"ClassName\":\"MyTransform\",\"OutputSchemas\":[{\"Columns\":[{\"Name\":\"id\",\"Type\":\"string\"},{\"Name\":\"first_name\",\"Type\":\"string\"},{\"Name\":\"last_name\",\"Type\":\"string\"},{\"Name\":\"date_of_birth\",\"Type\":\"string\"},{\"Name\":\"subject\",\"Type\":\"string\"},{\"Name\":\"grade\",\"Type\":\"string\"}]}]}},\"node-5\":{\"S3DirectTarget\":{\"Name\":\"S3 CSV Output\",\"Inputs\":[\"node-4\"],\"PartitionKeys\":[],\"Path\":\"s3://${DataBucket}/output/\",\"Format\":\"csv\",\"Compression\":\"none\",\"SchemaChangePolicy\":{\"EnableUpdateCatalog\":false}}}}"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Description": "Name of the S3 bucket",
+      "Value": {
+        "Ref": "DataBucket"
+      }
+    },
+    "GlueJobName": {
+      "Description": "Name of the Glue job",
+      "Value": {
+        "Ref": "GlueJob"
+      }
+    },
+    "GlueJobRoleArn": {
+      "Description": "ARN of the Glue job role",
+      "Value": {
+        "Fn::GetAtt": [
+          "GlueJobRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
