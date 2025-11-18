@@ -1,0 +1,139 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template for AWS Glue Crawler with S3 bucket and hourly schedule",
+  "Resources": {
+    "StudentDataBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "${AWS::StackName}-students-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "GlueDatabase": {
+      "Type": "AWS::Glue::Database",
+      "Properties": {
+        "CatalogId": {
+          "Ref": "AWS::AccountId"
+        },
+        "DatabaseInput": {
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}_students_db"
+          },
+          "Description": "Database for student data"
+        }
+      }
+    },
+    "GlueCrawlerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "glue.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "S3AccessPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "StudentDataBucket",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Sub": "${StudentDataBucket.Arn}/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "StudentsCrawler": {
+      "Type": "AWS::Glue::Crawler",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-students-crawler"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "GlueCrawlerRole",
+            "Arn"
+          ]
+        },
+        "DatabaseName": {
+          "Ref": "GlueDatabase"
+        },
+        "Targets": {
+          "S3Targets": [
+            {
+              "Path": {
+                "Fn::Sub": "s3://${StudentDataBucket}/"
+              }
+            }
+          ]
+        },
+        "Schedule": {
+          "ScheduleExpression": "cron(0 * * * ? *)"
+        },
+        "SchemaChangePolicy": {
+          "UpdateBehavior": "UPDATE_IN_DATABASE",
+          "DeleteBehavior": "LOG"
+        },
+        "Configuration": "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"}}}"
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Description": "Name of the S3 bucket for student data",
+      "Value": {
+        "Ref": "StudentDataBucket"
+      }
+    },
+    "DatabaseName": {
+      "Description": "Name of the Glue database",
+      "Value": {
+        "Ref": "GlueDatabase"
+      }
+    },
+    "CrawlerName": {
+      "Description": "Name of the Glue crawler",
+      "Value": {
+        "Ref": "StudentsCrawler"
+      }
+    },
+    "CrawlerRoleArn": {
+      "Description": "ARN of the Glue crawler role",
+      "Value": {
+        "Fn::GetAtt": [
+          "GlueCrawlerRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
