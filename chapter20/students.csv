@@ -1,0 +1,24 @@
+id, first_name,last_name,date_of_birth,subject,grade
+1,John,Smith,15-03-2005,CS101,A
+2,Sarah,Johnson,22-07-2004,MA203,B+
+3,Michael,Williams,08-11-2005,PH301,A-
+4,Emma,Brown,14-02-2004,CH205,B
+5,David,Jones,30-09-2005,BI410,A+
+6,Lisa,Garcia,05-06-2004,EN102,B-
+7,Robert,Miller,18-12-2005,HI304,C+
+8,Jessica,Davis,27-01-2004,PS201,A
+9,Christopher,Rodriguez,11-08-2005,EC306,B+
+10,Ashley,Martinez,03-04-2004,SO208,A-
+11,Matthew,Anderson,25-10-2005,GE105,B
+12,Ramesh,Kumar,16-05-2004,AR307,C
+13,Joshua,Thomas,09-07-2005,MU204,A+
+14,Lisa,Garcia,05-06-2004,EN102,B-
+15,Stephanie,Hernandez,21-12-2004,PE103,B+
+16,Andrew,Moore,04-09-2005,FR209,A
+17,Melissa,Martin,13-01-2004,SP302,B-
+18,Matthew,Anderson,25-10-2005,GE105,B
+19,Smita,Singh,28-06-2005,IT401,A-
+20,Nicole,Thompson,07-03-2004,AC206,C+
+21,Ryan,White,19-11-2005,ST108,B
+22,Lauren,Lopez,02-08-2004,PL305,A
+23,David,Jones,30-09-2005,BI410,A+
