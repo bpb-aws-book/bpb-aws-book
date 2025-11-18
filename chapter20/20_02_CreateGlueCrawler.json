@@ -3,12 +3,10 @@
   "Description": "CloudFormation template for AWS Glue Crawler with S3 bucket and hourly schedule",
   "Resources": {
     "StudentDataBucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketName": {
-          "Fn::Sub": "${AWS::StackName}-students-${AWS::AccountId}-${AWS::Region}"
-        }
-      }
+      "Type": "AWS::S3::Bucket"
+    },
+    "AthenaQueryResultsBucket": {
+      "Type": "AWS::S3::Bucket"
     },
     "GlueDatabase": {
       "Type": "AWS::Glue::Database",
@@ -105,13 +103,39 @@
         },
         "Configuration": "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"}}}"
       }
+    },
+    "AthenaWorkgroup": {
+      "Type": "AWS::Athena::WorkGroup",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-workgroup"
+        },
+        "Description": "Workgroup for querying student data",
+        "State": "ENABLED",
+        "RecursiveDeleteOption": true,
+        "WorkGroupConfiguration": {
+          "ResultConfiguration": {
+            "OutputLocation": {
+              "Fn::Sub": "s3://${AthenaQueryResultsBucket}/queryresults/"
+            }
+          },
+          "EnforceWorkGroupConfiguration": true,
+          "PublishCloudWatchMetricsEnabled": false
+        }
+      }
     }
   },
   "Outputs": {
-    "BucketName": {
+    "StudentDataBucketName": {
       "Description": "Name of the S3 bucket for student data",
       "Value": {
         "Ref": "StudentDataBucket"
+      }
+    },
+    "AthenaQueryResultsBucketName": {
+      "Description": "Name of the S3 bucket for Athena query results",
+      "Value": {
+        "Ref": "AthenaQueryResultsBucket"
       }
     },
     "DatabaseName": {
@@ -133,6 +157,18 @@
           "GlueCrawlerRole",
           "Arn"
         ]
+      }
+    },
+    "AthenaWorkgroupName": {
+      "Description": "Name of the Athena workgroup",
+      "Value": {
+        "Ref": "AthenaWorkgroup"
+      }
+    },
+    "AthenaQueryResultLocation": {
+      "Description": "S3 location for Athena query results",
+      "Value": {
+        "Fn::Sub": "s3://${AthenaQueryResultsBucket}/queryresults/"
       }
     }
   }
