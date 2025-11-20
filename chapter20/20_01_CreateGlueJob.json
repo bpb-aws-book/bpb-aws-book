@@ -116,12 +116,7 @@
       }
     },
     "DataBucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketName": {
-          "Fn::Sub": "${AWS::StackName}-data-${AWS::AccountId}-${AWS::Region}"
-        }
-      }
+      "Type": "AWS::S3::Bucket"
     },
     "GlueJobRole": {
       "Type": "AWS::IAM::Role",
