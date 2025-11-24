@@ -1,0 +1,24 @@
+id,book_title,category,author,description,isbn10,isbn13,price
+1,"To Kill a Mockingbird","Fiction","Harper Lee","A gripping tale of racial injustice and childhood innocence in the American South",0061120081,9780061120084,12.99
+2,"1984","Fiction","George Orwell","Orwell's dystopian masterpiece about totalitarianism and surveillance",0452284236,9780452284234,13.95
+3,"Pride and Prejudice","Fiction","Jane Austen","Austen's witty romance exploring class and marriage in Regency England",0141439513,9780141439518,11.50
+4,"The Wealth of Nations","NonFiction","Adam Smith","Smith's foundational work on economics and free market capitalism",0486430650,9780486430652,18.95
+5,"One Hundred Years of Solitude","Fiction","Gabriel García Márquez","Márquez's magical realism epic of the Buendía family",0060883286,9780060883287,16.99
+6,"Jane Eyre","Fiction","Charlotte Brontë","Brontë's Gothic romance of an orphaned governess",0141441143,9780141441146,12.50
+7,"The Catcher in the Rye","Classic","J.D. Salinger","Salinger's coming-of-age story of teenage alienation",0316769487,9780316769488,13.99
+8,"Lord of the Flies","Fiction","William Golding","Golding's dark allegory of civilization versus savagery",0571056865,9780571056866,11.99
+9,"Wuthering Heights","Fiction","Emily Brontë","Emily Brontë's passionate tale of love and revenge",0141439556,9780141439556,12.99
+10,"The Lord of the Rings","Fiction","J.R.R. Tolkien","Tolkien's epic fantasy trilogy of Middle-earth",0544003411,9780544003415,22.99
+11,"Moby Dick","Fiction","Herman Melville","Melville's epic tale of Captain Ahab's obsession with the white whale",0142437247,9780142437247,15.99
+12,"The Divine Comedy","Fiction","Dante Alighieri","Dante's allegorical journey through Hell, Purgatory, and Paradise",0142437220,9780142437223,15.99
+13,"War and Peace","Fiction","Leo Tolstoy","Tolstoy's sweeping novel of Russian society during the Napoleonic era",0199232765,9780199232765,18.99
+14,"One Hundred Years of Solitude","Fiction","Gabriel García Márquez","Márquez's magical realism epic of the Buendía family",0060883286,9780060883287,16.99
+15,"Crime and Punishment","Fiction","Fyodor Dostoevsky","Dostoevsky's psychological thriller of guilt and redemption",0486454118,9780486454115,13.50
+16,"The Adventures of Huckleberry Finn","Fiction","Mark Twain","Twain's satirical journey down the Mississippi River",0486280616,9780486280615,10.99
+17,"Brave New World","Fiction","Aldous Huxley","Huxley's dystopian vision of a technologically controlled society",0060850523,9780060850524,14.50
+18,"The Odyssey","Fiction","Homer","Homer's ancient epic of Odysseus's journey home from Troy",0140268863,9780140268867,13.99
+19,"Moby Dick","Fiction","Herman Melville","Melville's epic tale of Captain Ahab's obsession with the white whale",0142437247,9780142437247,15.99
+20,"Don Quixote","Fiction","Miguel de Cervantes","Cervantes' tale of an idealistic knight and his faithful squire",0060934344,9780060934347,17.99
+21,"The Origin of Species","NonFiction","Charles Darwin","Darwin's groundbreaking work on evolution and natural selection",0486450066,9780486450063,14.99
+22,"The Divine Comedy","Fiction","Dante Alighieri","Dante's allegorical journey through Hell, Purgatory, and Paradise",0142437220,9780142437223,15.99
+23,"Hamlet","Fiction","William Shakespeare","Shakespeare's tragic masterpiece of revenge and madness",0743477111,9780743477116,9.99
