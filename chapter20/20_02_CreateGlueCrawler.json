@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "CloudFormation template for AWS Glue Crawler with S3 bucket and hourly schedule",
   "Resources": {
-    "StudentDataBucket": {
+    "BookDataBucket": {
       "Type": "AWS::S3::Bucket"
     },
     "AthenaQueryResultsBucket": {
@@ -16,9 +16,9 @@
         },
         "DatabaseInput": {
           "Name": {
-            "Fn::Sub": "${AWS::StackName}_students_db"
+            "Fn::Sub": "${AWS::StackName}_books_db"
           },
-          "Description": "Database for student data"
+          "Description": "Database for books data"
         }
       }
     },
@@ -55,12 +55,12 @@
                   "Resource": [
                     {
                       "Fn::GetAtt": [
-                        "StudentDataBucket",
+                        "BookDataBucket",
                         "Arn"
                       ]
                     },
                     {
-                      "Fn::Sub": "${StudentDataBucket.Arn}/*"
+                      "Fn::Sub": "${BookDataBucket.Arn}/*"
                     }
                   ]
                 }
@@ -70,11 +70,11 @@
         ]
       }
     },
-    "StudentsCrawler": {
+    "BooksCrawler": {
       "Type": "AWS::Glue::Crawler",
       "Properties": {
         "Name": {
-          "Fn::Sub": "${AWS::StackName}-students-crawler"
+          "Fn::Sub": "${AWS::StackName}-books-crawler"
         },
         "Role": {
           "Fn::GetAtt": [
@@ -89,7 +89,7 @@
           "S3Targets": [
             {
               "Path": {
-                "Fn::Sub": "s3://${StudentDataBucket}/"
+                "Fn::Sub": "s3://${BookDataBucket}/"
               }
             }
           ]
@@ -110,7 +110,7 @@
         "Name": {
           "Fn::Sub": "${AWS::StackName}-workgroup"
         },
-        "Description": "Workgroup for querying student data",
+        "Description": "Workgroup for querying book data",
         "State": "ENABLED",
         "RecursiveDeleteOption": true,
         "WorkGroupConfiguration": {
@@ -126,10 +126,10 @@
     }
   },
   "Outputs": {
-    "StudentDataBucketName": {
-      "Description": "Name of the S3 bucket for student data",
+    "BookDataBucket": {
+      "Description": "Name of the S3 bucket for book data",
       "Value": {
-        "Ref": "StudentDataBucket"
+        "Ref": "BookDataBucket"
       }
     },
     "AthenaQueryResultsBucketName": {
@@ -147,7 +147,7 @@
     "CrawlerName": {
       "Description": "Name of the Glue crawler",
       "Value": {
-        "Ref": "StudentsCrawler"
+        "Ref": "BooksCrawler"
       }
     },
     "CrawlerRoleArn": {
