@@ -1,0 +1,237 @@
+{
+    "Description": "This CloudFormation Template creates a cross-region read replica for the RDS DB instance with its own VPC and peering connection.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "SourceDBInstanceArn": {
+            "Type": "String",
+            "Description": "ARN of the source RDS DB instance"
+        },
+        "SourceVPCId": {
+            "Type": "String",
+            "Description": "VPC ID of the source region VPC for peering"
+        },
+        "SourceVPCRegion": {
+            "Type": "String",
+            "Description": "Region of the source VPC"
+        }
+    },
+    "Resources": {
+        "ReadReplicaVPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": "192.168.0.0/16",
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Read Replica VPC"
+                    }
+                ]
+            }
+        },
+        "FirstPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "ReadReplicaVPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": "192.168.1.0/24",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Read Replica First Private Subnet"
+                    }
+                ]
+            }
+        },
+        "SecondPrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "ReadReplicaVPC"
+                },
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        1,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": "192.168.2.0/24",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Read Replica Second Private Subnet"
+                    }
+                ]
+            }
+        },
+        "ReadReplicaSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Security group for read replica",
+                "VpcId": {
+                    "Ref": "ReadReplicaVPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 5432,
+                        "ToPort": 5432,
+                        "CidrIp": "10.0.0.0/16"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Read Replica Security Group"
+                    }
+                ]
+            }
+        },
+        "VPCPeeringConnection": {
+            "Type": "AWS::EC2::VPCPeeringConnection",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "ReadReplicaVPC"
+                },
+                "PeerVpcId": {
+                    "Ref": "SourceVPCId"
+                },
+                "PeerRegion": {
+                    "Ref": "SourceVPCRegion"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Cross-Region VPC Peering"
+                    }
+                ]
+            }
+        },
+        "PrivateRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "ReadReplicaVPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Read Replica Private Route Table"
+                    }
+                ]
+            }
+        },
+        "PeeringRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTable"
+                },
+                "DestinationCidrBlock": "10.0.0.0/16",
+                "VpcPeeringConnectionId": {
+                    "Ref": "VPCPeeringConnection"
+                }
+            }
+        },
+        "FirstSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "FirstPrivateSubnet"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTable"
+                }
+            }
+        },
+        "SecondSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "SecondPrivateSubnet"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTable"
+                }
+            }
+        },
+        "BPBBookRDSDBSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "RDS Subnet Group with Private Subnets of Read Replica VPC",
+                "SubnetIds": [
+                    {
+                        "Ref": "FirstPrivateSubnet"
+                    },
+                    {
+                        "Ref": "SecondPrivateSubnet"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "BPBBookRDSDBSubnetGroup"
+                    }
+                ]
+            }
+        },        
+        "BPBBookRDSReadReplica": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "SourceDBInstanceIdentifier": {
+                    "Ref": "SourceDBInstanceArn"
+                },
+                "DBInstanceClass": "db.t3.micro",
+                "DBSubnetGroupName": {
+                    "Ref": "BPBBookRDSDBSubnetGroup"
+                },
+                "VPCSecurityGroups": [
+                    {
+                        "Ref": "ReadReplicaSecurityGroup"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "ReadReplicaEndpoint": {
+            "Description": "Read Replica Endpoint Address",
+            "Value": {
+                "Fn::GetAtt": "BPBBookRDSReadReplica.Endpoint.Address"
+            },
+            "Export": {
+                "Name": "BPBBookRDSReadReplicaAddress"
+            }
+        },
+        "VPCPeeringConnectionId": {
+            "Description": "VPC Peering Connection ID",
+            "Value": {
+                "Ref": "VPCPeeringConnection"
+            },
+            "Export": {
+                "Name": "ReadReplicaVPCPeeringConnection"
+            }
+        },
+        "ReadReplicaVPCId": {
+            "Description": "Read Replica VPC ID",
+            "Value": {
+                "Ref": "ReadReplicaVPC"
+            },
+            "Export": {
+                "Name": "ReadReplicaVPCId"
+            }
+        }
+    }
+}
