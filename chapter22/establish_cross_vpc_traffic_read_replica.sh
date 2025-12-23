@@ -25,7 +25,9 @@ SOURCE_RDS_SG_ID=$(aws cloudformation list-exports \
 # Accept the peering connection in the source region
 aws ec2 accept-vpc-peering-connection \
   --vpc-peering-connection-id $PEERING_CONNECTION_ID \
-  --region $SOURCE_REGION
+  --region $SOURCE_REGION \
+  --output text > /dev/null
+echo "Accepted peering connection $PEERING_CONNECTION_ID"
 
 # Get route table IDs for the source VPC
 ROUTE_TABLES=$(aws ec2 describe-route-tables \
