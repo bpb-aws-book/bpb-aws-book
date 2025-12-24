@@ -45,12 +45,3 @@ for RT_ID in $ROUTE_TABLES; do
     --region $SOURCE_REGION
   echo "Added route to $RT_ID"
 done
-
-# Add outbound rule to source RDS security group for read replica access
-aws ec2 authorize-security-group-egress \
-  --group-id $SOURCE_RDS_SG_ID \
-  --protocol tcp \
-  --port 5432 \
-  --cidr 192.168.0.0/16 \
-  --region $SOURCE_REGION
-echo "Added outbound rule to source RDS security group"
