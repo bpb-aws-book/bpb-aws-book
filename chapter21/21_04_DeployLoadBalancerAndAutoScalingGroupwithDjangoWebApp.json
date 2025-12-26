@@ -300,7 +300,7 @@
 				"IamInstanceProfile":{
 				"Arn":{"Fn::GetAtt": ["SSMIAMInstanceProfile", "Arn"]}
 				},
-				"DisableApiTermination":"true",
+				"DisableApiTermination":"false",
 				"Monitoring": {
 					"Enabled": "true"
 				},
