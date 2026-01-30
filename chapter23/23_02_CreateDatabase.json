@@ -33,7 +33,7 @@
                     "Ref": "BPBBookRDSDBSubnetGroup"
                 },
                 "ManageMasterUserPassword": true,
-                "MultiAZ": true,
+                "MultiAZ": false,
                 "MasterUserSecret": {
                     "KmsKeyId": {
                         "Ref": "KMSKey"
