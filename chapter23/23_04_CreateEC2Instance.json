@@ -1,0 +1,139 @@
+{
+    "Description": "This CloudFormation Template creates an EC2 instance with SSM Session Manager access.",
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "LatestAmiId": {
+            "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+            "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+        },
+        "InstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String",
+            "Default": "t2.micro"
+        }
+    },
+    "Resources": {
+        "SSMIAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+                ]
+            }
+        },
+        "SSMIAMInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Roles": [
+                    {
+                        "Ref": "SSMIAMRole"
+                    }
+                ]
+            }
+        },
+        "EC2Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": {
+                    "Ref": "LatestAmiId"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "SSMIAMInstanceProfile"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::ImportValue": "BPBBookStandaloneWebServerSecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter23EC2Instance"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "TwentyThree"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "yum install -y aws-cfn-bootstrap\n",
+                                "/opt/aws/bin/cfn-init -v ",
+                                "         --stack ",
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                "         --resource EC2Instance ",
+                                "         --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n",
+                                "/opt/aws/bin/cfn-signal -e $? ",
+                                "         --stack ",
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                "         --resource EC2Instance ",
+                                "         --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config": {
+                        "services": {
+                            "sysvinit": {
+                                "amazon-ssm-agent": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT5M"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "InstanceId": {
+            "Description": "EC2 Instance ID",
+            "Value": {
+                "Ref": "EC2Instance"
+            }
+        }
+    }
+}
