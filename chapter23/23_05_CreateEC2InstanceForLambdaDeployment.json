@@ -123,12 +123,7 @@
                                 },
                                 {
                                     "Effect": "Allow",
-                                    "Action": [
-                                        "s3:CreateBucket",
-                                        "s3:PutObject",
-                                        "s3:GetObject",
-                                        "s3:ListBucket"
-                                    ],
+                                    "Action": ["*"],
                                     "Resource": "arn:aws:s3:::aws-sam-cli-managed-default-*"
                                 },
                                 {
