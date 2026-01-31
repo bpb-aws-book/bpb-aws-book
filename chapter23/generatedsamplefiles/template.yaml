@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda function to query PostgreSQL database
+
+Resources:
+  BooksQueryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: BooksQueryFunction
+      Runtime: python3.14
+      Handler: lambda_function.lambda_handler
+      CodeUri: .
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SECRET_ARN: !ImportValue BPBBookRDSSecretARN
+          DB_HOST: !ImportValue BPBBookRDSDBAddress
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue BPBBookStandaloneWebServerSecurityGroup
+        SubnetIds:
+          - !ImportValue BPBBookVPCFirstPrivateSubnet
+          - !ImportValue BPBBookVPCSecondPrivateSubnet
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !ImportValue BPBBookRDSSecretARN
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: !ImportValue BPBBookKMSKeyARN
+
+Outputs:
+  BooksQueryFunctionArn:
+    Description: ARN of the Books Query Lambda Function
+    Value: !GetAtt BooksQueryFunction.Arn
