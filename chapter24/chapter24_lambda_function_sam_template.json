@@ -1,0 +1,29 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Resources": {
+    "Chapter24Function": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "lambda_function.lambda_handler",
+        "Runtime": "python3.14",
+        "CodeUri": ".",
+        "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]}
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {"Service": "lambda.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+      }
+    }
+  }
+}
