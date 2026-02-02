@@ -1,0 +1,34 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "Chapter24Function": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "Chapter24Function",
+        "Handler": "index.lambda_handler",
+        "Runtime": "python3.12",
+        "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
+        "Code": {
+          "ZipFile": "def lambda_handler(event, context):\n    return {\n        'statusCode': 200,\n        'body': 'hello world'\n    }\n"
+        }
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {"Service": "lambda.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+      }
+    },
+    "Chapter24Bucket": {
+      "Type": "AWS::S3::Bucket"
+    }
+  }
+}
