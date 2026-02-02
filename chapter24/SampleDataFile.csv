@@ -1,0 +1,6 @@
+book,author,price,ISBN10,ISBN13
+The Pragmatic Programmer,Andrew Hunt,45.99,020161622X,978-0201616224
+Clean Code,Robert C. Martin,42.50,0132350882,978-0132350884
+Design Patterns,Erich Gamma,54.99,0201633612,978-0201633610
+The Mythical Man-Month,Frederick P. Brooks Jr.,39.99,0201835959,978-0201835953
+Code Complete,Steve McConnell,49.99,0735619670,978-0735619678
