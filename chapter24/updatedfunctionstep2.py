@@ -6,7 +6,7 @@ def lambda_handler(event, context):
     response = s3.list_buckets()
 
     s3 = boto3.client('s3')
-    obj = s3.get_object(Bucket='bucket-name', Key='SampleDataFile.csv')
+    obj = s3.get_object(Bucket='bucket-name', Key='sampledatafile.csv')
     df = pd.read_csv(obj['Body'])
 
     author = df[df['book'] == 'Code Complete']['author'].values[0]
