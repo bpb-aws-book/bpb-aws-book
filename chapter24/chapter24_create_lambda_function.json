@@ -6,7 +6,7 @@
       "Properties": {
         "FunctionName": "Chapter24Function",
         "Handler": "index.lambda_handler",
-        "Runtime": "python3.12",
+        "Runtime": "python3.14",
         "Role": {"Fn::GetAtt": ["LambdaExecutionRole", "Arn"]},
         "Code": {
           "ZipFile": "def lambda_handler(event, context):\n    return {\n        'statusCode': 200,\n        'body': 'hello world'\n    }\n"
