@@ -9,7 +9,7 @@
         "InstanceType": {
             "Description": "EC2 instance type",
             "Type": "String",
-            "Default": "t2.micro"
+            "Default": "t3.small"
         }
     },
     "Resources": {
@@ -130,6 +130,15 @@
                                     "Effect": "Allow",
                                     "Action": "s3:CreateBucket",
                                     "Resource": "arn:aws:s3:::sam-deployment-bucket-*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "s3:PutObject",
+                                        "s3:GetObject",
+                                        "s3:DeleteObject"
+                                    ],
+                                    "Resource": "arn:aws:s3:::sam-deployment-bucket-*/*"
                                 },
                                 {
                                     "Effect": "Allow",
