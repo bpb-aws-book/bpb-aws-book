@@ -116,8 +116,10 @@
                                         "cloudformation:ExecuteChangeSet",
                                         "cloudformation:DescribeStacks",
                                         "cloudformation:DescribeStackEvents",
+                                        "cloudformation:DescribeStackResources",
                                         "cloudformation:GetTemplateSummary",
-                                        "cloudformation:DeleteStack"
+                                        "cloudformation:DeleteStack",
+                                        "cloudformation:CreateStack"
                                     ],
                                     "Resource": "*"
                                 },
@@ -125,20 +127,6 @@
                                     "Effect": "Allow",
                                     "Action": ["*"],
                                     "Resource": "arn:aws:s3:::aws-sam-cli-managed-default-*"
-                                },
-                                {
-                                    "Effect": "Allow",
-                                    "Action": "s3:CreateBucket",
-                                    "Resource": "arn:aws:s3:::sam-deployment-bucket-*"
-                                },
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "s3:PutObject",
-                                        "s3:GetObject",
-                                        "s3:DeleteObject"
-                                    ],
-                                    "Resource": "arn:aws:s3:::sam-deployment-bucket-*/*"
                                 },
                                 {
                                     "Effect": "Allow",
