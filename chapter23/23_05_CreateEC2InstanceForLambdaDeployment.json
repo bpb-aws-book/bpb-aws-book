@@ -128,6 +128,11 @@
                                 },
                                 {
                                     "Effect": "Allow",
+                                    "Action": "s3:CreateBucket",
+                                    "Resource": "arn:aws:s3:::sam-deployment-bucket-*"
+                                },
+                                {
+                                    "Effect": "Allow",
                                     "Action": [
                                         "lambda:CreateFunction",
                                         "lambda:DeleteFunction",
