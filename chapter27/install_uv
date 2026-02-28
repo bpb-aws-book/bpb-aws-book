@@ -1,3 +1,4 @@
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source $HOME/.cargo/env
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 uv --version
