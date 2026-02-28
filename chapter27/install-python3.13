@@ -19,3 +19,6 @@ python3.13 --version
 # Create virtual environment with Python 3.13
 python3.13 -m venv /path/to/myenv
 source /path/to/myenv/bin/activate
+
+#remove tmp dir
+sudo rm -rf /tmp/Python-3.13.0*
