@@ -2,5 +2,4 @@ mkdir strands-agent-project
 cd strands-agent-project
 python3.13 -m venv .venv
 source .venv/bin/activate
-pip install strands-agents strands-agents-tools agentcore bedrock-agentcore
-
+pip install strands-agents strands-agents-tools agentcore bedrock-agentcore bedrock-agentcore-starter-toolkit
