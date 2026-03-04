@@ -10,7 +10,7 @@ app = FastAPI(title="Chapter27 Agent Server", version="1.0.0")
 # Initialize Strands agent with built-in tools from strands-agents-tools
 chapter27_strands_agent = Agent(
     tools=[calculator, current_time],
-    system_prompt="You are a helpful assistant with access to a calculator, current time, and web search. Use these tools when appropriate to answer user questions accurately."
+    system_prompt="You are a helpful assistant with access to a calculator and current time. Use these tools when appropriate to answer user questions accurately."
 )
 
 class InvocationRequest(BaseModel):
