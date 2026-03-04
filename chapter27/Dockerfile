@@ -17,4 +17,4 @@ COPY chapter27-agent.py ./
 EXPOSE 8080
 
 # Run application
-CMD ["uv", "run", "uvicorn", "agent:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "uvicorn", "chapter27-agent:app", "--host", "0.0.0.0", "--port", "8080"]
