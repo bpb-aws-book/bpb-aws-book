@@ -1,6 +1,6 @@
 # based on code samples at https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/getting-started-custom.html
 # Use uv's ARM64 Python base image
-FROM --platform=linux/arm64 ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 WORKDIR /app
 
