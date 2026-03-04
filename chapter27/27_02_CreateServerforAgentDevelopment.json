@@ -1,0 +1,418 @@
+{
+	"Description": "This CloudFormation Template creates an EC2-based AgentCore development server with ARM64 (Graviton) architecture. It deploys an instance with Docker, uv package manager, and nginx configured for HTTPS. The template also creates an ECR repository for AgentCore container images and configures IAM roles with permissions for Bedrock, Bedrock Agent, ECR, and RDS access.",
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Parameters": {
+		"LatestAmiId": {
+			"Description": "The latest AMI id. Default is Amazon Linux 2023 ARM64",
+			"Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+			"Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64"
+		},
+		"InstanceType": {
+			"Description": "WebServer EC2 instance type (Graviton ARM64)",
+			"Type": "String",
+			"Default": "t4g.small",
+			"AllowedValues": [
+				"t4g.nano",
+				"t4g.micro",
+				"t4g.small",
+				"t4g.medium",
+				"t4g.large",
+				"t4g.xlarge",
+				"t4g.2xlarge",
+				"m6g.medium",
+				"m6g.large",
+				"m6g.xlarge",
+				"m6g.2xlarge",
+				"m6g.4xlarge",
+				"m6g.8xlarge",
+				"m6g.12xlarge",
+				"m6g.16xlarge",
+				"c6g.medium",
+				"c6g.large",
+				"c6g.xlarge",
+				"c6g.2xlarge",
+				"c6g.4xlarge",
+				"c6g.8xlarge",
+				"c6g.12xlarge",
+				"c6g.16xlarge",
+				"r6g.medium",
+				"r6g.large",
+				"r6g.xlarge",
+				"r6g.2xlarge",
+				"r6g.4xlarge",
+				"r6g.8xlarge",
+				"r6g.12xlarge",
+				"r6g.16xlarge"
+			],
+			"ConstraintDescription": "must be a valid Graviton (ARM64) EC2 instance type."
+		}
+	},
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [
+				{
+					"Label": {
+						"default": "Your IP and EC2 Configuration"
+					},
+					"Parameters": [
+						"LatestAmiId",
+						"InstanceType"
+					]
+				}
+			],
+			"ParameterLabels": {
+				"LatestAmiId": {
+					"default": "Amazon Linux 2023 ARM64 AMI ID"
+				},
+				"InstanceType": {
+					"default": "Instance Type (Graviton ARM64)"
+				}
+			}
+		}
+	},
+	"Resources": {
+		"AgentCoreECRRepository": {
+			"Type": "AWS::ECR::Repository",
+			"Properties": {
+				"RepositoryName": "bpbawsbook/agentcore",
+				"ImageScanningConfiguration": {
+					"ScanOnPush": true
+				},
+				"EncryptionConfiguration": {
+					"EncryptionType": "AES256"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "BPBAwsBookAgentCore"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "TwentySeven"
+					}
+				]
+			}
+		},
+		"SSMIAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "SSMIAMRoleForDevelopmentServer",
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+                    "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
+                ],
+				"Policies": [{
+					"PolicyName": "AdditionalPermissionsPolicy",
+					"PolicyDocument": {
+						"Version": "2012-10-17",
+						"Statement": [
+							{
+								"Effect": "Allow",
+								"Action": ["cloudformation:ListExports"],
+								"Resource": ["*"]
+							},
+							{
+								"Action": [
+									"iam:UploadServerCertificate"
+								],
+								"Resource": [
+									"*"
+								],
+								"Effect": "Allow"
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:GetAuthorizationToken",
+									"ecr:BatchCheckLayerAvailability",
+									"ecr:GetDownloadUrlForLayer",
+									"ecr:BatchGetImage",
+									"ecr:PutImage",
+									"ecr:InitiateLayerUpload",
+									"ecr:UploadLayerPart",
+									"ecr:CompleteLayerUpload",
+									"ecr:DescribeRepositories",
+									"ecr:ListImages",
+									"ecr:DescribeImages"
+								],
+								"Resource": [
+									{"Fn::GetAtt": ["AgentCoreECRRepository", "Arn"]}
+								]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"ecr:GetAuthorizationToken"
+								],
+								"Resource": ["*"]
+							},
+							{
+								"Effect": "Allow",
+								"Action": [
+									"bedrock-agent:*",
+									"bedrock-agent-runtime:*"
+								],
+								"Resource": ["*"]
+							}					
+						]
+					}
+				}]
+
+            }
+        },
+		"SSMIAMInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "SSMIAMRole"
+                    }
+                ]
+            }
+        },
+		"AgentCoreDevelopmentServer": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {
+					"Ref": "LatestAmiId"
+				},
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+               "Ref": "SSMIAMInstanceProfile"
+            	},
+				"SecurityGroupIds": [
+					{"Fn::ImportValue": "BPBBookStandaloneWebServerSecurityGroup"}
+				],
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"0",
+						{
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"SubnetId": {
+					"Fn::ImportValue": "BPBBookVPCFirstPublicSubnet"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter27DevelopmentServer"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "TwentySeven"
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"",
+							[
+								"#!/bin/bash -xe\n",
+								"yum install -y aws-cfn-bootstrap\n",
+								"# Install the files and packages from the metadata\n",
+								"/opt/aws/bin/cfn-init -v ",
+								"         --stack ",
+								{
+									"Ref": "AWS::StackName"
+								},
+								"         --resource AgentCoreDevelopmentServer ",
+								"         --configsets All",
+								"         --region ",
+								{
+									"Ref": "AWS::Region"
+								},
+								"\n",
+								"# Signal the status from cfn-init\n",
+								"/opt/aws/bin/cfn-signal -e $? ",
+								"         --stack ",
+								{
+									"Ref": "AWS::StackName"
+								},
+								"         --resource AgentCoreDevelopmentServer ",
+								"         --region ",
+								{
+									"Ref": "AWS::Region"
+								},
+								"\n"
+							]
+						]
+					}
+				}
+			},
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"configSets": {
+						"All": [
+							"InstallSSMAgent","InstallDocker","InstallPackages","InstallNginx","ExportCertificatestoIAM", "CopyFiles"
+						]
+					},
+					"InstallSSMAgent" : {
+                        "services" : {
+                        "sysvinit" : {  
+                            "amazon-ssm-agent"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        }
+                    },
+					"InstallDocker" : {
+						"commands": {
+							"install docker and add user to the docker group": {
+								"command": "sudo yum update -y && sudo yum install -y docker && sudo service docker start && sudo usermod -a -G docker ec2-user",
+								"cwd": "/home/ec2-user"
+							}
+						}
+					},
+					"InstallPackages": {
+                        "packages" : {
+                            "yum" : {
+                                "git" : [], "jq" : []
+                            }
+                        },
+						"commands": {
+							"01_install_uv_package_manager": {
+								"command": "runuser -l ec2-user -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'",
+								"cwd": "/home/ec2-user"
+							},
+							"02_add_uv_to_PATH_in_bashrc": {
+								"command": "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> /home/ec2-user/.bashrc && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> /home/ec2-user/.bash_profile && chown ec2-user:ec2-user /home/ec2-user/.bashrc /home/ec2-user/.bash_profile",
+								"cwd": "/home/ec2-user"
+							},
+							"03_create_profile_d_script": {
+								"command": "echo 'export PATH=\"/home/ec2-user/.local/bin:$PATH\"' > /etc/profile.d/uv.sh && chmod +x /etc/profile.d/uv.sh",
+								"cwd": "/home/ec2-user"
+							},
+							"04_verify_uv_installation": {
+								"command": "test -f /home/ec2-user/.local/bin/uv && echo 'uv installed successfully' || echo 'uv installation failed'",
+								"cwd": "/home/ec2-user"
+							},
+							"05_create_system_wide_symlink": {
+								"command": "ln -sf /home/ec2-user/.local/bin/uv /usr/local/bin/uv && ln -sf /home/ec2-user/.local/bin/uvx /usr/local/bin/uvx",
+								"cwd": "/home/ec2-user"
+							}
+						}
+					},
+                    "InstallNginx" : {
+                        "packages" : {
+                        "yum" : {
+                            "nginx" : []
+                        }
+                    },
+                        "services" : {
+                        "sysvinit" : {  
+                            "nginx"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        },
+						"files" : {
+							"/etc/nginx/default.d/inquisitebookwormclub.conf" : {
+								"content" : { "Fn::Join" : [ "", [
+									"location / {\n",
+									"    proxy_set_header Host $http_host;\n",
+									"    proxy_set_header X-Real-IP $remote_addr;\n",
+									"    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n",
+									"    proxy_set_header X-Forwarded-Proto $scheme;\n",
+									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
+									"}"
+								]]}
+							}
+						},
+						"commands": {
+							"take a backup of our nginx config file": {
+								"command": "sudo cp nginx.conf nginx.conf.original",
+								"cwd": "/etc/nginx"
+							},
+							"install openssl": {
+								"command": "sudo yum install openssl -y",
+								"cwd": "/etc/nginx"
+							},
+							"generate self signed certificates": {
+								"command": "sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout inquisitivebookwormclub.key -out inquisitivebookwormclub.crt -subj \"/C=US/ST=AnyState/L=Anycity/O=Inquisitive Bookworm Club/OU=ITDepartment/CN=None\"",
+								"cwd": "/etc/nginx"
+							},
+							"copy the nginx.conf file for the development server": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/nginx-agentcoredev.conf",
+								"cwd": "/etc/nginx"
+							},
+							"overwrite the SSL enabled nginx conf file": {
+								"command": "mv nginx-agentcoredev.conf nginx.conf",
+								"cwd": "/etc/nginx"
+							},
+							"restart nginx": {
+								"command": "sudo service nginx restart",
+								"cwd": "/etc/nginx"
+							}
+					}
+                    },
+					"ExportCertificatestoIAM" : {
+						"commands": {
+							"export certificates to IAM": {
+								"command": "sudo aws iam upload-server-certificate --server-certificate-name InquisitiveBookwormClubCert --certificate-body file://inquisitivebookwormclub.crt --private-key file://inquisitivebookwormclub.key",
+								"cwd": "/etc/nginx"
+							}
+					}
+                    },
+					"CopyFiles" : {
+						"commands": {
+							"Copy python 3.13 installation file": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/install-python3.13.sh",
+								"cwd": "/home/ec2-user"
+							}
+					}
+                    }
+				}
+			},
+			"CreationPolicy": {
+				"ResourceSignal": {
+					"Timeout": "PT5M"
+				}
+			}
+		}},
+		"Outputs": {
+			"PublicIp": {
+				"Value": {
+					"Fn::GetAtt": [
+						"AgentCoreDevelopmentServer",
+						"PublicIp"
+					]
+				},
+				"Description": "AgentCore Development Server's Public IP Address"
+			},
+			"ECRRepositoryUri": {
+				"Value": {
+					"Fn::GetAtt": [
+						"AgentCoreECRRepository",
+						"RepositoryUri"
+					]
+				},
+				"Description": "ECR Repository URI for bpbawsbook/agentcore"
+			},
+			"ECRRepositoryArn": {
+				"Value": {
+					"Fn::GetAtt": [
+						"AgentCoreECRRepository",
+						"Arn"
+					]
+				},
+				"Description": "ECR Repository ARN",
+				"Export": {
+					"Name": "BPBBookAgentCoreECRArn"
+				}
+			}
+		}
+	}
