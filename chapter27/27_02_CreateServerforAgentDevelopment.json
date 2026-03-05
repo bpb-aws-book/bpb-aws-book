@@ -305,6 +305,10 @@
 							"05_create_system_wide_symlink": {
 								"command": "ln -sf /home/ec2-user/.local/bin/uv /usr/local/bin/uv && ln -sf /home/ec2-user/.local/bin/uvx /usr/local/bin/uvx",
 								"cwd": "/home/ec2-user"
+							},
+							"06_install_psql_client": {
+								"command": "sudo dnf install -y postgresql15",
+                                "cwd": "/home/ec2-user/"
 							}
 						}
 					},
