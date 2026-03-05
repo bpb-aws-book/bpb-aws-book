@@ -1,0 +1,149 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Creates a Cognito User Pool for machine-to-machine applications with OAuth 2.0 client credentials flow",
+	"Resources": {
+		"BPBBookUserPool": {
+			"Type": "AWS::Cognito::UserPool",
+			"Properties": {
+				"UserPoolName": "User pool - bpbbook",
+				"UserPoolTags": {
+					"Name": "BPBBookUserPool",
+					"Purpose": "M2M Authentication"
+				}
+			}
+		},
+		"BPBBookUserPoolDomain": {
+			"Type": "AWS::Cognito::UserPoolDomain",
+			"Properties": {
+				"Domain": {
+					"Fn::Sub": "bpbbook-${AWS::AccountId}"
+				},
+				"UserPoolId": {
+					"Ref": "BPBBookUserPool"
+				}
+			}
+		},
+		"BPBBookUserPoolResourceServer": {
+			"Type": "AWS::Cognito::UserPoolResourceServer",
+			"Properties": {
+				"UserPoolId": {
+					"Ref": "BPBBookUserPool"
+				},
+				"Identifier": "bpbbook-api",
+				"Name": "BPBBook API Resource Server",
+				"Scopes": [
+					{
+						"ScopeName": "read",
+						"ScopeDescription": "Read access to API"
+					},
+					{
+						"ScopeName": "write",
+						"ScopeDescription": "Write access to API"
+					}
+				]
+			}
+		},
+		"BPBBookUserPoolClient": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"DependsOn": "BPBBookUserPoolResourceServer",
+			"Properties": {
+				"ClientName": "bpbbook-m2m-client",
+				"UserPoolId": {
+					"Ref": "BPBBookUserPool"
+				},
+				"GenerateSecret": true,
+				"AllowedOAuthFlows": ["client_credentials"],
+				"AllowedOAuthFlowsUserPoolClient": true,
+				"AllowedOAuthScopes": [
+					"bpbbook-api/read",
+					"bpbbook-api/write"
+				],
+				"ExplicitAuthFlows": [],
+				"PreventUserExistenceErrors": "ENABLED"
+			}
+		}
+	},
+	"Outputs": {
+		"UserPoolId": {
+			"Description": "Cognito User Pool ID",
+			"Value": {
+				"Ref": "BPBBookUserPool"
+			},
+			"Export": {
+				"Name": "BPBBookUserPoolId"
+			}
+		},
+		"UserPoolArn": {
+			"Description": "Cognito User Pool ARN",
+			"Value": {
+				"Fn::GetAtt": ["BPBBookUserPool", "Arn"]
+			},
+			"Export": {
+				"Name": "BPBBookUserPoolArn"
+			}
+		},
+		"AppClientId": {
+			"Description": "Cognito App Client ID for M2M authentication",
+			"Value": {
+				"Ref": "BPBBookUserPoolClient"
+			},
+			"Export": {
+				"Name": "BPBBookAppClientId"
+			}
+		},
+		"DiscoveryURL": {
+			"Description": "OAuth 2.0 Discovery URL for AgentCore",
+			"Value": {
+				"Fn::Sub": "https://cognito-idp.${AWS::Region}.amazonaws.com/${BPBBookUserPool}/.well-known/openid-configuration"
+			},
+			"Export": {
+				"Name": "BPBBookDiscoveryURL"
+			}
+		},
+		"Issuer": {
+			"Description": "OAuth 2.0 Issuer URL (for AgentCore COGNITO_ISSUER env var)",
+			"Value": {
+				"Fn::Sub": "https://cognito-idp.${AWS::Region}.amazonaws.com/${BPBBookUserPool}"
+			},
+			"Export": {
+				"Name": "BPBBookIssuer"
+			}
+		},
+		"TokenEndpoint": {
+			"Description": "OAuth 2.0 Token Endpoint",
+			"Value": {
+				"Fn::Sub": "https://${BPBBookUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token"
+			},
+			"Export": {
+				"Name": "BPBBookTokenEndpoint"
+			}
+		},
+		"AuthorizationEndpoint": {
+			"Description": "OAuth 2.0 Authorization Endpoint (not used for client credentials flow)",
+			"Value": {
+				"Fn::Sub": "https://${BPBBookUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize"
+			},
+			"Export": {
+				"Name": "BPBBookAuthorizationEndpoint"
+			}
+		},
+		"UserPoolDomain": {
+			"Description": "Cognito User Pool Domain",
+			"Value": {
+				"Ref": "BPBBookUserPoolDomain"
+			},
+			"Export": {
+				"Name": "BPBBookUserPoolDomain"
+			}
+		},
+		"CognitoDomainURL": {
+			"Description": "Full Cognito Domain URL for OAuth token endpoint (COGNITO_DOMAIN env var)",
+			"Value": {
+				"Fn::Sub": "https://${BPBBookUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+			},
+			"Export": {
+				"Name": "BPBBookCognitoDomainURL"
+			}
+		}
+	}
+}
