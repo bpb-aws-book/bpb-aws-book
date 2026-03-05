@@ -2,13 +2,17 @@ import json
 import os
 import boto3
 import pg8000
-import datetime
 from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
     """
     Lambda function that connects to PostgreSQL RDS using credentials from Secrets Manager
-    and adds a record to a table.
+    and retrieves books based on search criteria.
+
+    Get all books: no parameters
+    Get books by name: ?name=Clean Code
+    Get rented books: ?is_rented=true
+    Combined: ?name=Code&is_rented=false
     """
     # Get environment variables
     secret_arn = os.environ['SECRET_ARN']
@@ -32,31 +36,49 @@ def lambda_handler(event, context):
         # Create a cursor
         cursor = conn.cursor()
         
-        # Extract data from the event
-        data = event.get('data', {})
-        name = data.get('name', 'Default Name')
-        description = data.get('description', 'Default Description')
-        author = data.get('author', 'Default Author')
-        price = data.get('price', 0)
-        current_date = datetime.datetime.now().date()
+        # Extract query parameters from the event
+        query_params = event.get('queryStringParameters', {})
+        name = query_params.get('name')
+        is_rented = query_params.get('is_rented')
         
-        # Execute SQL query to insert a record
-        cursor.execute(
-            "INSERT INTO books_book (name, description, author, price, is_rented, created_at, updated_at) VALUES ($1, $2, $3, $4, 'false', current_date, current_date) RETURNING id",
-            (name, description, author, price)
-        )
+        # Build the SQL query dynamically based on provided parameters
+        query = "SELECT id, name, description, author, price, is_rented, created_at, updated_at FROM books_book WHERE 1=1"
+        params = []
         
-        # Get the ID of the inserted record
-        record_id = cursor.fetchone()[0]
+        if name:
+            query += " AND name ILIKE $" + str(len(params) + 1)
+            params.append(f"%{name}%")
         
-        # Commit the transaction
-        conn.commit()
+        if is_rented is not None:
+            query += " AND is_rented = $" + str(len(params) + 1)
+            params.append(is_rented.lower() == 'true')
+        
+        # Execute the query
+        cursor.execute(query, tuple(params))
+        
+        # Fetch all results
+        rows = cursor.fetchall()
+        
+        # Convert results to list of dictionaries
+        books = []
+        for row in rows:
+            books.append({
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'author': row[3],
+                'price': float(row[4]),
+                'is_rented': row[5],
+                'created_at': row[6].isoformat() if row[6] else None,
+                'updated_at': row[7].isoformat() if row[7] else None
+            })
         
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'message': 'Record added successfully',
-                'id': record_id
+                'message': 'Books retrieved successfully',
+                'count': len(books),
+                'books': books
             })
         }
     
@@ -91,4 +113,3 @@ def get_secret(secret_arn):
     # Decrypts secret using the associated KMS key
     secret = get_secret_value_response['SecretString']
     return json.loads(secret)
-
