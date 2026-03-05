@@ -1,0 +1,20 @@
+[
+  {
+    "name": "search_books",
+    "description": "Search for books in the database by name and rental status. Returns a list of books matching the search criteria.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Book name to search for (case-insensitive partial match). Example: 'Clean Code'"
+        },
+        "is_rented": {
+          "type": "string",
+          "enum": ["true", "false"],
+          "description": "Filter by rental status. Use 'true' for rented books or 'false' for available books"
+        }
+      }
+    }
+  }
+]
