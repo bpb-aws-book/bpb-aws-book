@@ -68,6 +68,180 @@
                 ]
             }
         }
+    },
+    "DBInitLambdaSecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+            "GroupDescription": "Security group for DB init Lambda function",
+            "VpcId": { "Fn::ImportValue": "BPBBookVPCForLearning" },
+            "SecurityGroupEgress": [
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5432,
+                    "ToPort": 5432,
+                    "CidrIp": "0.0.0.0/0"
+                },
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "CidrIp": "0.0.0.0/0"
+                }
+            ]
+        }
+    },
+    "DBInitRDSIngressRule": {
+        "Type": "AWS::EC2::SecurityGroupIngress",
+        "Properties": {
+            "GroupId": { "Fn::ImportValue": "BPBBookRDSSecurityGroup" },
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "SourceSecurityGroupId": { "Fn::GetAtt": ["DBInitLambdaSecurityGroup", "GroupId"] }
+        }
+    },
+    "DBInitLambdaRole": {
+        "Type": "AWS::IAM::Role",
+        "Properties": {
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": { "Service": "lambda.amazonaws.com" },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "ManagedPolicyArns": [
+                "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+            ],
+            "Policies": [
+                {
+                    "PolicyName": "DBInitSecretsAccess",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "secretsmanager:GetSecretValue",
+                                    "secretsmanager:DescribeSecret"
+                                ],
+                                "Resource": {
+                                    "Fn::GetAtt": "BPBBookRDSDBInstance.MasterUserSecret.SecretArn"
+                                }
+                            },
+                            {
+                                "Effect": "Allow",
+                                "Action": "kms:Decrypt",
+                                "Resource": { "Fn::GetAtt": ["KMSKey", "Arn"] }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "DBInitFunction": {
+        "Type": "AWS::Lambda::Function",
+        "DependsOn": ["BPBBookRDSDBInstance", "DBInitRDSIngressRule"],
+        "Properties": {
+            "Runtime": "python3.13",
+            "Handler": "index.handler",
+            "Timeout": 60,
+            "MemorySize": 128,
+            "Role": { "Fn::GetAtt": ["DBInitLambdaRole", "Arn"] },
+            "VpcConfig": {
+                "SecurityGroupIds": [
+                    { "Fn::GetAtt": ["DBInitLambdaSecurityGroup", "GroupId"] }
+                ],
+                "SubnetIds": [
+                    { "Fn::ImportValue": "BPBBookVPCFirstPrivateSubnet" },
+                    { "Fn::ImportValue": "BPBBookVPCSecondPrivateSubnet" }
+                ]
+            },
+            "Environment": {
+                "Variables": {
+                    "SECRET_ARN": { "Fn::GetAtt": "BPBBookRDSDBInstance.MasterUserSecret.SecretArn" },
+                    "DB_HOST": { "Fn::GetAtt": ["BPBBookRDSDBInstance", "Endpoint.Address"] },
+                    "DB_NAME": "bpbbookdb",
+                    "DB_PORT": "5432"
+                }
+            },
+            "Code": {
+                "ZipFile": { "Fn::Join": ["\n", [
+                    "import json",
+                    "import os",
+                    "import boto3",
+                    "import urllib.request",
+                    "import subprocess",
+                    "import sys",
+                    "",
+                    "def install_pg8000():",
+                    "    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pg8000', '-t', '/tmp/lib', '--quiet'])",
+                    "    sys.path.insert(0, '/tmp/lib')",
+                    "",
+                    "def send_response(event, context, status, reason=''):",
+                    "    body = json.dumps({",
+                    "        'Status': status,",
+                    "        'Reason': reason,",
+                    "        'PhysicalResourceId': context.log_stream_name,",
+                    "        'StackId': event['StackId'],",
+                    "        'RequestId': event['RequestId'],",
+                    "        'LogicalResourceId': event['LogicalResourceId']",
+                    "    }).encode('utf-8')",
+                    "    req = urllib.request.Request(event['ResponseURL'], data=body, headers={'Content-Type': 'application/json'}, method='PUT')",
+                    "    urllib.request.urlopen(req)",
+                    "",
+                    "def handler(event, context):",
+                    "    is_cfn = 'ResponseURL' in event",
+                    "    if event.get('RequestType') == 'Delete':",
+                    "        if is_cfn: send_response(event, context, 'SUCCESS')",
+                    "        return {'status': 'SKIPPED', 'reason': 'Delete request'}",
+                    "    try:",
+                    "        install_pg8000()",
+                    "        import pg8000",
+                    "        sm = boto3.client('secretsmanager')",
+                    "        secret = json.loads(sm.get_secret_value(SecretId=os.environ['SECRET_ARN'])['SecretString'])",
+                    "        conn = pg8000.connect(",
+                    "            host=os.environ['DB_HOST'],",
+                    "            port=int(os.environ['DB_PORT']),",
+                    "            database=os.environ['DB_NAME'],",
+                    "            user=secret['username'],",
+                    "            password=secret['password']",
+                    "        )",
+                    "        conn.autocommit = True",
+                    "        cursor = conn.cursor()",
+                    "        print('Creating table...')",
+                    "        cursor.execute('CREATE TABLE IF NOT EXISTS books_book (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, description TEXT NOT NULL, author VARCHAR(100) NOT NULL, price NUMERIC(10, 2) NOT NULL, is_rented BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP)')",
+                    "        print('Table created. Inserting data...')",
+                    "        cursor.execute(\"INSERT INTO books_book (name, description, author, price, is_rented) VALUES (%s, %s, %s, %s, %s)\", ('Clean Code: A Handbook of Agile Software Craftsmanship', 'My fav book', 'Robert C Martin', 35.99, False))",
+                    "        cursor.execute(\"INSERT INTO books_book (name, description, author, price, is_rented) VALUES (%s, %s, %s, %s, %s)\", ('Code Complete: A Practical Handbook of Software Construction', 'One of the best practical guides to programming', 'Steve McConnell', 54.99, False))",
+                    "        cursor.execute(\"INSERT INTO books_book (name, description, author, price, is_rented) VALUES (%s, %s, %s, %s, %s)\", ('Head First Software Architecture: A Learners Guide to Architectural Thinking', 'Teaches software architecture', 'Raju Gandhi', 505.99, False))",
+                    "        cursor.execute(\"INSERT INTO books_book (name, description, author, price, is_rented) VALUES (%s, %s, %s, %s, %s)\", ('The Warren Buffett Way', 'An insightful new take on the life and work of one of the worlds most remarkable investors', 'Robert G. Hagstrom', 54.99, False))",
+                    "        print('Data inserted. Verifying...')",
+                    "        cursor.execute('SELECT COUNT(*) FROM books_book')",
+                    "        count = cursor.fetchone()[0]",
+                    "        print(f'Row count: {count}')",
+                    "        cursor.close()",
+                    "        conn.close()",
+                    "        if is_cfn: send_response(event, context, 'SUCCESS')",
+                    "        return {'status': 'SUCCESS', 'reason': 'Table created and data inserted'}",
+                    "    except Exception as e:",
+                    "        print(f'Error: {e}')",
+                    "        if is_cfn: send_response(event, context, 'FAILED', str(e))",
+                    "        return {'status': 'FAILED', 'reason': str(e)}"
+                ]]}
+            }
+        }
+    },
+    "DBInitCustomResource": {
+        "Type": "AWS::CloudFormation::CustomResource",
+        "DependsOn": ["DBInitFunction", "BPBBookRDSDBInstance", "DBInitRDSIngressRule"],
+        "Properties": {
+            "ServiceToken": { "Fn::GetAtt": ["DBInitFunction", "Arn"] }
+        }
     }
     },
     "Outputs": {
