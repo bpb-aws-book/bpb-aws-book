@@ -112,7 +112,8 @@
                 "Path": "/",
                 "ManagedPolicyArns": [
                     "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-                    "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
+                    "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
+                    "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"
                 ],
 				"Policies": [{
 					"PolicyName": "AdditionalPermissionsPolicy",
@@ -373,9 +374,25 @@
                     },
 					"CopyFiles" : {
 						"commands": {
-							"Copy python 3.13 installation file": {
+							"01_Copy python 3.13 installation file": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/install-python3.13.sh",
 								"cwd": "/home/ec2-user"
+							},
+							"02_Create chapter folder": {
+								"command": "mkdir -p chapter27",
+								"cwd": "/home/ec2-user"
+							},
+							"03_Create Agent Source Code File simplest agent": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent.py",
+								"cwd": "/home/ec2-user/chapter27"
+							},
+							"04_Create Agent Source Code File Agent with memory": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-memory.py",
+								"cwd": "/home/ec2-user/chapter27"
+							},
+							"05_Create Agent Source Code File Agent Lambda tool": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-booksearch.py",
+								"cwd": "/home/ec2-user/chapter27"
 							}
 					}
                     }
