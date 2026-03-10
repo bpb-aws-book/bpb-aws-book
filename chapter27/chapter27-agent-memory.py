@@ -43,12 +43,28 @@ class MemoryHook(HookProvider):
             k=5
         )
 
+        # Retrieve extracted long-term memories
+        extracted = memory_client.retrieve_memories(
+            memory_id=MEMORY_ID,
+            namespace=f"/strategies/default/actors/user/",
+            query=f"session {session_id}",
+            actor_id="user"
+        )
+
+        context_parts = []
         if turns:
-            context = "\n".join([
+            turn_context = "\n".join([
                 f"{m['role']}: {m['content']['text']}"
                 for t in turns for m in t
             ])
-            event.agent.system_prompt += f"\n\nPrevious conversation:\n{context}"
+            context_parts.append(f"Recent conversation:\n{turn_context}")
+
+        if extracted:
+            mem_context = "\n".join([str(m) for m in extracted])
+            context_parts.append(f"Extracted memories:\n{mem_context}")
+
+        if context_parts:
+            event.agent.system_prompt += "\n\n" + "\n\n".join(context_parts)
 
     def on_message_added(self, event):
         """Saves each message to memory after it's processed"""
