@@ -43,28 +43,12 @@ class MemoryHook(HookProvider):
             k=5
         )
 
-        # Retrieve extracted long-term memories
-        extracted = memory_client.retrieve_memories(
-            memory_id=MEMORY_ID,
-            namespace=f"/strategies/default/actors/user/",
-            query=f"session {session_id}",
-            actor_id="user"
-        )
-
-        context_parts = []
         if turns:
-            turn_context = "\n".join([
+            context = "\n".join([
                 f"{m['role']}: {m['content']['text']}"
                 for t in turns for m in t
             ])
-            context_parts.append(f"Recent conversation:\n{turn_context}")
-
-        if extracted:
-            mem_context = "\n".join([str(m) for m in extracted])
-            context_parts.append(f"Extracted memories:\n{mem_context}")
-
-        if context_parts:
-            event.agent.system_prompt += "\n\n" + "\n\n".join(context_parts)
+            event.agent.system_prompt += f"\n\nRecent conversation:\n{context}"
 
     def on_message_added(self, event):
         """Saves each message to memory after it's processed"""
@@ -114,6 +98,21 @@ async def invoke_agent(request: InvocationRequest):
         # Set session_id so MemoryHook can use it
         global current_session_id
         current_session_id = request.session_id
+
+        # Retrieve extracted long-term memories per request
+        if memory_client and MEMORY_ID:
+            try:
+                extracted = memory_client.retrieve_memories(
+                    memory_id=MEMORY_ID,
+                    namespace="/strategies/default/actors/user/",
+                    query=user_message,
+                    actor_id="user"
+                )
+                if extracted:
+                    mem_context = "\n".join([str(m) for m in extracted])
+                    user_message = f"[Extracted memories: {mem_context}]\n\n{user_message}"
+            except Exception as e:
+                print(f"Warning: Could not retrieve memories: {e}")
 
         result = chapter27_strands_agent(user_message)
         response = {
