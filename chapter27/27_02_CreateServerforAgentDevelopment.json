@@ -338,27 +338,27 @@
 							}
 						},
 						"commands": {
-							"take a backup of our nginx config file": {
+							"01_take a backup of our nginx config file": {
 								"command": "sudo cp nginx.conf nginx.conf.original",
 								"cwd": "/etc/nginx"
 							},
-							"install openssl": {
+							"02_install openssl": {
 								"command": "sudo yum install openssl -y",
 								"cwd": "/etc/nginx"
 							},
-							"generate self signed certificates": {
+							"03_generate self signed certificates": {
 								"command": "sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout inquisitivebookwormclub.key -out inquisitivebookwormclub.crt -subj \"/C=US/ST=AnyState/L=Anycity/O=Inquisitive Bookworm Club/OU=ITDepartment/CN=None\"",
 								"cwd": "/etc/nginx"
 							},
-							"copy the nginx.conf file for the development server": {
+							"04_copy the nginx.conf file for the development server": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/nginx-agentcoredev.conf",
 								"cwd": "/etc/nginx"
 							},
-							"overwrite the SSL enabled nginx conf file": {
+							"05_overwrite the SSL enabled nginx conf file": {
 								"command": "mv nginx-agentcoredev.conf nginx.conf",
 								"cwd": "/etc/nginx"
 							},
-							"restart nginx": {
+							"06_restart nginx": {
 								"command": "sudo service nginx restart",
 								"cwd": "/etc/nginx"
 							}
@@ -379,18 +379,22 @@
 								"cwd": "/home/ec2-user"
 							},
 							"02_Create chapter folder": {
-								"command": "mkdir -p chapter27",
+								"command": "mkdir -p chapter27 && sudo chown -R ec2-user chapter27",
 								"cwd": "/home/ec2-user"
 							},
-							"03_Create Agent Source Code File simplest agent": {
+							"03_Create folder for agent deployment and testing": {
+								"command": "mkdir -p chapter27-agent && sudo chown -R ec2-user chapter27-agent",
+								"cwd": "/home/ec2-user/chapter27"
+							},
+							"04_Create Agent Source Code File simplest agent": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent.py",
 								"cwd": "/home/ec2-user/chapter27"
 							},
-							"04_Create Agent Source Code File Agent with memory": {
+							"05_Create Agent Source Code File Agent with memory": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-memory.py",
 								"cwd": "/home/ec2-user/chapter27"
 							},
-							"05_Create Agent Source Code File Agent Lambda tool": {
+							"06_Create Agent Source Code File Agent Lambda tool": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-booksearch.py",
 								"cwd": "/home/ec2-user/chapter27"
 							}
