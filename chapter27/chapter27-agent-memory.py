@@ -104,7 +104,7 @@ async def invoke_agent(request: InvocationRequest):
             try:
                 extracted = memory_client.retrieve_memories(
                     memory_id=MEMORY_ID,
-                    namespace="/strategies/default/actors/user/",
+                    namespace="/strategies/preference_builtin_xxxxx-yyyyyyyyyy/actors/user/",
                     query=user_message,
                     actor_id="user"
                 )
