@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to build the Lambda layer with pg8000 for Python 3.12
+# Script to build the Lambda layer with pg8000
 
 # Create directory structure
 mkdir -p ./layer/python
