@@ -1,0 +1,178 @@
+{
+	"Description": "This CloudFormation Template creates an Amazon Bedrock AgentCore Runtime that runs a containerized agent from the ECR repository created by 27_02_CreateServerforAgentDevelopment.json. It creates an IAM execution role with BedrockAgentCoreFullAccess plus Identity permissions, and configures environment variables for gateway and identity provider integration.",
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Parameters": {
+		"GatewayMcpUrl": {
+			"Description": "The MCP URL of the AgentCore Gateway (update after gateway creation)",
+			"Type": "String",
+			"Default": "https://REPLACE_WITH_GATEWAY_URL/mcp"
+		},
+		"IdentityProviderName": {
+			"Description": "The name of the AgentCore Identity provider (update after provider creation)",
+			"Type": "String",
+			"Default": "REPLACE_WITH_PROVIDER_NAME"
+		}
+	},
+	"Resources": {
+		"AgentCoreRuntimeExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "BPBBookAgentCoreRuntimeExecutionRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "bedrock-agentcore.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"
+				],
+				"Policies": [
+					{
+						"PolicyName": "AgentCoreIdentityPermissions",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"bedrock-agentcore:CreateWorkloadIdentity",
+										"bedrock-agentcore:GetWorkloadAccessToken",
+										"bedrock-agentcore:GetResourceOauth2Token"
+									],
+									"Resource": "*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"secretsmanager:GetSecretValue"
+									],
+									"Resource": {
+										"Fn::Sub": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:bedrock-agentcore-identity*"
+									}
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"bedrock:InvokeModel",
+										"bedrock:InvokeModelWithResponseStream"
+									],
+									"Resource": "*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"ecr:GetAuthorizationToken"
+									],
+									"Resource": "*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"ecr:BatchCheckLayerAvailability",
+										"ecr:GetDownloadUrlForLayer",
+										"ecr:BatchGetImage"
+									],
+									"Resource": {
+										"Fn::ImportValue": "BPBBookAgentCoreECRArn"
+									}
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents"
+									],
+									"Resource": "*"
+								}
+							]
+						}
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "BPBBookAgentCoreRuntimeRole"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "TwentySeven"
+					}
+				]
+			}
+		},
+		"AgentCoreRuntime": {
+			"Type": "AWS::BedrockAgentCore::Runtime",
+			"DependsOn": "AgentCoreRuntimeExecutionRole",
+			"Properties": {
+				"AgentRuntimeName": "BPBBookAgentCoreRuntime",
+				"Description": "AgentCore Runtime for the BPB AWS Book Chapter 27 book search agent",
+				"AgentRuntimeArtifact": {
+					"ContainerConfiguration": {
+						"ContainerUri": {
+							"Fn::Sub": [
+								"${RepoUri}:latest",
+								{
+									"RepoUri": {
+										"Fn::ImportValue": "BPBBookAgentCoreECRUri"
+									}
+								}
+							]
+						}
+					}
+				},
+				"NetworkConfiguration": {
+					"NetworkMode": "PUBLIC"
+				},
+				"RoleArn": {
+					"Fn::GetAtt": ["AgentCoreRuntimeExecutionRole", "Arn"]
+				},
+				"EnvironmentVariables": {
+					"GATEWAY_MCP_URL": { "Ref": "GatewayMcpUrl" },
+					"IDENTITY_PROVIDER_NAME": { "Ref": "IdentityProviderName" }
+				},
+				"Tags": {
+					"Name": "BPBBookAgentCoreRuntime",
+					"Chapter": "TwentySeven"
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"AgentCoreRuntimeArn": {
+			"Value": {
+				"Fn::GetAtt": ["AgentCoreRuntime", "AgentRuntimeArn"]
+			},
+			"Description": "ARN of the AgentCore Runtime",
+			"Export": {
+				"Name": "BPBBookAgentCoreRuntimeArn"
+			}
+		},
+		"AgentCoreRuntimeId": {
+			"Value": {
+				"Fn::GetAtt": ["AgentCoreRuntime", "AgentRuntimeId"]
+			},
+			"Description": "ID of the AgentCore Runtime"
+		},
+		"AgentCoreRuntimeStatus": {
+			"Value": {
+				"Fn::GetAtt": ["AgentCoreRuntime", "Status"]
+			},
+			"Description": "Current status of the AgentCore Runtime"
+		},
+		"ExecutionRoleArn": {
+			"Value": {
+				"Fn::GetAtt": ["AgentCoreRuntimeExecutionRole", "Arn"]
+			},
+			"Description": "ARN of the Runtime Execution Role"
+		}
+	}
+}
