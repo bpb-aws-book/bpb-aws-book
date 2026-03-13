@@ -45,7 +45,7 @@
       "Properties": {
         "CodeUri": "./src/",
         "Handler": "app.lambda_handler",
-        "Runtime": "python3.12",
+        "Runtime": "python3.13",
         "Timeout": 60,
         "MemorySize": 128,
         "Layers": [
