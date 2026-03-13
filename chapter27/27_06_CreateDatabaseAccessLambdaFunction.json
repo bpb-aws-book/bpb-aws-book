@@ -35,7 +35,7 @@
         "LayerName": "pg8000-layer",
         "Description": "Layer containing pg8000 for PostgreSQL connections",
         "ContentUri": "./src/",
-        "CompatibleRuntimes": ["python3.12"]
+        "CompatibleRuntimes": ["python3.13"]
       },
       "DeletionPolicy": "Delete"    
     },
