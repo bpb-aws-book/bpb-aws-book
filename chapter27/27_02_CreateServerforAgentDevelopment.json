@@ -386,15 +386,19 @@
 								"command": "mkdir -p chapter27-agent && sudo chown -R ec2-user chapter27-agent",
 								"cwd": "/home/ec2-user/chapter27"
 							},
-							"04_Create Agent Source Code File simplest agent": {
+							"04_Copy Dockerfile for container deployment": {
+								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/Dockerfile",
+								"cwd": "/home/ec2-user/chapter27/chapter27-agent"
+							},
+							"05_Create Agent Source Code File simplest agent": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent.py",
 								"cwd": "/home/ec2-user/chapter27"
 							},
-							"05_Create Agent Source Code File Agent with memory": {
+							"06_Create Agent Source Code File Agent with memory": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-memory.py",
 								"cwd": "/home/ec2-user/chapter27"
 							},
-							"06_Create Agent Source Code File Agent Lambda tool": {
+							"07_Create Agent Source Code File Agent Lambda tool": {
 								"command": "wget https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/refs/heads/main/chapter27/chapter27-agent-booksearch.py",
 								"cwd": "/home/ec2-user/chapter27"
 							}
@@ -437,6 +441,18 @@
 				"Description": "ECR Repository ARN",
 				"Export": {
 					"Name": "BPBBookAgentCoreECRArn"
+				}
+			},
+			"ECRRepositoryUriExport": {
+				"Value": {
+					"Fn::GetAtt": [
+						"AgentCoreECRRepository",
+						"RepositoryUri"
+					]
+				},
+				"Description": "ECR Repository URI for AgentCore container images",
+				"Export": {
+					"Name": "BPBBookAgentCoreECRUri"
 				}
 			}
 		}
