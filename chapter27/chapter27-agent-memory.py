@@ -7,6 +7,7 @@ from strands.hooks import AgentInitializedEvent, HookProvider, MessageAddedEvent
 from strands_tools import calculator, current_time
 from bedrock_agentcore.memory import MemoryClient
 import json
+import uuid
 import os
 
 app = FastAPI(title="Chapter27 Agent Server with Memory", version="1.0.0")
@@ -18,8 +19,8 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 # Initialize memory client
 memory_client = MemoryClient(region_name=AWS_REGION) if MEMORY_ID else None
 
-# Simple shared session tracker (JSONSerializableDict doesn't support assignment)
-current_session_id = "default"
+# Auto-generated session ID per app instance
+current_session_id = str(uuid.uuid4())
 
 class MemoryHook(HookProvider):
     """
@@ -81,7 +82,6 @@ chapter27_strands_agent = Agent(
 
 class InvocationRequest(BaseModel):
     input: Dict[str, Any]
-    session_id: str = "default"
 
 class InvocationResponse(BaseModel):
     output: Dict[str, Any]
@@ -103,20 +103,12 @@ async def invoke_agent(request: Request):
         try:
             payload = json.loads(body_str)
         except json.JSONDecodeError:
-            payload = {"input": {"prompt": body_str.strip()}, "session_id": "default"}
-
-        # Ensure session_id exists in payload
-        if "session_id" not in payload:
-            payload["session_id"] = "default"
+            payload = {"input": {"prompt": body_str.strip()}}
 
         parsed = InvocationRequest(**payload)
         user_message = parsed.input.get("prompt", "")
         if not user_message:
             return {"error": "No prompt found in input"}
-
-        # Set session_id so MemoryHook can use it
-        global current_session_id
-        current_session_id = parsed.session_id
 
         # Retrieve extracted long-term memories per request
         if memory_client and MEMORY_ID:
@@ -153,7 +145,7 @@ async def root():
     return {
         "message": "Chapter27 Agent Server with Memory",
         "endpoints": {
-            "POST /invocations": "Invoke the agent with JSON body: {\"input\": {\"prompt\": \"your question\"}, \"session_id\": \"optional-session-id\"}",
+            "POST /invocations": "Invoke the agent with JSON body: {\"input\": {\"prompt\": \"your question\"}}",
             "GET /ping": "Health check",
             "GET /test": "Interactive test page"
         },
@@ -178,8 +170,6 @@ async def test_page():
     <body>
         <h1>Chapter27 Agent Test (with Memory)</h1>
         <p>Try asking: "What is 25 * 17?" or "What time is it?"</p>
-        <label for="session_id">Session ID:</label>
-        <input type="text" id="session_id" value="test-session-1" style="width: 100%; padding: 8px; margin: 5px 0 10px 0;">
         <textarea id="prompt" placeholder="Enter your question here...">What is the square root of 144?</textarea>
         <button onclick="testAgent()">Send to Agent</button>
         <div id="response"></div>
@@ -187,7 +177,6 @@ async def test_page():
         <script>
             async function testAgent() {
                 const prompt = document.getElementById('prompt').value;
-                const sessionId = document.getElementById('session_id').value;
                 const responseDiv = document.getElementById('response');
                 responseDiv.textContent = 'Processing...';
                 
@@ -195,7 +184,7 @@ async def test_page():
                     const response = await fetch('/invocations', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ input: { prompt: prompt }, session_id: sessionId })
+                        body: JSON.stringify({ input: { prompt: prompt } })
                     });
                     
                     const data = await response.json();
