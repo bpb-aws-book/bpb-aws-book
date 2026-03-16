@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Any
 from datetime import datetime
@@ -6,6 +6,7 @@ from strands import Agent
 from strands.hooks import AgentInitializedEvent, HookProvider, MessageAddedEvent
 from strands_tools import calculator, current_time
 from bedrock_agentcore.memory import MemoryClient
+import json
 import os
 
 app = FastAPI(title="Chapter27 Agent Server with Memory", version="1.0.0")
@@ -85,19 +86,37 @@ class InvocationRequest(BaseModel):
 class InvocationResponse(BaseModel):
     output: Dict[str, Any]
 
-@app.post("/invocations", response_model=InvocationResponse)
-async def invoke_agent(request: InvocationRequest):
+@app.post("/invocations")
+async def invoke_agent(request: Request):
     try:
-        user_message = request.input.get("prompt", "")
+        body = await request.body()
+        body_str = body.decode("utf-8", errors="replace")
+
+        if not body_str.strip():
+            return {"error": "Empty request body"}
+
+        # Fix smart/curly quotes from Sandbox UI
+        body_str = body_str.replace("\u201c", '"').replace("\u201d", '"')
+        body_str = body_str.replace("\u2018", "'").replace("\u2019", "'")
+
+        # Try parsing as JSON first, fall back to plain text as prompt
+        try:
+            payload = json.loads(body_str)
+        except json.JSONDecodeError:
+            payload = {"input": {"prompt": body_str.strip()}, "session_id": "default"}
+
+        # Ensure session_id exists in payload
+        if "session_id" not in payload:
+            payload["session_id"] = "default"
+
+        parsed = InvocationRequest(**payload)
+        user_message = parsed.input.get("prompt", "")
         if not user_message:
-            raise HTTPException(
-                status_code=400, 
-                detail="No prompt found in input. Please provide a 'prompt' key in the input."
-            )
+            return {"error": "No prompt found in input"}
 
         # Set session_id so MemoryHook can use it
         global current_session_id
-        current_session_id = request.session_id
+        current_session_id = parsed.session_id
 
         # Retrieve extracted long-term memories per request
         if memory_client and MEMORY_ID:
@@ -120,10 +139,10 @@ async def invoke_agent(request: InvocationRequest):
             "timestamp": datetime.utcnow().isoformat()
         }
 
-        return InvocationResponse(output=response)
+        return {"output": response}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent processing failed: {str(e)}")
+        return {"error": f"Failed: {str(e)}", "type": type(e).__name__}
 
 @app.get("/ping")
 async def ping():
