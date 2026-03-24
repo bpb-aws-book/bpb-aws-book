@@ -1,0 +1,104 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Books Search API - REST API Gateway with Lambda backend and IP restriction",
+  "Parameters": {
+    "AllowedIpRange": {
+      "Type": "String",
+      "Default": "203.0.113.0/24",
+      "Description": "CIDR range allowed to access the API (change to your IP range)"
+    }
+  },
+  "Globals": {
+    "Function": {
+      "Timeout": 10,
+      "Runtime": "python3.12",
+      "MemorySize": 128
+    }
+  },
+  "Resources": {
+    "BooksApi": {
+      "Type": "AWS::Serverless::Api",
+      "Properties": {
+        "StageName": "prod",
+        "EndpointConfiguration": {
+          "Type": "REGIONAL"
+        },
+        "Auth": {
+          "ResourcePolicy": {
+            "IpRangeWhitelist": [
+              { "Ref": "AllowedIpRange" }
+            ]
+          }
+        }
+      }
+    },
+    "ListBooksFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "app.list_books",
+        "CodeUri": "src/",
+        "Description": "Returns all books",
+
+        "Events": {
+          "ListBooks": {
+            "Type": "Api",
+            "Properties": {
+              "RestApiId": { "Ref": "BooksApi" },
+              "Path": "/books",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    },
+    "GetBookFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "app.get_book",
+        "CodeUri": "src/",
+        "Description": "Returns a single book by ID",
+        "Events": {
+          "GetBook": {
+            "Type": "Api",
+            "Properties": {
+              "RestApiId": { "Ref": "BooksApi" },
+              "Path": "/books/{bookId}",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    },
+    "GetRootFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "app.get_root",
+        "CodeUri": "src/",
+        "Description": "Returns API overview",
+        "Events": {
+          "Root": {
+            "Type": "Api",
+            "Properties": {
+              "RestApiId": { "Ref": "BooksApi" },
+              "Path": "/",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "BooksApiUrl": {
+      "Description": "API Gateway endpoint URL (use HTTPS only)",
+      "Value": {
+        "Fn::Sub": "https://${BooksApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+      }
+    },
+    "BooksApiId": {
+      "Description": "API Gateway ID",
+      "Value": { "Ref": "BooksApi" }
+    }
+  }
+}
