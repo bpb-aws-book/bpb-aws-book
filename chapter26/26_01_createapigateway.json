@@ -1,12 +1,12 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "Books Search API - REST API Gateway with Lambda backend and IP restriction",
+  "Description": "Books Search API - REST API Gateway with Lambda authorizer",
   "Parameters": {
-    "AllowedIpRange": {
+    "AuthTokenValue": {
       "Type": "String",
-      "Default": "203.0.113.0/24",
-      "Description": "CIDR range allowed to access the API (change to your IP range)"
+      "NoEcho": true,
+      "Description": "Secret token value for the x-api-token header"
     }
   },
   "Globals": {
@@ -25,10 +25,28 @@
           "Type": "REGIONAL"
         },
         "Auth": {
-          "ResourcePolicy": {
-            "IpRangeWhitelist": [
-              { "Ref": "AllowedIpRange" }
-            ]
+          "DefaultAuthorizer": "TokenAuthorizer",
+          "Authorizers": {
+            "TokenAuthorizer": {
+              "FunctionArn": { "Fn::GetAtt": ["AuthorizerFunction", "Arn"] },
+              "Identity": {
+                "Header": "x-api-token"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "AuthorizerFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "authorizer.handler",
+        "CodeUri": "src/",
+        "Description": "Lambda authorizer - validates x-api-token header",
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN": { "Ref": "AuthTokenValue" }
           }
         }
       }
@@ -39,7 +57,6 @@
         "Handler": "app.list_books",
         "CodeUri": "src/",
         "Description": "Returns all books",
-
         "Events": {
           "ListBooks": {
             "Type": "Api",
