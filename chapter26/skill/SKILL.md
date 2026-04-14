@@ -1,3 +1,8 @@
+---
+name: python-review
+description: Review Python modules for code quality, security, and best practices. Use when reviewing Python code, performing code review, or checking for issues.
+---
+
 # Python Code Review
 
 Review Python modules for code quality, security, and best practices.
