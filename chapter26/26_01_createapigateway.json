@@ -10,7 +10,7 @@
     },
     "StageName": {
       "Type": "String",
-      "Default": "test",
+      "Default": "test-chapter26",
       "Description": "API Gateway stage name"
     }
   },
