@@ -7,6 +7,11 @@
       "Type": "String",
       "NoEcho": true,
       "Description": "Secret token value for the x-api-token header"
+    },
+    "StageName": {
+      "Type": "String",
+      "Default": "test",
+      "Description": "API Gateway stage name"
     }
   },
   "Globals": {
@@ -20,7 +25,7 @@
     "BooksApi": {
       "Type": "AWS::Serverless::Api",
       "Properties": {
-        "StageName": "prod",
+        "StageName": { "Ref": "StageName" },
         "EndpointConfiguration": {
           "Type": "REGIONAL"
         },
@@ -110,7 +115,7 @@
     "BooksApiUrl": {
       "Description": "API Gateway endpoint URL (use HTTPS only)",
       "Value": {
-        "Fn::Sub": "https://${BooksApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+        "Fn::Sub": "https://${BooksApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
       }
     },
     "BooksApiId": {
