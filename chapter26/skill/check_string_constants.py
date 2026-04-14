@@ -86,7 +86,7 @@ def check_file(filepath):
 
 
 def main():
-    search_dir = "src"
+    search_dir = "."
     if not os.path.isdir(search_dir):
         print(f"Directory '{search_dir}' not found.")
         sys.exit(1)
