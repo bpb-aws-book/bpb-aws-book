@@ -1,0 +1,460 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template that creates a CodePipeline with CodeCommit as source, CodeBuild for template validation and parameter substitution, and CloudFormation for stack deployment.",
+  "Parameters": {
+    "RepositoryName": {
+      "Type": "String",
+      "Default": "vpc-webserver-repo",
+      "Description": "Name of the CodeCommit repository containing the CloudFormation template"
+    },
+    "BranchName": {
+      "Type": "String",
+      "Default": "main",
+      "Description": "Branch name to trigger the pipeline"
+    },
+    "StackName": {
+      "Type": "String",
+      "Default": "VPCWebServerStack",
+      "Description": "Name of the CloudFormation stack to deploy"
+    },
+    "TemplateFileName": {
+      "Type": "String",
+      "Default": "28_2_CreateVPCwithWebserverDjangoApplication.json",
+      "Description": "Name of the CloudFormation template file in the repository"
+    },
+    "LatestAmiId": {
+      "Type": "String",
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64",
+      "Description": "SSM parameter path for the latest AMI ID"
+    },
+    "YourPublicIPAddress": {
+      "Type": "String",
+      "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32"
+    }
+  },
+  "Resources": {
+    "ArtifactStoreBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      }
+    },
+    "CodeCommitRepository": {
+      "Type": "AWS::CodeCommit::Repository",
+      "Properties": {
+        "RepositoryName": { "Ref": "RepositoryName" },
+        "RepositoryDescription": "Repository for VPC and WebServer CloudFormation template"
+      }
+    },
+    "CodeBuildServiceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "CodeBuildServiceRole-VPCPipeline",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "codebuild.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CodeBuildPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion",
+                    "s3:PutObject"
+                  ],
+                  "Resource": [
+                    { "Fn::Sub": "${ArtifactStoreBucket.Arn}/*" }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudformation:ValidateTemplate"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "CodeBuildProject": {
+      "Type": "AWS::CodeBuild::Project",
+      "Properties": {
+        "Name": "ValidateAndConfigureCFNTemplate",
+        "Description": "Validates the CloudFormation template and updates LatestAmiId and YourPublicIPAddress parameters",
+        "ServiceRole": { "Fn::GetAtt": ["CodeBuildServiceRole", "Arn"] },
+        "Artifacts": {
+          "Type": "CODEPIPELINE"
+        },
+        "Environment": {
+          "Type": "LINUX_CONTAINER",
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/amazonlinux2-x86_64-standard:5.0",
+          "EnvironmentVariables": [
+            {
+              "Name": "TEMPLATE_FILE_NAME",
+              "Value": { "Ref": "TemplateFileName" },
+              "Type": "PLAINTEXT"
+            },
+            {
+              "Name": "LATEST_AMI_ID",
+              "Value": { "Ref": "LatestAmiId" },
+              "Type": "PLAINTEXT"
+            },
+            {
+              "Name": "YOUR_PUBLIC_IP_ADDRESS",
+              "Value": { "Ref": "YourPublicIPAddress" },
+              "Type": "PLAINTEXT"
+            }
+          ]
+        },
+        "Source": {
+          "Type": "CODEPIPELINE",
+          "BuildSpec": "version: 0.2\nphases:\n  install:\n    runtime-versions:\n      python: 3.12\n    commands:\n      - echo \"Installing cfn-lint for template validation\"\n      - pip install cfn-lint\n  pre_build:\n    commands:\n      - echo \"Validating CloudFormation template...\"\n      - aws cloudformation validate-template --template-body file://$TEMPLATE_FILE_NAME\n      - cfn-lint $TEMPLATE_FILE_NAME || true\n      - echo \"Template validation successful\"\n  build:\n    commands:\n      - echo \"Resolving LatestAmiId from SSM Parameter Store...\"\n      - export RESOLVED_AMI_ID=$(aws ssm get-parameter --name \"$LATEST_AMI_ID\" --query \"Parameter.Value\" --output text)\n      - echo \"Resolved AMI ID = $RESOLVED_AMI_ID\"\n      - echo \"Creating parameter configuration file...\"\n      - |\n        cat > config-params.json <<EOF\n        {\n          \"Parameters\": {\n            \"LatestAmiId\": \"$LATEST_AMI_ID\",\n            \"YourPublicIPAddress\": \"$YOUR_PUBLIC_IP_ADDRESS\"\n          }\n        }\n        EOF\n      - echo \"Parameter configuration file created\"\n  post_build:\n    commands:\n      - echo \"Build completed successfully\"\nartifacts:\n  files:\n    - $TEMPLATE_FILE_NAME\n    - config-params.json\n  discard-paths: no\n"
+        }
+      }
+    },
+    "PipelineServiceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "CodePipelineServiceRole-VPCPipeline",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "codepipeline.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CodePipelinePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion",
+                    "s3:GetBucketVersioning",
+                    "s3:PutObject"
+                  ],
+                  "Resource": [
+                    { "Fn::GetAtt": ["ArtifactStoreBucket", "Arn"] },
+                    { "Fn::Sub": "${ArtifactStoreBucket.Arn}/*" }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "codecommit:CancelUploadArchive",
+                    "codecommit:GetBranch",
+                    "codecommit:GetCommit",
+                    "codecommit:GetUploadArchiveStatus",
+                    "codecommit:UploadArchive"
+                  ],
+                  "Resource": { "Fn::GetAtt": ["CodeCommitRepository", "Arn"] }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "codebuild:BatchGetBuilds",
+                    "codebuild:StartBuild"
+                  ],
+                  "Resource": { "Fn::GetAtt": ["CodeBuildProject", "Arn"] }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudformation:CreateStack",
+                    "cloudformation:DeleteStack",
+                    "cloudformation:DescribeStacks",
+                    "cloudformation:UpdateStack",
+                    "cloudformation:CreateChangeSet",
+                    "cloudformation:DeleteChangeSet",
+                    "cloudformation:DescribeChangeSet",
+                    "cloudformation:ExecuteChangeSet",
+                    "cloudformation:SetStackPolicy",
+                    "cloudformation:ValidateTemplate"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "iam:PassRole"
+                  ],
+                  "Resource": { "Fn::GetAtt": ["CloudFormationDeployRole", "Arn"] }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "CloudFormationDeployRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "CloudFormationDeployRole-VPCPipeline",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudformation.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CloudFormationDeployPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:*",
+                    "iam:CreateRole",
+                    "iam:DeleteRole",
+                    "iam:PutRolePolicy",
+                    "iam:DeleteRolePolicy",
+                    "iam:GetRole",
+                    "iam:PassRole",
+                    "iam:CreateInstanceProfile",
+                    "iam:DeleteInstanceProfile",
+                    "iam:AddRoleToInstanceProfile",
+                    "iam:RemoveRoleFromInstanceProfile",
+                    "iam:AttachRolePolicy",
+                    "iam:DetachRolePolicy",
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "cloudformation:*"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Pipeline": {
+      "Type": "AWS::CodePipeline::Pipeline",
+      "Properties": {
+        "Name": "VPC-WebServer-Pipeline",
+        "RoleArn": { "Fn::GetAtt": ["PipelineServiceRole", "Arn"] },
+        "ArtifactStore": {
+          "Type": "S3",
+          "Location": { "Ref": "ArtifactStoreBucket" }
+        },
+        "Stages": [
+          {
+            "Name": "Source",
+            "Actions": [
+              {
+                "Name": "CodeCommitSource",
+                "ActionTypeId": {
+                  "Category": "Source",
+                  "Owner": "AWS",
+                  "Provider": "CodeCommit",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "RepositoryName": { "Ref": "RepositoryName" },
+                  "BranchName": { "Ref": "BranchName" },
+                  "PollForSourceChanges": "false"
+                },
+                "OutputArtifacts": [
+                  { "Name": "SourceOutput" }
+                ],
+                "RunOrder": 1
+              }
+            ]
+          },
+          {
+            "Name": "Build",
+            "Actions": [
+              {
+                "Name": "ValidateAndConfigureTemplate",
+                "ActionTypeId": {
+                  "Category": "Build",
+                  "Owner": "AWS",
+                  "Provider": "CodeBuild",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ProjectName": { "Ref": "CodeBuildProject" }
+                },
+                "InputArtifacts": [
+                  { "Name": "SourceOutput" }
+                ],
+                "OutputArtifacts": [
+                  { "Name": "BuildOutput" }
+                ],
+                "RunOrder": 1
+              }
+            ]
+          },
+          {
+            "Name": "Deploy",
+            "Actions": [
+              {
+                "Name": "DeployCloudFormationStack",
+                "ActionTypeId": {
+                  "Category": "Deploy",
+                  "Owner": "AWS",
+                  "Provider": "CloudFormation",
+                  "Version": "1"
+                },
+                "Configuration": {
+                  "ActionMode": "CREATE_UPDATE",
+                  "StackName": { "Ref": "StackName" },
+                  "TemplatePath": {
+                    "Fn::Sub": "BuildOutput::${TemplateFileName}"
+                  },
+                  "TemplateConfiguration": "BuildOutput::config-params.json",
+                  "RoleArn": { "Fn::GetAtt": ["CloudFormationDeployRole", "Arn"] },
+                  "Capabilities": "CAPABILITY_NAMED_IAM"
+                },
+                "InputArtifacts": [
+                  { "Name": "BuildOutput" }
+                ],
+                "RunOrder": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "EventBridgeRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Name": "CodeCommitChangesTriggerPipeline",
+        "Description": "Triggers the pipeline when changes are pushed to the CodeCommit repository",
+        "EventPattern": {
+          "source": ["aws.codecommit"],
+          "detail-type": ["CodeCommit Repository State Change"],
+          "resources": [
+            { "Fn::GetAtt": ["CodeCommitRepository", "Arn"] }
+          ],
+          "detail": {
+            "event": ["referenceCreated", "referenceUpdated"],
+            "referenceType": ["branch"],
+            "referenceName": [{ "Ref": "BranchName" }]
+          }
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": { "Fn::Sub": "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}" },
+            "Id": "CodePipelineTarget",
+            "RoleArn": { "Fn::GetAtt": ["EventBridgeRole", "Arn"] }
+          }
+        ]
+      }
+    },
+    "EventBridgeRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "EventBridgeRole-VPCPipeline",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "EventBridgeStartPipeline",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "codepipeline:StartPipelineExecution",
+                  "Resource": { "Fn::Sub": "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "PipelineName": {
+      "Description": "Name of the CodePipeline",
+      "Value": { "Ref": "Pipeline" }
+    },
+    "PipelineURL": {
+      "Description": "URL to the CodePipeline console",
+      "Value": { "Fn::Sub": "https://${AWS::Region}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${Pipeline}/view" }
+    },
+    "CodeCommitRepoCloneURL": {
+      "Description": "HTTPS clone URL for the CodeCommit repository",
+      "Value": { "Fn::GetAtt": ["CodeCommitRepository", "CloneUrlHttp"] }
+    },
+    "ArtifactBucket": {
+      "Description": "S3 bucket used for pipeline artifacts",
+      "Value": { "Ref": "ArtifactStoreBucket" }
+    }
+  }
+}
