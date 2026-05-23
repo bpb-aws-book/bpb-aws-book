@@ -64,37 +64,33 @@ def get_guardrails():
 
 
 # Input controls
-col1, col2 = st.columns(2)
+system_prompt = st.text_area(
+    "System Prompt",
+    height=150,
+    placeholder="Enter a system prompt to guide the model's behavior...",
+)
 
-with col1:
-    system_prompt = st.text_area(
-        "System Prompt",
-        height=150,
-        placeholder="Enter a system prompt to guide the model's behavior...",
-    )
+context = st.text_area(
+    "Context",
+    height=200,
+    placeholder="Enter context information for the model to reference...",
+)
 
-    context = st.text_area(
-        "Context",
-        height=200,
-        placeholder="Enter context information for the model to reference...",
-    )
+user_prompt = st.text_area(
+    "Prompt",
+    height=150,
+    placeholder="Enter your prompt here...",
+)
 
-with col2:
-    user_prompt = st.text_area(
-        "Prompt",
-        height=150,
-        placeholder="Enter your prompt here...",
-    )
+# Guardrail dropdown
+guardrails = get_guardrails()
+guardrail_options = ["None"] + [
+    f"{g['name']} ({g['id']})" for g in guardrails
+]
+selected_guardrail = st.selectbox("Bedrock Guardrail", guardrail_options)
 
-    # Guardrail dropdown
-    guardrails = get_guardrails()
-    guardrail_options = ["None"] + [
-        f"{g['name']} ({g['id']})" for g in guardrails
-    ]
-    selected_guardrail = st.selectbox("Bedrock Guardrail", guardrail_options)
-
-    # Prompt caching checkbox
-    enable_prompt_caching = st.checkbox("Enable Prompt Caching", value=False)
+# Prompt caching checkbox
+enable_prompt_caching = st.checkbox("Enable Prompt Caching", value=False)
 
 st.divider()
 
