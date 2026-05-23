@@ -40,7 +40,7 @@ bedrock_client = boto3.client("bedrock-runtime", region_name=region)
 bedrock_mgmt_client = boto3.client("bedrock", region_name=region)
 
 # Model ID for Global Anthropic Claude Opus 4 inference profile
-MODEL_ID = "us.anthropic.claude-opus-4-0-20250514"
+MODEL_ID = "global.anthropic.claude-opus-4-6-v1"
 
 
 @st.cache_data(ttl=300)
@@ -112,11 +112,9 @@ if st.button("Invoke Bedrock", type="primary", use_container_width=True):
                 user_content = []
                 if context.strip():
                     user_content.append({"text": f"Context:\n{context.strip()}"})
+                    if enable_prompt_caching:
+                        user_content.append({"cachePoint": {"type": "default"}})
                 user_content.append({"text": user_prompt.strip()})
-
-                # Apply cache point if prompt caching is enabled
-                if enable_prompt_caching and context.strip():
-                    user_content[0]["cachePoint"] = {"type": "default"}
 
                 messages.append({"role": "user", "content": user_content})
 
@@ -130,7 +128,7 @@ if st.button("Invoke Bedrock", type="primary", use_container_width=True):
                 if system_prompt.strip():
                     system_content = [{"text": system_prompt.strip()}]
                     if enable_prompt_caching:
-                        system_content[0]["cachePoint"] = {"type": "default"}
+                        system_content.append({"cachePoint": {"type": "default"}})
                     request_params["system"] = system_content
 
                 # Add guardrail config if selected
