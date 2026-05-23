@@ -1,6 +1,7 @@
 import streamlit as st
 import boto3
 import json
+import requests
 
 st.set_page_config(page_title="Chapter 25 Bedrock Playground", layout="wide")
 
@@ -14,9 +15,29 @@ st.markdown(
 
 st.divider()
 
-# Initialize Bedrock clients
-bedrock_client = boto3.client("bedrock-runtime")
-bedrock_mgmt_client = boto3.client("bedrock")
+
+def get_instance_region():
+    """Get the region from EC2 instance metadata."""
+    try:
+        token = requests.put(
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+            timeout=2,
+        ).text
+        region = requests.get(
+            "http://169.254.169.254/latest/meta-data/placement/region",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=2,
+        ).text
+        return region
+    except Exception:
+        return "us-east-1"
+
+
+# Initialize Bedrock clients with region from instance metadata
+region = get_instance_region()
+bedrock_client = boto3.client("bedrock-runtime", region_name=region)
+bedrock_mgmt_client = boto3.client("bedrock", region_name=region)
 
 # Model ID for Global Anthropic Claude Opus 4 inference profile
 MODEL_ID = "us.anthropic.claude-opus-4-0-20250514"
