@@ -1,0 +1,94 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Transform": "AWS::Serverless-2016-10-31",
+	"Description": "Bedrock API Tutorial - Demonstrates differences between InvokeModel and Converse APIs, and the impact of inference parameters (temperature, topP, topK).",
+	"Globals": {
+		"Function": {
+			"Runtime": "python3.12",
+			"Timeout": 180,
+			"MemorySize": 256,
+			"Architectures": [
+				"x86_64"
+			]
+		}
+	},
+	"Resources": {
+		"BedrockAccessPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"Description": "Allows Lambda functions to invoke Bedrock models",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"bedrock:InvokeModel",
+								"bedrock:InvokeModelWithResponseStream"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"aws-marketplace:ViewSubscriptions",
+								"aws-marketplace:Subscribe"
+							],
+							"Resource": "*"
+						}
+					]
+				}
+			}
+		},
+		"InvokeModelDemo": {
+			"Type": "AWS::Serverless::Function",
+			"Properties": {
+				"FunctionName": "BedrockInvokeModelDemo",
+				"Handler": "invoke_model_demo.lambda_handler",
+				"CodeUri": "src/",
+				"Description": "Demonstrates InvokeModel with model-specific schemas for Claude and Llama",
+				"Policies": [
+					{"Ref": "BedrockAccessPolicy"}
+				]
+			}
+		},
+		"ConverseDemo": {
+			"Type": "AWS::Serverless::Function",
+			"Properties": {
+				"FunctionName": "BedrockConverseDemo",
+				"Handler": "converse_demo.lambda_handler",
+				"CodeUri": "src/",
+				"Description": "Demonstrates Converse API with unified schema across Claude and Llama",
+				"Policies": [
+					{"Ref": "BedrockAccessPolicy"}
+				]
+			}
+		},
+		"InferenceParamsDemo": {
+			"Type": "AWS::Serverless::Function",
+			"Properties": {
+				"FunctionName": "BedrockInferenceParamsDemo",
+				"Handler": "inference_params_demo.lambda_handler",
+				"CodeUri": "src/",
+				"Description": "Demonstrates the impact of temperature, topP, and topK on model output",
+				"Policies": [
+					{"Ref": "BedrockAccessPolicy"}
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"InvokeModelDemoFunction": {
+			"Description": "InvokeModel Demo Lambda Function ARN",
+			"Value": {"Fn::GetAtt": ["InvokeModelDemo", "Arn"]}
+		},
+		"ConverseDemoFunction": {
+			"Description": "Converse Demo Lambda Function ARN",
+			"Value": {"Fn::GetAtt": ["ConverseDemo", "Arn"]}
+		},
+		"InferenceParamsDemoFunction": {
+			"Description": "Inference Params Demo Lambda Function ARN",
+			"Value": {"Fn::GetAtt": ["InferenceParamsDemo", "Arn"]}
+		}
+	}
+}
