@@ -40,25 +40,25 @@
 				}
 			}
 		},
-		"InvokeModelDemo": {
+		"InvokeVsConverseDemo": {
 			"Type": "AWS::Serverless::Function",
 			"Properties": {
-				"FunctionName": "BedrockInvokeModelDemo",
-				"Handler": "invoke_model_demo.lambda_handler",
-				"CodeUri": "src/",
-				"Description": "Demonstrates InvokeModel with model-specific schemas for Claude and Llama",
+				"FunctionName": "BedrockInvokeVsConverseDemo",
+				"Handler": "lambda_function.lambda_handler",
+				"CodeUri": "src/invoke_vs_converse/",
+				"Description": "Demonstrates InvokeModel (model-specific schemas) vs Converse (unified schema)",
 				"Policies": [
 					{"Ref": "BedrockAccessPolicy"}
 				]
 			}
 		},
-		"ConverseDemo": {
+		"StreamingDemo": {
 			"Type": "AWS::Serverless::Function",
 			"Properties": {
-				"FunctionName": "BedrockConverseDemo",
-				"Handler": "converse_demo.lambda_handler",
-				"CodeUri": "src/",
-				"Description": "Demonstrates Converse API with unified schema across Claude and Llama",
+				"FunctionName": "BedrockStreamingDemo",
+				"Handler": "lambda_function.lambda_handler",
+				"CodeUri": "src/streaming_vs_nonstreaming/",
+				"Description": "Demonstrates streaming vs non-streaming with InvokeModel and Converse APIs",
 				"Policies": [
 					{"Ref": "BedrockAccessPolicy"}
 				]
@@ -68,8 +68,8 @@
 			"Type": "AWS::Serverless::Function",
 			"Properties": {
 				"FunctionName": "BedrockInferenceParamsDemo",
-				"Handler": "inference_params_demo.lambda_handler",
-				"CodeUri": "src/",
+				"Handler": "lambda_function.lambda_handler",
+				"CodeUri": "src/inference_params/",
 				"Description": "Demonstrates the impact of temperature, topP, and topK on model output",
 				"Policies": [
 					{"Ref": "BedrockAccessPolicy"}
@@ -78,13 +78,13 @@
 		}
 	},
 	"Outputs": {
-		"InvokeModelDemoFunction": {
-			"Description": "InvokeModel Demo Lambda Function ARN",
-			"Value": {"Fn::GetAtt": ["InvokeModelDemo", "Arn"]}
+		"InvokeVsConverseDemoFunction": {
+			"Description": "InvokeModel vs Converse Demo Lambda Function ARN",
+			"Value": {"Fn::GetAtt": ["InvokeVsConverseDemo", "Arn"]}
 		},
-		"ConverseDemoFunction": {
-			"Description": "Converse Demo Lambda Function ARN",
-			"Value": {"Fn::GetAtt": ["ConverseDemo", "Arn"]}
+		"StreamingDemoFunction": {
+			"Description": "Streaming Demo Lambda Function ARN",
+			"Value": {"Fn::GetAtt": ["StreamingDemo", "Arn"]}
 		},
 		"InferenceParamsDemoFunction": {
 			"Description": "Inference Params Demo Lambda Function ARN",
