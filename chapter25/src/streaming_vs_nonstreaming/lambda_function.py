@@ -1,108 +1,50 @@
 """
 Lambda 2: Streaming vs Non-Streaming
 ======================================
-Shows the difference between streaming and non-streaming responses
-using both InvokeModel and Converse APIs with a single model (Claude).
+Demonstrates the difference between streaming and non-streaming responses
+using the Converse API.
 
-4 calls total:
-- InvokeModel (non-streaming)
-- InvokeModelWithResponseStream (streaming)
-- Converse (non-streaming)
-- ConverseStream (streaming)
+Pass {"streaming": true} or {"streaming": false} in the event payload
+to see each behavior separately.
+
+NOTE: InvokeModel also supports both streaming and non-streaming:
+  - Non-streaming: bedrock_runtime.invoke_model(...)
+  - Streaming:     bedrock_runtime.invoke_model_with_response_stream(...)
+This function uses Converse APIs for simplicity:
+  - Non-streaming: bedrock_runtime.converse(...)
+  - Streaming:     bedrock_runtime.converse_stream(...)
 """
 
 import json
 import boto3
+import time
 
 bedrock_runtime = boto3.client("bedrock-runtime")
 
-PROMPT = "Write a short paragraph about why the sky is blue."
+PROMPT = "Write a paragraph with ten sentences about why we should learn multiple languages"
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 
-# ============================================================
-# INVOKE MODEL — Non-Streaming vs Streaming
-# ============================================================
-
-def invoke_model_non_streaming(prompt):
-    """InvokeModel: waits for full response, returns it all at once."""
-    body = json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 300,
-        "temperature": 0.5
-    })
-
-    response = bedrock_runtime.invoke_model(
-        modelId=MODEL_ID,
-        contentType="application/json",
-        accept="application/json",
-        body=body
-    )
-    response_body = json.loads(response["body"].read())
-
-    return {
-        "api": "InvokeModel",
-        "streaming": False,
-        "behavior": "Waits until the entire response is generated, then returns it all at once",
-        "output": response_body["content"][0]["text"],
-        "usage": response_body["usage"]
-    }
-
-
-def invoke_model_streaming(prompt):
-    """InvokeModelWithResponseStream: returns response in chunks as they generate."""
-    body = json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 300,
-        "temperature": 0.5
-    })
-
-    response = bedrock_runtime.invoke_model_with_response_stream(
-        modelId=MODEL_ID,
-        contentType="application/json",
-        accept="application/json",
-        body=body
-    )
-
-    # Collect chunks as they arrive
-    chunks = []
-    full_response = ""
-    for event in response["body"]:
-        chunk = json.loads(event["chunk"]["bytes"])
-        if chunk["type"] == "content_block_delta":
-            text_piece = chunk["delta"]["text"]
-            chunks.append(text_piece)
-            full_response += text_piece
-
-    return {
-        "api": "InvokeModelWithResponseStream",
-        "streaming": True,
-        "behavior": "Returns response in chunks as tokens are generated — ideal for real-time UIs",
-        "output": full_response,
-        "total_chunks_received": len(chunks),
-        "first_3_chunks": chunks[:3],
-        "note": "Each chunk contains a small piece of text. In a UI, you would display each chunk immediately."
-    }
-
-
-# ============================================================
-# CONVERSE — Non-Streaming vs Streaming
-# ============================================================
-
 def converse_non_streaming(prompt):
-    """Converse: waits for full response, returns it all at once."""
+    """
+    Converse (non-streaming):
+    Sends the request and waits for the ENTIRE response to be generated.
+    You get nothing until the model finishes — then you get everything at once.
+    """
+    start_time = time.time()
+
     response = bedrock_runtime.converse(
         modelId=MODEL_ID,
         messages=[{"role": "user", "content": [{"text": prompt}]}],
         inferenceConfig={"maxTokens": 300, "temperature": 0.5}
     )
 
+    elapsed = round(time.time() - start_time, 2)
+
     return {
-        "api": "Converse",
-        "streaming": False,
-        "behavior": "Waits until the entire response is generated, then returns it all at once",
+        "api": "Converse (non-streaming)",
+        "behavior": "Waited for the ENTIRE response before returning. Nothing received until model finished.",
+        "wait_time_seconds": elapsed,
         "output": response["output"]["message"]["content"][0]["text"],
         "usage": response["usage"],
         "stop_reason": response["stopReason"]
@@ -110,7 +52,14 @@ def converse_non_streaming(prompt):
 
 
 def converse_streaming(prompt):
-    """ConverseStream: returns response in chunks as they generate."""
+    """
+    ConverseStream (streaming):
+    Returns text in small chunks AS the model generates tokens.
+    In a real UI, you would display each chunk immediately — giving a typing effect.
+    """
+    start_time = time.time()
+    time_to_first_chunk = None
+
     response = bedrock_runtime.converse_stream(
         modelId=MODEL_ID,
         messages=[{"role": "user", "content": [{"text": prompt}]}],
@@ -127,67 +76,72 @@ def converse_streaming(prompt):
             text_piece = event["contentBlockDelta"]["delta"]["text"]
             chunks.append(text_piece)
             full_response += text_piece
+            if time_to_first_chunk is None:
+                time_to_first_chunk = round(time.time() - start_time, 2)
         elif "metadata" in event:
             usage = event["metadata"].get("usage", {})
 
+    total_time = round(time.time() - start_time, 2)
+
     return {
-        "api": "ConverseStream",
-        "streaming": True,
-        "behavior": "Returns response in chunks as tokens are generated — ideal for real-time UIs",
-        "output": full_response,
+        "api": "ConverseStream (streaming)",
+        "behavior": "Received text in small chunks AS the model generated them. First chunk arrived quickly.",
+        "time_to_first_chunk_seconds": time_to_first_chunk,
+        "total_time_seconds": total_time,
         "total_chunks_received": len(chunks),
-        "first_3_chunks": chunks[:3],
+        "first_5_chunks": chunks[:5],
+        "last_3_chunks": chunks[-3:] if len(chunks) >= 3 else chunks,
+        "full_output": full_response,
         "usage": usage,
-        "note": "Each chunk contains a small piece of text. In a UI, you would display each chunk immediately."
+        "note": "In a chatbot UI, each chunk would be displayed immediately — users see text appear word by word instead of waiting for the full response."
     }
 
 
-# ============================================================
-# HANDLER
-# ============================================================
-
 def lambda_handler(event, context):
-    results = {
+    """
+    Pass {"streaming": true} to see streaming behavior.
+    Pass {"streaming": false} to see non-streaming behavior.
+    Pass {} (empty) to see both side by side.
+    """
+    streaming_flag = event.get("streaming")
+
+    result = {
         "tutorial": "Streaming vs Non-Streaming",
         "model": MODEL_ID,
         "prompt": PROMPT,
-        "key_lesson": (
-            "Non-streaming APIs wait for the full response before returning. "
-            "Streaming APIs return text in small chunks as tokens are generated. "
-            "Use streaming for real-time UIs (chatbots, typing effects). "
-            "Use non-streaming for batch processing or when you need the full response at once."
-        ),
-        "results": []
+        "event_received": event
     }
 
-    # 1. InvokeModel — non-streaming
-    try:
-        results["results"].append(invoke_model_non_streaming(PROMPT))
-    except Exception as e:
-        results["results"].append({"api": "InvokeModel", "streaming": False, "error": str(e)})
+    # If streaming flag is explicitly set, run only that mode
+    if streaming_flag is True:
+        try:
+            result["streaming_result"] = converse_streaming(PROMPT)
+        except Exception as e:
+            result["streaming_result"] = {"error": str(e)}
 
-    # 2. InvokeModelWithResponseStream — streaming
-    try:
-        results["results"].append(invoke_model_streaming(PROMPT))
-    except Exception as e:
-        results["results"].append({"api": "InvokeModelWithResponseStream", "streaming": True, "error": str(e)})
+    elif streaming_flag is False:
+        try:
+            result["non_streaming_result"] = converse_non_streaming(PROMPT)
+        except Exception as e:
+            result["non_streaming_result"] = {"error": str(e)}
 
-    # 3. Converse — non-streaming
-    try:
-        results["results"].append(converse_non_streaming(PROMPT))
-    except Exception as e:
-        results["results"].append({"api": "Converse", "streaming": False, "error": str(e)})
+    else:
+        # No flag passed — run both for comparison
+        try:
+            result["non_streaming_result"] = converse_non_streaming(PROMPT)
+        except Exception as e:
+            result["non_streaming_result"] = {"error": str(e)}
 
-    # 4. ConverseStream — streaming
-    try:
-        results["results"].append(converse_streaming(PROMPT))
-    except Exception as e:
-        results["results"].append({"api": "ConverseStream", "streaming": True, "error": str(e)})
+        try:
+            result["streaming_result"] = converse_streaming(PROMPT)
+        except Exception as e:
+            result["streaming_result"] = {"error": str(e)}
 
-    # Summary
-    results["when_to_use"] = {
-        "non_streaming": "Batch jobs, background processing, APIs that return complete responses",
-        "streaming": "Chatbots, real-time UIs, long responses where users want to see progress"
-    }
+        result["comparison"] = {
+            "non_streaming": "You wait for the full response. Simple but slow for the user.",
+            "streaming": "You get chunks immediately. Better UX for chatbots and real-time apps.",
+            "when_to_use_non_streaming": "Batch processing, background jobs, short responses",
+            "when_to_use_streaming": "Chatbots, long responses, any UI where users are waiting"
+        }
 
-    return results
+    return result
