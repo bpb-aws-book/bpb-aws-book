@@ -17,7 +17,7 @@ import boto3
 bedrock_runtime = boto3.client("bedrock-runtime")
 
 # Using a creative prompt where parameter differences are clearly visible
-PROMPT = "Write a one-sentence tagline for a coffee shop on Mars."
+PROMPT = "Give me a one liner to sell sand to visitors at a beach"
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 
