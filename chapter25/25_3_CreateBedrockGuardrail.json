@@ -1,0 +1,45 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Creates a Bedrock Guardrail that blocks any conversations related to politics.",
+	"Resources": {
+		"NoPoliticsGuardrail": {
+			"Type": "AWS::Bedrock::Guardrail",
+			"Properties": {
+				"Name": {
+					"Fn::Sub": "NoPolitics-${AWS::StackName}"
+				},
+				"Description": "Sample Guardrail for learning how to block any conversations related to politics",
+				"BlockedInputMessaging": "Sorry, I have been asked by a book publisher to not answer questions related to politics",
+				"BlockedOutputsMessaging": "Sorry, I have been asked by a book publisher to not answer questions related to politics",
+				"TopicPolicyConfig": {
+					"TopicsConfig": [
+						{
+							"Name": "Politics",
+							"Definition": "Any political conversations, poll predictions or opinion about politicians and their families",
+							"Type": "DENY",
+							"Examples": [
+								"Who will win the next election?",
+								"What do you think about the president?",
+								"Which political party is better?"
+							]
+						}
+					]
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"GuardrailId": {
+			"Description": "The ID of the created Bedrock Guardrail",
+			"Value": {
+				"Fn::GetAtt": ["NoPoliticsGuardrail", "GuardrailId"]
+			}
+		},
+		"GuardrailArn": {
+			"Description": "The ARN of the created Bedrock Guardrail",
+			"Value": {
+				"Fn::GetAtt": ["NoPoliticsGuardrail", "GuardrailArn"]
+			}
+		}
+	}
+}
