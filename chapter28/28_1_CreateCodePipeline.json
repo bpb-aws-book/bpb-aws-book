@@ -32,6 +32,31 @@
       "Description": "SSM parameter path for the latest AMI ID"
     }
   },
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Your IP and Pipeline Configuration" },
+          "Parameters": [
+            "YourPublicIPAddress",
+            "LatestAmiId",
+            "RepositoryName",
+            "BranchName",
+            "StackName",
+            "TemplateFileName"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "YourPublicIPAddress": { "default": "Your Public IP Address" },
+        "LatestAmiId": { "default": "Latest AMI ID (SSM Parameter Path)" },
+        "RepositoryName": { "default": "CodeCommit Repository Name" },
+        "BranchName": { "default": "Branch Name" },
+        "StackName": { "default": "CloudFormation Stack Name" },
+        "TemplateFileName": { "default": "Template File Name" }
+      }
+    }
+  },
   "Resources": {
     "ArtifactStoreBucket": {
       "Type": "AWS::S3::Bucket",
@@ -360,7 +385,7 @@
                 },
                 "Configuration": {
                   "ActionMode": "CREATE_UPDATE",
-                  "StackName": { "Ref": "StackName" },
+                  "StackName": { "Fn::Sub": "${StackName}-${AWS::StackName}" },
                   "TemplatePath": {
                     "Fn::Sub": "BuildOutput::${TemplateFileName}"
                   },
