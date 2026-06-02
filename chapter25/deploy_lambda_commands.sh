@@ -12,4 +12,4 @@ wget -O ~/chapter25/src/streaming_vs_nonstreaming/lambda_function.py https://raw
 
 wget -O ~/chapter25/src/inference_params/lambda_function.py https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/main/chapter25/src/inference_params/lambda_function.py
 
-sam deploy --template-file 25_1_BedrockAPI.json --stack-name chapter25-stack-1 --capabilities CAPABILITY_IAM --resolve-s3
+sam deploy --template-file ~/chapter25/25_1_BedrockAPI.json --stack-name chapter25-stack-1 --capabilities CAPABILITY_IAM --resolve-s3
