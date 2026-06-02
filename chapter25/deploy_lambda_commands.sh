@@ -6,7 +6,7 @@ mkdir -p ~/chapter25/src/inference_params
 
 wget -O ~/chapter25/25_1_BedrockAPI.json https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/main/chapter25/25_1_BedrockAPI.json
 
-wget -O ~/chapter25/src/invokemodel_vs_converse/lambda_function.py https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/main/chapter25/src/invoke_vs_converse/lambda_function.py
+wget -O ~/chapter25/src/invokemodel_vs_converse/lambda_function.py https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/main/chapter25/src/invokemodel_vs_converse/lambda_function.py
 
 wget -O ~/chapter25/src/streaming_vs_nonstreaming/lambda_function.py https://raw.githubusercontent.com/bpb-aws-book/bpb-aws-book/main/chapter25/src/streaming_vs_nonstreaming/lambda_function.py
 
