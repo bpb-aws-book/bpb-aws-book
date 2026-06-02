@@ -1,6 +1,6 @@
 cd && mkdir chapter25 && cd chapter25
 mkdir src
-mkdir -p ~/chapter25/src/invoke_vs_converse
+mkdir -p ~/chapter25/src/invokemodel_vs_converse
 mkdir -p ~/chapter25/src/streaming_vs_nonstreaming
 mkdir -p ~/chapter25/src/inference_params
 
