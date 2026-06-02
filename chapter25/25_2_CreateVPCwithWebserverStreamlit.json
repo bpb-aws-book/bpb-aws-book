@@ -719,7 +719,7 @@
 								"cwd": "/home/ec2-user"
 							},
 							"06_launch_streamlit": {
-								"command": "runuser -l ec2-user -c 'cd /home/ec2-user/streamlit_app && source env/bin/activate && nohup streamlit run app.py --server.port 8501 --server.address 0.0.0.0 > /home/ec2-user/streamlit_app/streamlit.log 2>&1 &'",
+								"command": "bash -c 'cat > /etc/systemd/system/streamlit.service << EOF\n[Unit]\nDescription=Streamlit App\nAfter=network.target\n\n[Service]\nUser=ec2-user\nWorkingDirectory=/home/ec2-user/streamlit_app\nExecStart=/home/ec2-user/streamlit_app/env/bin/streamlit run app.py --server.port 8501 --server.address 0.0.0.0\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\nEOF\nsystemctl daemon-reload && systemctl enable streamlit && systemctl start streamlit'",
 								"cwd": "/home/ec2-user"
 							}
 						}
@@ -728,7 +728,7 @@
 			},
 			"CreationPolicy": {
 				"ResourceSignal": {
-					"Timeout": "PT5M"
+					"Timeout": "PT10M"
 				}
 			}
 		}
