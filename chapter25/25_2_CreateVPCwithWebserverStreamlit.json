@@ -562,6 +562,14 @@
 				"SecurityGroupIngress": [
 					{
 						"IpProtocol": "tcp",
+						"FromPort": 80,
+						"ToPort": 80,
+						"CidrIp": {
+							"Ref": "YourPublicIPAddress"
+						}
+					},
+					{
+						"IpProtocol": "tcp",
 						"FromPort": 8501,
 						"ToPort": 8501,
 						"CidrIp": {
@@ -720,6 +728,10 @@
 							},
 							"06_launch_streamlit": {
 								"command": "bash -c 'cat > /etc/systemd/system/streamlit.service << EOF\n[Unit]\nDescription=Streamlit App\nAfter=network.target\n\n[Service]\nUser=ec2-user\nWorkingDirectory=/home/ec2-user/streamlit_app\nExecStart=/home/ec2-user/streamlit_app/env/bin/streamlit run app.py --server.port 8501 --server.address 0.0.0.0\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\nEOF\nsystemctl daemon-reload && systemctl enable streamlit && systemctl start streamlit'",
+								"cwd": "/home/ec2-user"
+							},
+							"07_redirect_port_80_to_8501": {
+								"command": "yum install -y iptables-nft && iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8501",
 								"cwd": "/home/ec2-user"
 							}
 						}
