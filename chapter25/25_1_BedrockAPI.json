@@ -40,7 +40,7 @@
 				}
 			}
 		},
-		"InvokeVsConverseDemo": {
+		"InvokeModelVsConverseDemo": {
 			"Type": "AWS::Serverless::Function",
 			"Properties": {
 				"FunctionName": "BedrockInvokeModelVsConverseDemo",
@@ -78,9 +78,9 @@
 		}
 	},
 	"Outputs": {
-		"InvokeVsConverseDemoFunction": {
+		"InvokeModelVsConverseDemoFunction": {
 			"Description": "InvokeModel vs Converse Demo Lambda Function ARN",
-			"Value": {"Fn::GetAtt": ["InvokeVsConverseDemo", "Arn"]}
+			"Value": {"Fn::GetAtt": ["InvokeModelVsConverseDemo", "Arn"]}
 		},
 		"StreamingDemoFunction": {
 			"Description": "Streaming Demo Lambda Function ARN",
