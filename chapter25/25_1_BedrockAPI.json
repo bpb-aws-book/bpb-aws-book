@@ -43,9 +43,9 @@
 		"InvokeVsConverseDemo": {
 			"Type": "AWS::Serverless::Function",
 			"Properties": {
-				"FunctionName": "BedrockInvokeVsConverseDemo",
+				"FunctionName": "BedrockInvokeModelVsConverseDemo",
 				"Handler": "lambda_function.lambda_handler",
-				"CodeUri": "src/invoke_vs_converse/",
+				"CodeUri": "src/invokemodel_vs_converse/",
 				"Description": "Demonstrates InvokeModel (model-specific schemas) vs Converse (unified schema)",
 				"Policies": [
 					{"Ref": "BedrockAccessPolicy"}
