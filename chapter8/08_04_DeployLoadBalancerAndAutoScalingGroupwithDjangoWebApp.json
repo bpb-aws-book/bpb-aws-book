@@ -5,7 +5,7 @@
 		"LatestAmiId": {
 			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
 			"Type": "String",
-			"Default": "ami-067e5532aa1072d31"
+			"Default": "ami-UPDATETHIS"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
@@ -101,7 +101,7 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoWebServer",
+                "RoleName": "SSMIAMRoleForDjangoWebServerASG",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
