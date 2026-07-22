@@ -1,5 +1,5 @@
 {
-	"Description": "This CloudFormation Template creates an EC2 instance server for building docker image and for testing database connectivity",
+	"Description": "This CloudFormation Template creates an EC2 instance with Docker installed, an ECR repository, and populates the backend database with sample data for the Inquisitive Bookworm Club application",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
 		"LatestAmiId": {
@@ -85,7 +85,7 @@
 			],
 			"ParameterLabels": {
 				"LatestAmiId": {
-					"default": "Amazon Linux 2 AMI ID"
+					"default": "Amazon Linux 2023 AMI ID"
 				},
 				"InstanceType": {
 					"default": "Instance Type"
@@ -94,171 +94,175 @@
 		}
 	},
 	"Resources": {
-			"ECRRepository": {
-				"Type": "AWS::ECR::Repository",
-				"DeletionPolicy": "Retain",
-				"Properties": {
-					"RepositoryName": "bpbbook/inquisitivebookwormclubrepo",
-					"ImageScanningConfiguration": {
-						"ScanOnPush": true
-					},
-					"ImageTagMutability": "MUTABLE",
-					"EncryptionConfiguration": {
-						"EncryptionType": "AES256"
-					},
-					"LifecyclePolicy": {
-						"LifecyclePolicyText": {
-							"Fn::Join": [
-								"",
-								[
-									"{",
-									"  \"rules\": [",
-									"    {",
-									"      \"rulePriority\": 1,",
-									"      \"description\": \"Keep only last 10 untagged images\",",
-									"      \"selection\": {",
-									"        \"tagStatus\": \"untagged\",",
-									"        \"countType\": \"imageCountMoreThan\",",
-									"        \"countNumber\": 10",
-									"      },",
-									"      \"action\": {",
-									"        \"type\": \"expire\"",
-									"      }",
-									"    },",
-									"    {",
-									"      \"rulePriority\": 2,",
-									"      \"description\": \"Keep last 30 days of tagged images\",",
-									"      \"selection\": {",
-									"        \"tagStatus\": \"tagged\",",
-									"        \"tagPrefixList\": [\"v\"],",
-									"        \"countType\": \"sinceImagePushed\",",
-									"        \"countUnit\": \"days\",",
-									"        \"countNumber\": 30",
-									"      },",
-									"      \"action\": {",
-									"        \"type\": \"expire\"",
-									"      }",
-									"    }",
-									"  ]",
-									"}"
-								]
+		"ECRRepository": {
+			"Type": "AWS::ECR::Repository",
+			"DeletionPolicy": "Retain",
+			"Properties": {
+				"RepositoryName": "bpbbook/inquisitivebookwormclubrepo",
+				"ImageScanningConfiguration": {
+					"ScanOnPush": true
+				},
+				"ImageTagMutability": "MUTABLE",
+				"EncryptionConfiguration": {
+					"EncryptionType": "AES256"
+				},
+				"LifecyclePolicy": {
+					"LifecyclePolicyText": {
+						"Fn::Join": [
+							"",
+							[
+								"{",
+								"  \"rules\": [",
+								"    {",
+								"      \"rulePriority\": 1,",
+								"      \"description\": \"Keep only last 10 untagged images\",",
+								"      \"selection\": {",
+								"        \"tagStatus\": \"untagged\",",
+								"        \"countType\": \"imageCountMoreThan\",",
+								"        \"countNumber\": 10",
+								"      },",
+								"      \"action\": {",
+								"        \"type\": \"expire\"",
+								"      }",
+								"    },",
+								"    {",
+								"      \"rulePriority\": 2,",
+								"      \"description\": \"Keep last 30 days of tagged images\",",
+								"      \"selection\": {",
+								"        \"tagStatus\": \"tagged\",",
+								"        \"tagPrefixList\": [\"v\"],",
+								"        \"countType\": \"sinceImagePushed\",",
+								"        \"countUnit\": \"days\",",
+								"        \"countNumber\": 30",
+								"      },",
+								"      \"action\": {",
+								"        \"type\": \"expire\"",
+								"      }",
+								"    }",
+								"  ]",
+								"}"
 							]
-						}
-							},
-		"RepositoryPolicyText": {
-			"Version": "2012-10-17",
-			"Statement": [
-				{
-					"Sid": "AllowPushPull",
-					"Effect": "Allow",
-					"Principal": {
-						"AWS": {
-							"Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root"
-						}
-					},
-					"Action": [
-						"ecr:GetDownloadUrlForLayer",
-						"ecr:BatchGetImage",
-						"ecr:BatchCheckLayerAvailability",
-						"ecr:PutImage",
-						"ecr:InitiateLayerUpload",
-						"ecr:UploadLayerPart",
-						"ecr:CompleteLayerUpload"
-					]
-				}
-			]
-		}
-	}},		
-		"SSMIAMRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoDockerBuildServer",
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": "ec2.amazonaws.com"
-                            },
-                            "Action": "sts:AssumeRole"
-                        }
-                    ]
-                },
-                "Path": "/",
-                "ManagedPolicyArns": [
-                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
-                ],
-				"Policies": [{
-					"PolicyName": "AdditionalPermissionsPolicy",
-					"PolicyDocument": {
-						"Version": "2012-10-17",
-						"Statement": [
-							{
-								"Effect": "Allow",
-								"Action": ["secretsmanager:GetResourcePolicy",
-											"secretsmanager:GetSecretValue",
-											"secretsmanager:DescribeSecret",
-											"secretsmanager:ListSecretVersionIds"],
-								"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
-							},
-							{
-								"Effect": "Allow",
-								"Action": ["secretsmanager:ListSecrets"],
-								"Resource": ["*"]
-							},
-							{
-								"Effect": "Allow",
-								"Action": [
-									"kms:Decrypt"
-								],
-								"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
-							},
-							{
-								"Effect": "Allow",
-								"Action": ["cloudformation:ListExports"],
-								"Resource": ["*"]
-							},
-							{
-								"Effect": "Allow",
-								"Action": [
-									"ecr:BatchGetImage",
-									"ecr:BatchCheckLayerAvailability",
-									"ecr:CompleteLayerUpload",
-									"ecr:GetDownloadUrlForLayer",
-									"ecr:InitiateLayerUpload",
-									"ecr:PutImage",
-									"ecr:UploadLayerPart",
-									"ecr:ListImages"
-								],
-								"Resource": {
-									"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
-								}
-							},
-							{
-								"Effect": "Allow",
-								"Action": [
-									"ecr:GetAuthorizationToken"
-								],
-								"Resource": ["*"]
-							}
 						]
 					}
-				}]
-
-            }
-        },
+				},
+				"RepositoryPolicyText": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "AllowPushPull",
+							"Effect": "Allow",
+							"Principal": {
+								"AWS": {
+									"Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root"
+								}
+							},
+							"Action": [
+								"ecr:GetDownloadUrlForLayer",
+								"ecr:BatchGetImage",
+								"ecr:BatchCheckLayerAvailability",
+								"ecr:PutImage",
+								"ecr:InitiateLayerUpload",
+								"ecr:UploadLayerPart",
+								"ecr:CompleteLayerUpload"
+							]
+						}
+					]
+				}
+			}
+		},
+		"SSMIAMRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "SSMIAMRoleForDjangoDockerBuildServer",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ec2.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+				],
+				"Policies": [
+					{
+						"PolicyName": "AdditionalPermissionsPolicy",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"secretsmanager:GetResourcePolicy",
+										"secretsmanager:GetSecretValue",
+										"secretsmanager:DescribeSecret",
+										"secretsmanager:ListSecretVersionIds"
+									],
+									"Resource": [{"Fn::ImportValue": "BPBBookRDSSecretARN"}]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["secretsmanager:ListSecrets"],
+									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"kms:Decrypt"
+									],
+									"Resource": [{"Fn::ImportValue": "BPBBookKMSKeyARN"}]
+								},
+								{
+									"Effect": "Allow",
+									"Action": ["cloudformation:ListExports"],
+									"Resource": ["*"]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"ecr:BatchGetImage",
+										"ecr:BatchCheckLayerAvailability",
+										"ecr:CompleteLayerUpload",
+										"ecr:GetDownloadUrlForLayer",
+										"ecr:InitiateLayerUpload",
+										"ecr:PutImage",
+										"ecr:UploadLayerPart",
+										"ecr:ListImages"
+									],
+									"Resource": {
+										"Fn::Sub": "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bpbbook/inquisitivebookwormclubrepo"
+									}
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"ecr:GetAuthorizationToken"
+									],
+									"Resource": ["*"]
+								}
+							]
+						}
+					}
+				]
+			}
+		},
 		"SSMIAMInstanceProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "Properties": {
-                "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "SSMIAMRole"
-                    }
-                ]
-            }
-        },
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "SSMIAMRole"
+					}
+				]
+			}
+		},
 		"DockerBuildServer": {
 			"Type": "AWS::EC2::Instance",
 			"Properties": {
@@ -269,8 +273,8 @@
 					"Ref": "InstanceType"
 				},
 				"IamInstanceProfile": {
-               "Ref": "SSMIAMInstanceProfile"
-            	},
+					"Ref": "SSMIAMInstanceProfile"
+				},
 				"SecurityGroupIds": [
 					{"Fn::ImportValue": "BPBBookDockerBuildServerSecurityGroup"}
 				],
@@ -292,7 +296,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Ten"
+						"Value": "Eleven"
 					}
 				],
 				"UserData": {
@@ -339,95 +343,95 @@
 							"InstallSSMAgent", "InstallAdditionalPackages", "PopulateData", "InstallDocker"
 						]
 					},
-					"InstallSSMAgent" : {
-                        "services" : {
-                        "sysvinit" : {  
-                            "amazon-ssm-agent"   : { "enabled" : "true", "ensureRunning" : "true" }
-                        }
-                        }
-                    },
+					"InstallSSMAgent": {
+						"services": {
+							"sysvinit": {
+								"amazon-ssm-agent": { "enabled": "true", "ensureRunning": "true" }
+							}
+						}
+					},
 					"InstallAdditionalPackages": {
-                        "packages" : {
-                            "yum" : {
-                                "git" : [], "jq" : []
-                            }
-                        },
+						"packages": {
+							"yum": {
+								"git": [], "jq": []
+							}
+						},
 						"commands": {
-                            "clone the repository":{
-                                "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
-                                "cwd": "/home/ec2-user"
-                            },
-							"copy required files":{
-                                "command": "cp -r bpb-aws-book/chapter11/inquisitive_bookworm_club .",
-                                "cwd": "/home/ec2-user"
-                            },
-							"copy docker build files":{
-                                "command": "cp -r bpb-aws-book/chapter11/Dockerfile .",
-                                "cwd": "/home/ec2-user"
-                            },
-							"copy dependency installation script file":{
-                                "command": "cp -r bpb-aws-book/chapter11/setup.sh .",
-                                "cwd": "/home/ec2-user"
-                            },
-							"copy docker entrypoint script file":{
-                                "command": "cp -r bpb-aws-book/chapter11/entrypoint.sh .",
-                                "cwd": "/home/ec2-user"
-                            },
-							"copy nginx configuration file":{
-                                "command": "cp -r bpb-aws-book/chapter11/inquisitivebookwormclubsite.conf .",
-                                "cwd": "/home/ec2-user"
-                            },
-							 "remove the cloned repository": {
-                                "command": "rm -rf bpb-aws-book",
-                                "cwd": "/home/ec2-user"
-                            },
+							"clone the repository": {
+								"command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
+								"cwd": "/home/ec2-user"
+							},
+							"copy required files": {
+								"command": "cp -r bpb-aws-book/chapter11/inquisitive_bookworm_club .",
+								"cwd": "/home/ec2-user"
+							},
+							"copy docker build files": {
+								"command": "cp -r bpb-aws-book/chapter11/Dockerfile .",
+								"cwd": "/home/ec2-user"
+							},
+							"copy dependency installation script file": {
+								"command": "cp -r bpb-aws-book/chapter11/setup.sh .",
+								"cwd": "/home/ec2-user"
+							},
+							"copy docker entrypoint script file": {
+								"command": "cp -r bpb-aws-book/chapter11/entrypoint.sh .",
+								"cwd": "/home/ec2-user"
+							},
+							"copy nginx configuration file": {
+								"command": "cp -r bpb-aws-book/chapter11/inquisitivebookwormclubsite.conf .",
+								"cwd": "/home/ec2-user"
+							},
+							"remove the cloned repository": {
+								"command": "rm -rf bpb-aws-book",
+								"cwd": "/home/ec2-user"
+							},
 							"get security token for reading metadata": {
 								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"retrieve current AWS region from instance metadata": {
 								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/placement/region -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > awsregion",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update settings file AWS region with the current AWS region": {
-								"command": "export AWS_REGION=$(cat awsregion) && sed -i 's/AWS_REGION/'${AWS_REGION}'/g' settings.py && rm -r tokenfile",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+								"command": "export AWS_REGION=$(cat awsregion) && sed -i 's/AWS_REGION/'${AWS_REGION}'/g' settings.py && rm -f tokenfile",
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"create script file to upgrade and install pip and gunicorn": {
 								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
-							},						
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
 							"execute script file from the previous step": {
 								"command": "sh setupenv.sh",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							 "install dependencies for postgresql access and boto3": {
-								"command": "sudo su && source env/bin/activate && python3 -m pip install boto3 psycopg2-binary aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							"install dependencies for postgresql access and boto3": {
+								"command": "source env/bin/activate && python3 -m pip install boto3 psycopg2-binary aws-secretsmanager-caching && sudo dnf install -y postgresql15 postgresql15-contrib && sudo chmod -R a+rwx env && deactivate",
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"update settings file database endpoint url": {
-								"command": "sudo su && aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+								"command": "aws cloudformation list-exports > exports && export BPBBOOKDBURL=$(jq -r '.[][] | select(.Name==\"BPBBookRDSDBAddress\").Value' exports) && sed -i 's/BPBBOOKDBURL/'${BPBBOOKDBURL}'/g' settings.py",
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
 							"update settings file secrets arn": {
-								"command": "sudo su && export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
-                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+								"command": "export SECRETARN=$(jq -r '.[][] | select(.Name==\"BPBBookRDSSecretARN\").Value' exports) && sed -i 's/SECRETARN/'${SECRETARN}'/g' settings.py",
+								"cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							}
 						}
 					},
-					"PopulateData" : {
+					"PopulateData": {
 						"commands": {
 							"perform migrations": {
-								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
+								"command": "source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
 								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
 							"populate sample data": {
-								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+								"command": "source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
 								"cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
 					},
-					"InstallDocker" : {
+					"InstallDocker": {
 						"commands": {
 							"install docker and add user to the docker group": {
 								"command": "sudo yum update -y && sudo yum install -y docker && sudo service docker start && sudo usermod -a -G docker ec2-user",
@@ -439,44 +443,44 @@
 			},
 			"CreationPolicy": {
 				"ResourceSignal": {
-					"Timeout": "PT5M"
-				}
-			}
-		}},
-		"Outputs": {
-			"RepositoryURI": {
-				"Description": "The URI of the ECR repository",
-				"Value": {
-					"Fn::Sub": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}"
-				},
-				"Export": {
-					"Name": {
-						"Fn::Sub": "${AWS::StackName}-RepositoryURI"
-					}
-				}
-			},
-			"RepositoryName": {
-				"Description": "The name of the ECR repository",
-				"Value": {
-					"Ref": "ECRRepository"
-				},
-				"Export": {
-					"Name": {
-						"Fn::Sub": "${AWS::StackName}-RepositoryName"
-					}
-				}
-			},
-			"RepositoryARN": {
-				"Description": "The ARN of the ECR repository",
-				"Value": {
-					"Fn::GetAtt": ["ECRRepository", "Arn"]
-				},
-				"Export": {
-					"Name": {
-						"Fn::Sub": "${AWS::StackName}-RepositoryARN"
-					}
+					"Timeout": "PT10M"
 				}
 			}
 		}
-
+	},
+	"Outputs": {
+		"RepositoryURI": {
+			"Description": "The URI of the ECR repository",
+			"Value": {
+				"Fn::Sub": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-RepositoryURI"
+				}
+			}
+		},
+		"RepositoryName": {
+			"Description": "The name of the ECR repository",
+			"Value": {
+				"Ref": "ECRRepository"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-RepositoryName"
+				}
+			}
+		},
+		"RepositoryARN": {
+			"Description": "The ARN of the ECR repository",
+			"Value": {
+				"Fn::GetAtt": ["ECRRepository", "Arn"]
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-RepositoryARN"
+				}
+			}
+		}
 	}
+}
