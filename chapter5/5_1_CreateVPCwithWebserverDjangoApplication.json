@@ -1,0 +1,647 @@
+{
+	"Description": "This CloudFormation Template creates a VPC with a public and private subnet in one Availability Zone. It deploys an internet gateway, with a default route on the public subnet. It deploys a NAT gateway and default route for the private subnet. The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Parameters": {
+		"YourPublicIPAddress": {
+			"Description": "Your public IP address in CIDR format with a /32 suffix. Visit checkip.amazonaws.com to find your public IP. For example, if your IP is 1.2.3.4, enter: 1.2.3.4/32",
+			"Type": "String",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/32$",
+			"ConstraintDescription": "Must be a valid IP address in the format x.x.x.x/32"
+		},
+		"LatestAmiId": {
+			"Description": "The latest AMI id. Default is Amazon Linux 2023",
+			"Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+			"Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+		},
+		"InstanceType": {
+			"Description": "WebServer EC2 instance type",
+			"Type": "String",
+			"Default": "t2.small",
+			"AllowedValues": [
+				"t2.micro",
+				"t2.small",
+				"t2.medium",
+				"t2.large",
+				"t3.micro",
+				"t3.small",
+				"t3.medium",
+				"t3.large",
+				"t3a.micro",
+				"t3a.small",
+				"t3a.medium",
+				"t3a.large",
+				"m5.large",
+				"m5.xlarge",
+				"m5a.large",
+				"m5a.xlarge",
+				"m6i.large",
+				"m6i.xlarge",
+				"m6a.large",
+				"m6a.xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5a.large",
+				"c5a.xlarge",
+				"c6i.large",
+				"c6i.xlarge",
+				"c6a.large",
+				"c6a.xlarge",
+				"r5.large",
+				"r5.xlarge",
+				"r5a.large",
+				"r5a.xlarge",
+				"r6i.large",
+				"r6i.xlarge"
+			],
+			"ConstraintDescription": "must be a valid EC2 instance type."
+		},
+		"VpcCIDR": {
+			"Description": "IP range (CIDR notation) for the VPC. Must be a valid CIDR block.",
+			"Type": "String",
+			"Default": "10.0.0.0/16",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+			"ConstraintDescription": "Must be a valid CIDR block in the format x.x.x.x/xx"
+		},
+		"FirstPublicSubnetCIDR": {
+			"Description": "IP range (CIDR notation) for the public subnet in the first Availability Zone",
+			"Type": "String",
+			"Default": "10.0.1.0/24",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+			"ConstraintDescription": "Must be a valid CIDR block in the format x.x.x.x/xx"
+		},
+		"FirstPrivateSubnetCIDR": {
+			"Description": "IP range (CIDR notation) for the private subnet in the first Availability Zone",
+			"Type": "String",
+			"Default": "10.0.3.0/24",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+			"ConstraintDescription": "Must be a valid CIDR block in the format x.x.x.x/xx"
+		}
+	},
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [
+				{
+					"Label": {
+						"default": "Your IP and EC2 Configuration"
+					},
+					"Parameters": [
+						"YourPublicIPAddress",
+						"LatestAmiId",
+						"InstanceType"
+					]
+				},
+				{
+					"Label": {
+						"default": "VPC Configuration"
+					},
+					"Parameters": [
+						"VpcCIDR",
+						"FirstPublicSubnetCIDR",
+						"FirstPrivateSubnetCIDR"
+					]
+				}
+			],
+			"ParameterLabels": {
+				"VpcCIDR": {
+					"default": "CIDR of the VPC where the web server will be deployed"
+				},
+				"FirstPublicSubnetCIDR": {
+					"default": "CIDR of the public subnet where the web server will be deployed"
+				},
+				"YourPublicIPAddress": {
+					"default": "Your public IP Address"
+				},
+				"LatestAmiId": {
+					"default": "Amazon Linux 2023 AMI ID"
+				},
+				"InstanceType": {
+					"default": "Instance Type"
+				}
+			}
+		}
+	},
+	"Resources": {
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": {
+					"Ref": "VpcCIDR"
+				},
+				"EnableDnsSupport": true,
+				"EnableDnsHostnames": true,
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Custom VPC for learning"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"InternetGateway": {
+			"Type": "AWS::EC2::InternetGateway",
+			"Metadata": {
+				"Comment": "The internet gateway allows resources a route out to the internet"
+			},
+			"Properties": {
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "ChapterFive-IGW"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"InternetGatewayAttachment": {
+			"Type": "AWS::EC2::VPCGatewayAttachment",
+			"Properties": {
+				"InternetGatewayId": {
+					"Ref": "InternetGateway"
+				},
+				"VpcId": {
+					"Ref": "VPC"
+				}
+			},
+			"Metadata": {
+				"Comment": "Attaches the internet gateway to the VPC"
+			}
+		},
+		"FirstPublicSubnet": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"AvailabilityZone": {
+					"Fn::Select": [
+						0,
+						{
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"CidrBlock": {
+					"Ref": "FirstPublicSubnetCIDR"
+				},
+				"MapPublicIpOnLaunch": true,
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter Five Public Subnet in the first AZ"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"FirstPrivateSubnet": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"AvailabilityZone": {
+					"Fn::Select": [
+						0,
+						{
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"CidrBlock": {
+					"Ref": "FirstPrivateSubnetCIDR"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter Five Private Subnet in the first AZ"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"FirstNATGatewayEIP": {
+			"Type": "AWS::EC2::EIP",
+			"DependsOn": "InternetGatewayAttachment",
+			"Properties": {
+				"Domain": "vpc"
+			},
+			"Metadata": {
+				"Comment": "Allocates an Elastic IP address for the gateway"
+			}
+		},
+		"FirstNATGateway": {
+			"Type": "AWS::EC2::NatGateway",
+			"Properties": {
+				"AllocationId": {
+					"Fn::GetAtt": [
+						"FirstNATGatewayEIP",
+						"AllocationId"
+					]
+				},
+				"SubnetId": {
+					"Ref": "FirstPublicSubnet"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "NAT Gateway associated with the private subnet in the first AZ"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"PublicRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter Five Public Route Table"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"PublicRoute": {
+			"Type": "AWS::EC2::Route",
+			"DependsOn": "InternetGatewayAttachment",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PublicRouteTable"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"GatewayId": {
+					"Ref": "InternetGateway"
+				}
+			},
+			"Metadata": {
+				"Comment": "Routes all traffic through the IGW"
+			}
+		},
+		"FirstPublicSubnetRouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PublicRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "FirstPublicSubnet"
+				}
+			},
+			"Metadata": {
+				"Comment": "Associates the first public subnet with the public route table"
+			}
+		},
+		"FirstPrivateRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter Five First Private Route Table"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				]
+			}
+		},
+		"FirstPrivateRoute": {
+			"Type": "AWS::EC2::Route",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "FirstPrivateRouteTable"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"NatGatewayId": {
+					"Ref": "FirstNATGateway"
+				}
+			},
+			"Metadata": {
+				"Comment": "Routes all traffic through the NAT gateway"
+			}
+		},
+		"FirstPrivateSubnetRouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "FirstPrivateRouteTable"
+				},
+				"SubnetId": {
+					"Ref": "FirstPrivateSubnet"
+				}
+			},
+			"Metadata": {
+				"Comment": "Associates the private subnet with the private route table"
+			}
+		},
+		"EC2SecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "WebServerSecurityGroup"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				],
+				"GroupDescription": "Allow http to client host",
+				"GroupName": "WebServerSecurityGroup",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 80,
+						"ToPort": 80,
+						"CidrIp": {
+							"Ref": "YourPublicIPAddress"
+						}
+					}
+				]
+			},
+			"Metadata": {
+				"Comment": "Allows inbound HTTP traffic from your public IP address"
+			}
+		},
+		"SSMIAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": {"Fn::Sub": "${AWS::StackName}-SSMIAMRoleForDjangoWebServer"},
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+                ]
+            }
+        },
+		"SSMIAMInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "SSMIAMRole"
+                    }
+                ]
+            }
+        },
+		"WebServer": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"ImageId": {
+					"Ref": "LatestAmiId"
+				},
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"IamInstanceProfile": {
+               "Ref": "SSMIAMInstanceProfile"
+            	},
+				"SecurityGroupIds": [
+					{
+						"Fn::GetAtt": [
+							"EC2SecurityGroup",
+							"GroupId"
+						]
+					}
+				],
+				"SubnetId": {
+					"Ref": "FirstPublicSubnet"
+				},
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "Chapter5WebServer"
+					},
+					{
+						"Key": "Chapter",
+						"Value": "Five"
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n# Install the files and packages from the metadata\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServer --configsets All --region ${AWS::Region}\n# Signal the status from cfn-init\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServer --region ${AWS::Region}\n"
+					}
+				}
+			},
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"configSets": {
+						"All": [
+							"InstallSSMAgent","InstallDjangoApplication", "ConfigureGunicorn","InstallNginx"
+						]
+					},
+					"InstallSSMAgent" : {
+                        "services" : {
+                        "sysvinit" : {  
+                            "amazon-ssm-agent"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        }
+                    },
+					"InstallDjangoApplication": {
+                        "packages" : {
+                            "yum" : {
+                                "git" : []
+                            }
+                        },
+						"commands": {
+                            "01_clone the repository":{
+                                "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
+                                "cwd": "/home/ec2-user"
+                            },
+							"02_copy required files":{
+                                "command": "cp -r bpb-aws-book/chapter4/inquisitive_bookworm_club .",
+                                "cwd": "/home/ec2-user"
+                            },
+							"03_remove the cloned repository": {
+                                "command": "rm -rf bpb-aws-book",
+                                "cwd": "/home/ec2-user"
+                            },
+							"04_get security token for reading metadata": {
+								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"05_retrieve public ip from instance metadata": {
+								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"06_update settings file": {
+								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -f tokenfile",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
+							},
+							"07_create script file to upgrade and install pip and gunicorn": {
+								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"08_execute script file from the previous step": {
+								"command": "sh setupenv.sh",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"09_perform migrations": {
+								"command": "source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							},
+							"10_populate sample data": {
+								"command": "source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+                                "cwd": "/home/ec2-user/inquisitive_bookworm_club"
+							}
+						}
+					},
+                    "ConfigureGunicorn" : {
+                    "files" : {
+                    "/etc/systemd/system/gunicorn.socket" : {
+                        "content" : { "Fn::Join" : [ "", [
+                            "[Unit] \n",
+                            "Description=gunicorn socket \n",
+                            "\n",
+                            "[Socket] \n",
+                            "ListenStream=/run/gunicorn.sock \n",
+                            "\n",
+                            "[Install] \n",
+                            "WantedBy=sockets.target"
+                        ]]},
+                        "mode"  : "000644",
+                        "owner" : "ec2-user",
+                        "group" : "ec2-user"
+                    },
+                    "/etc/systemd/system/gunicorn.service" : {
+                        "content" : { "Fn::Join" : [ "", [
+                            "[Unit] \n",
+                            "Description=gunicorn daemon\n",
+                            "Requires=gunicorn.socket\n",
+                            "After=network.target\n",
+                            "\n",
+                            "[Service]\n",
+                            "User=ec2-user\n",
+                            "Group=ec2-user\n",
+                            "WorkingDirectory=/home/ec2-user/inquisitive_bookworm_club\n",
+                            "ExecStart=/home/ec2-user/inquisitive_bookworm_club/env/bin/gunicorn \\\n",
+                            "--access-logfile - \\\n",
+                            "--workers 3 \\\n",
+                            "--bind unix:/run/gunicorn.sock \\\n",
+                            "inquisitive_bookworm_club_project.wsgi:application\n",
+                            "[Install]\n",
+                            "WantedBy=multi-user.target"
+                        ]]},
+                        "mode"  : "000644",
+                        "owner" : "ec2-user",
+                        "group" : "ec2-user"
+                    }
+                },
+				"commands": {
+					"activate gunicorn service": {
+						"command": "systemctl start gunicorn.socket && systemctl enable gunicorn.socket && file /run/gunicorn.sock && systemctl daemon-reload",
+						"cwd": "/home/ec2-user"
+					}
+					}
+				},
+                    "InstallNginx" : {
+                        "packages" : {
+                        "yum" : {
+                            "nginx" : []
+                        }
+                    },
+                        "services" : {
+                        "sysvinit" : {  
+                            "nginx"   : { "enabled" : "true", "ensureRunning" : "true" }
+                        }
+                        },
+						"files" : {
+							"/etc/nginx/default.d/inquisitebookwormclub.conf" : {
+								"content" : { "Fn::Join" : [ "", [
+									"location / {\n",
+									"    proxy_set_header Host $http_host;\n",
+									"    proxy_set_header X-Real-IP $remote_addr;\n",
+									"    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n",
+									"    proxy_set_header X-Forwarded-Proto $scheme;\n",
+									"    proxy_pass http://unix:/run/gunicorn.sock;\n",
+									"}"
+								]]}
+							}},
+							"commands": {
+								"change ownership": {
+									"command": "sudo chown ec2-user:ec2-user inquisitive_bookworm_club && sudo chown ec2-user:ec2-user ./inquisitive_bookworm_club/db.sqlite3",
+									"cwd": "/home/ec2-user"
+								}
+							}
+                    }
+				}
+			},
+			"CreationPolicy": {
+				"ResourceSignal": {
+					"Timeout": "PT15M"
+				}
+			}
+		}},
+		"Outputs": {
+			"PublicIp": {
+				"Value": {
+					"Fn::GetAtt": [
+						"WebServer",
+						"PublicIp"
+					]
+				},
+				"Description": "Web Server's Public IP Address"
+			},
+			"VPC": {
+				"Description": "A reference to the created VPC",
+				"Value": {
+					"Ref": "VPC"
+				}
+			},
+			"FirstPublicSubnet": {
+				"Description": "A reference to the public subnet in the 1st Availability Zone",
+				"Value": {
+					"Ref": "FirstPublicSubnet"
+				}
+			},
+			"FirstPrivateSubnet": {
+				"Description": "A reference to the private subnet in the 1st Availability Zone",
+				"Value": {
+					"Ref": "FirstPrivateSubnet"
+				}
+			}
+		}
+	}
