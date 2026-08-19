@@ -1,10 +1,12 @@
 {
-	"Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+	"Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets. The template deploys an EC2 based web server running a Django application (served via Nginx and Gunicorn) with a public IP address, and allows HTTP access to the web server from your IP address.",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
 		"YourPublicIPAddress": {
-			"Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
-			"Type": "String"
+			"Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value: 1.2.3.4/32",
+			"Type": "String",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/32$",
+			"ConstraintDescription": "Must be a valid IPv4 address in CIDR notation with /32 suffix (e.g., 1.2.3.4/32)."
 		},
 		"LatestAmiId": {
 			"Description": "The latest AMI id. Default is Amazon Linux 2023",
@@ -16,60 +18,25 @@
 			"Type": "String",
 			"Default": "t2.small",
 			"AllowedValues": [
-				"t1.micro",
-				"t2.nano",
 				"t2.micro",
 				"t2.small",
 				"t2.medium",
 				"t2.large",
-				"m1.small",
-				"m1.medium",
-				"m1.large",
-				"m1.xlarge",
-				"m2.xlarge",
-				"m2.2xlarge",
-				"m2.4xlarge",
-				"m3.medium",
-				"m3.large",
-				"m3.xlarge",
-				"m3.2xlarge",
-				"m4.large",
-				"m4.xlarge",
-				"m4.2xlarge",
-				"m4.4xlarge",
-				"m4.10xlarge",
-				"c1.medium",
-				"c1.xlarge",
-				"c3.large",
-				"c3.xlarge",
-				"c3.2xlarge",
-				"c3.4xlarge",
-				"c3.8xlarge",
-				"c4.large",
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
-				"g2.2xlarge",
-				"g2.8xlarge",
-				"r3.large",
-				"r3.xlarge",
-				"r3.2xlarge",
-				"r3.4xlarge",
-				"r3.8xlarge",
-				"i2.xlarge",
-				"i2.2xlarge",
-				"i2.4xlarge",
-				"i2.8xlarge",
-				"d2.xlarge",
-				"d2.2xlarge",
-				"d2.4xlarge",
-				"d2.8xlarge",
-				"hi1.4xlarge",
-				"hs1.8xlarge",
-				"cr1.8xlarge",
-				"cc2.8xlarge",
-				"cg1.4xlarge"
+				"t3.micro",
+				"t3.small",
+				"t3.medium",
+				"t3.large",
+				"m5.large",
+				"m5.xlarge",
+				"m5.2xlarge",
+				"m5.4xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"r5.large",
+				"r5.xlarge",
+				"r5.2xlarge"
 			],
 			"ConstraintDescription": "must be a valid EC2 instance type."
 		},
@@ -136,7 +103,7 @@
 					"default": "Your public IP Address"
 				},
 				"LatestAmiId": {
-					"default": "Amazon Linux 2 AMI ID"
+					"default": "Amazon Linux 2023 AMI ID"
 				},
 				"InstanceType": {
 					"default": "Instance Type"
@@ -577,7 +544,7 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoWebServer",
+                
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
@@ -592,7 +559,7 @@
                 },
                 "Path": "/",
                 "ManagedPolicyArns": [
-                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+                    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
                 ]
             }
         },
@@ -642,38 +609,7 @@
 				],
 				"UserData": {
 					"Fn::Base64": {
-						"Fn::Join": [
-							"",
-							[
-								"#!/bin/bash -xe\n",
-								"yum install -y aws-cfn-bootstrap\n",
-								"# Install the files and packages from the metadata\n",
-								"/opt/aws/bin/cfn-init -v ",
-								"         --stack ",
-								{
-									"Ref": "AWS::StackName"
-								},
-								"         --resource WebServer ",
-								"         --configsets All",
-								"         --region ",
-								{
-									"Ref": "AWS::Region"
-								},
-								"\n",
-								"# Signal the status from cfn-init\n",
-								"/opt/aws/bin/cfn-signal -e $? ",
-								"         --stack ",
-								{
-									"Ref": "AWS::StackName"
-								},
-								"         --resource WebServer ",
-								"         --region ",
-								{
-									"Ref": "AWS::Region"
-								},
-								"\n"
-							]
-						]
+						"Fn::Sub": "#!/bin/bash -xe\nyum install -y aws-cfn-bootstrap\n# Install the files and packages from the metadata\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServer --configsets All --region ${AWS::Region}\n# Signal the status from cfn-init\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServer --region ${AWS::Region}\n"
 					}
 				}
 			},
@@ -698,44 +634,44 @@
                             }
                         },
 						"commands": {
-                            "clone the repository":{
+                            "01_clone_repository":{
                                 "command": "git clone https://github.com/bpb-aws-book/bpb-aws-book.git",
                                 "cwd": "/home/ec2-user"
                             },
-							"copy required files":{
+							"02_copy_required_files":{
                                 "command": "cp -r bpb-aws-book/chapter4/inquisitive_bookworm_club .",
                                 "cwd": "/home/ec2-user"
                             },
-							 "remove the cloned repository": {
+							"03_remove_cloned_repository": {
                                 "command": "rm -rf bpb-aws-book",
                                 "cwd": "/home/ec2-user"
                             },
-							"get security token for reading metadata": {
-								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\"> tokenfile",
+							"04_get_metadata_token": {
+								"command": "curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\" > tokenfile",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
-							"retrieve public ip from instance metadata": {
+							"05_retrieve_public_ip": {
 								"command": "export METADATATOKEN=$(cat tokenfile) && curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\" > publicipv4file",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
-							 "update settings file": {
-								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -r tokenfile",
+							"06_update_settings_file": {
+								"command": "export EC2PUBLICIPV4=$(cat publicipv4file) && sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py && rm -f tokenfile && rm -f publicipv4file",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project"
 							},
-							"create script file to upgrade and install pip and gunicorn": {
-								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
+							"07_create_setup_script": {
+								"command": "echo 'python3 -m venv env && source env/bin/activate && python3 -m pip install --upgrade pip && python3 -m pip install django && python3 -m pip install gunicorn && deactivate' > setupenv.sh",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							"execute script file from the previous step": {
-								"command": "sh setupenv.sh",
+							"08_execute_setup_script": {
+								"command": "bash setupenv.sh",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							"perform migrations": {
-								"command": "sudo su && source env/bin/activate && python manage.py migrate && python manage.py makemigrations books && python manage.py migrate books && deactivate",
+							"09_perform_migrations": {
+								"command": "/home/ec2-user/inquisitive_bookworm_club/env/bin/python manage.py migrate && /home/ec2-user/inquisitive_bookworm_club/env/bin/python manage.py makemigrations books && /home/ec2-user/inquisitive_bookworm_club/env/bin/python manage.py migrate books",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							},
-							"populate sample data": {
-								"command": "sudo su && source env/bin/activate && python manage.py shell < populatesampledata.py && deactivate",
+							"10_populate_sample_data": {
+								"command": "/home/ec2-user/inquisitive_bookworm_club/env/bin/python manage.py shell < populatesampledata.py",
                                 "cwd": "/home/ec2-user/inquisitive_bookworm_club"
 							}
 						}
@@ -744,22 +680,22 @@
                     "files" : {
                     "/etc/systemd/system/gunicorn.socket" : {
                         "content" : { "Fn::Join" : [ "", [
-                            "[Unit] \n",
-                            "Description=gunicorn socket \n",
+                            "[Unit]\n",
+                            "Description=gunicorn socket\n",
                             "\n",
-                            "[Socket] \n",
-                            "ListenStream=/run/gunicorn.sock \n",
+                            "[Socket]\n",
+                            "ListenStream=/run/gunicorn.sock\n",
                             "\n",
-                            "[Install] \n",
+                            "[Install]\n",
                             "WantedBy=sockets.target"
                         ]]},
                         "mode"  : "000644",
-                        "owner" : "ec2-user",
-                        "group" : "ec2-user"
+                        "owner" : "root",
+                        "group" : "root"
                     },
                     "/etc/systemd/system/gunicorn.service" : {
                         "content" : { "Fn::Join" : [ "", [
-                            "[Unit] \n",
+                            "[Unit]\n",
                             "Description=gunicorn daemon\n",
                             "Requires=gunicorn.socket\n",
                             "After=network.target\n",
@@ -773,17 +709,18 @@
                             "--workers 3 \\\n",
                             "--bind unix:/run/gunicorn.sock \\\n",
                             "inquisitive_bookworm_club_project.wsgi:application\n",
+                            "\n",
                             "[Install]\n",
                             "WantedBy=multi-user.target"
                         ]]},
                         "mode"  : "000644",
-                        "owner" : "ec2-user",
-                        "group" : "ec2-user"
+                        "owner" : "root",
+                        "group" : "root"
                     }
                 },
 				"commands": {
 					"activate gunicorn service": {
-						"command": "systemctl start gunicorn.socket && systemctl enable gunicorn.socket && file /run/gunicorn.sock && systemctl daemon-reload",
+						"command": "systemctl daemon-reload && systemctl start gunicorn.socket && systemctl enable gunicorn.socket",
 						"cwd": "/home/ec2-user"
 					}
 					}
@@ -813,7 +750,7 @@
 							}},
 							"commands": {
 								"change ownership": {
-									"command": "sudo chown ec2-user:ec2-user inquisitive_bookworm_club && sudo chown ec2-user:ec2-user ./inquisitive_bookworm_club/db.sqlite3",
+									"command": "chown ec2-user:ec2-user inquisitive_bookworm_club && chown ec2-user:ec2-user ./inquisitive_bookworm_club/db.sqlite3",
 									"cwd": "/home/ec2-user"
 								}
 							}
@@ -822,7 +759,7 @@
 			},
 			"CreationPolicy": {
 				"ResourceSignal": {
-					"Timeout": "PT5M"
+					"Timeout": "PT10M"
 				}
 			}
 		}},
