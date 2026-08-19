@@ -1,75 +1,41 @@
 {
-	"Description": "This CloudFormation Template deploys the underlying infrastructure and an auto scaling group with web servers for our Django Web Application",
+	"Description": "This CloudFormation Template creates a VPC with public and private subnets across two Availability Zones, a launch template based on a pre-built Django Web Application AMI, and an Auto Scaling Group with a target tracking scaling policy.",
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Parameters": {
 		"YourPublicIPAddress": {
-			"Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
-			"Type": "String"
+			"Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value: 1.2.3.4/32",
+			"Type": "String",
+			"AllowedPattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/32$",
+			"ConstraintDescription": "Must be a valid IPv4 address in CIDR notation with /32 suffix (e.g., 1.2.3.4/32)."
 		},
 		"LatestAmiId": {
-			"Description": "The AMI ID with Django Web Application Installed. Its in the format ami-xxxxxxxx",
-			"Type": "String",
-			"Default": "ami-061fedd0a6844facc"
+			"Description": "The AMI ID with Django Web Application installed. It is in the format ami-0123456789abcdef0",
+			"Type": "AWS::EC2::Image::Id"
 		},
 		"InstanceType": {
 			"Description": "WebServer EC2 instance type",
 			"Type": "String",
 			"Default": "t2.small",
 			"AllowedValues": [
-				"t1.micro",
-				"t2.nano",
 				"t2.micro",
 				"t2.small",
 				"t2.medium",
 				"t2.large",
-				"m1.small",
-				"m1.medium",
-				"m1.large",
-				"m1.xlarge",
-				"m2.xlarge",
-				"m2.2xlarge",
-				"m2.4xlarge",
-				"m3.medium",
-				"m3.large",
-				"m3.xlarge",
-				"m3.2xlarge",
-				"m4.large",
-				"m4.xlarge",
-				"m4.2xlarge",
-				"m4.4xlarge",
-				"m4.10xlarge",
-				"c1.medium",
-				"c1.xlarge",
-				"c3.large",
-				"c3.xlarge",
-				"c3.2xlarge",
-				"c3.4xlarge",
-				"c3.8xlarge",
-				"c4.large",
-				"c4.xlarge",
-				"c4.2xlarge",
-				"c4.4xlarge",
-				"c4.8xlarge",
-				"g2.2xlarge",
-				"g2.8xlarge",
-				"r3.large",
-				"r3.xlarge",
-				"r3.2xlarge",
-				"r3.4xlarge",
-				"r3.8xlarge",
-				"i2.xlarge",
-				"i2.2xlarge",
-				"i2.4xlarge",
-				"i2.8xlarge",
-				"d2.xlarge",
-				"d2.2xlarge",
-				"d2.4xlarge",
-				"d2.8xlarge",
-				"hi1.4xlarge",
-				"hs1.8xlarge",
-				"cr1.8xlarge",
-				"cc2.8xlarge",
-				"cg1.4xlarge"
+				"t3.micro",
+				"t3.small",
+				"t3.medium",
+				"t3.large",
+				"m5.large",
+				"m5.xlarge",
+				"m5.2xlarge",
+				"m5.4xlarge",
+				"c5.large",
+				"c5.xlarge",
+				"c5.2xlarge",
+				"c5.4xlarge",
+				"r5.large",
+				"r5.xlarge",
+				"r5.2xlarge"
 			],
 			"ConstraintDescription": "must be a valid EC2 instance type."
 		},
@@ -136,7 +102,7 @@
 					"default": "Your public IP Address"
 				},
 				"LatestAmiId": {
-					"default": "Amazon Linux 2 AMI ID"
+					"default": "Django Web App AMI ID"
 				},
 				"InstanceType": {
 					"default": "Instance Type"
@@ -160,7 +126,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -174,11 +140,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "ChapterThree-IGW"
+						"Value": "ChapterFour-IGW"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -218,11 +184,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Subnet in the first AZ"
+						"Value": "Chapter Four Public Subnet in the first AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -248,11 +214,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Subnet in the second AZ"
+						"Value": "Chapter Four Public Subnet in the second AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -278,11 +244,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Private Subnet in the first AZ"
+						"Value": "Chapter Four Private Subnet in the first AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -308,79 +274,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Private Subnet in the second AZ"
+						"Value": "Chapter Four Private Subnet in the second AZ"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
-					}
-				]
-			}
-		},
-		"FirstNATGatewayEIP": {
-			"Type": "AWS::EC2::EIP",
-			"DependsOn": "InternetGatewayAttachment",
-			"Properties": {
-				"Domain": "vpc"
-			},
-			"Metadata": {
-				"Comment": "Allocates an Elastic IP address for the gateway"
-			}
-		},
-		"SecondNATGatewayEIP": {
-			"Type": "AWS::EC2::EIP",
-			"DependsOn": "InternetGatewayAttachment",
-			"Properties": {
-				"Domain": "vpc"
-			},
-			"Metadata": {
-				"Comment": "Allocates an Elastic IP address for the gateway"
-			}
-		},
-		"FirstNATGateway": {
-			"Type": "AWS::EC2::NatGateway",
-			"Properties": {
-				"AllocationId": {
-					"Fn::GetAtt": [
-						"FirstNATGatewayEIP",
-						"AllocationId"
-					]
-				},
-				"SubnetId": {
-					"Ref": "FirstPublicSubnet"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
-						"Value": "NAT Gateway associated with the private subnet in the first AZ"
-					},
-					{
-						"Key": "Chapter",
-						"Value": "Three"
-					}
-				]
-			}
-		},
-		"SecondNATGateway": {
-			"Type": "AWS::EC2::NatGateway",
-			"Properties": {
-				"AllocationId": {
-					"Fn::GetAtt": [
-						"SecondNATGatewayEIP",
-						"AllocationId"
-					]
-				},
-				"SubnetId": {
-					"Ref": "SecondPublicSubnet"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
-						"Value": "NAT Gateway associated with the private subnet in the second AZ"
-					},
-					{
-						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -394,11 +292,11 @@
 				"Tags": [
 					{
 						"Key": "Name",
-						"Value": "Chapter Three Public Route Table"
+						"Value": "Chapter Four Public Route Table"
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				]
 			}
@@ -447,100 +345,6 @@
 				"Comment": "Associates the second public subnet with the public route table"
 			}
 		},
-		"FirstPrivateRouteTable": {
-			"Type": "AWS::EC2::RouteTable",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
-						"Value": "Chapter Three First Private Route Table"
-					},
-					{
-						"Key": "Chapter",
-						"Value": "Three"
-					}
-				]
-			}
-		},
-		"FirstPrivateRoute": {
-			"Type": "AWS::EC2::Route",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "FirstPrivateRouteTable"
-				},
-				"DestinationCidrBlock": "0.0.0.0/0",
-				"NatGatewayId": {
-					"Ref": "FirstNATGateway"
-				}
-			},
-			"Metadata": {
-				"Comment": "Routes all traffic through the NAT gateway"
-			}
-		},
-		"FirstPrivateSubnetRouteTableAssociation": {
-			"Type": "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "FirstPrivateRouteTable"
-				},
-				"SubnetId": {
-					"Ref": "FirstPrivateSubnet"
-				}
-			},
-			"Metadata": {
-				"Comment": "Associates the private subnet with the private route table"
-			}
-		},
-		"SecondPrivateRouteTable": {
-			"Type": "AWS::EC2::RouteTable",
-			"Properties": {
-				"VpcId": {
-					"Ref": "VPC"
-				},
-				"Tags": [
-					{
-						"Key": "Name",
-						"Value": "Chapter Three Second Private Route Table"
-					},
-					{
-						"Key": "Chapter",
-						"Value": "Three"
-					}
-				]
-			}
-		},
-		"SecondPrivateRoute": {
-			"Type": "AWS::EC2::Route",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "SecondPrivateRouteTable"
-				},
-				"DestinationCidrBlock": "0.0.0.0/0",
-				"NatGatewayId": {
-					"Ref": "SecondNATGateway"
-				}
-			},
-			"Metadata": {
-				"Comment": "Routes all traffic through the NAT gateway"
-			}
-		},
-		"SecondPrivateSubnetRouteTableAssociation": {
-			"Type": "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties": {
-				"RouteTableId": {
-					"Ref": "SecondPrivateRouteTable"
-				},
-				"SubnetId": {
-					"Ref": "SecondPrivateSubnet"
-				}
-			},
-			"Metadata": {
-				"Comment": "Associates the private subnet with the private route table"
-			}
-		},
 		"EC2SecurityGroup": {
 			"Type": "AWS::EC2::SecurityGroup",
 			"Properties": {
@@ -551,7 +355,7 @@
 					},
 					{
 						"Key": "Chapter",
-						"Value": "Three"
+						"Value": "Four"
 					}
 				],
 				"GroupDescription": "Allow http to client host",
@@ -577,7 +381,6 @@
 		"SSMIAMRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
-                "RoleName": "SSMIAMRoleForDjangoWebServerASG",
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
@@ -592,7 +395,7 @@
                 },
                 "Path": "/",
                 "ManagedPolicyArns": [
-                    "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+                    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
                 ]
             }
         },
@@ -610,7 +413,6 @@
 		"DjangoWebAppLaunchTemplate":{
 			"Type":"AWS::EC2::LaunchTemplate",
 			"Properties":{
-			  "LaunchTemplateName":"DjangoWebAppLaunchTemplate",
 			  "TagSpecifications": [
 				{
 					"ResourceType": "launch-template",
@@ -630,9 +432,9 @@
 				"IamInstanceProfile":{
 				"Arn":{"Fn::GetAtt": ["SSMIAMInstanceProfile", "Arn"]}
 				},
-				"DisableApiTermination":"true",
+				"DisableApiTermination":"false",
 				"Monitoring": {
-					"Enabled": "true"
+					"Enabled": true
 				},
 				"ImageId": {
 					"Ref": "LatestAmiId"
@@ -650,17 +452,7 @@
 				],
 				"UserData":{
 					"Fn::Base64":{
-					  "Fn::Join": [
-						"", [
-						  "#!/bin/bash\n",
-						  "METADATATOKEN=$(curl -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\n",
-						  "EC2PUBLICIPV4=$(curl http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\n",
-						  "cd /home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project\n",
-						  "sudo sed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['EC2PUBLICIPV4','localhost']\" settings.py\n",
-						  "sudo sed -i 's/EC2PUBLICIPV4/'${EC2PUBLICIPV4}'/g' settings.py\n",
-						  "sudo systemctl restart gunicorn"
-						]
-					  ]
+					  "Fn::Sub": "#!/bin/bash -xe\nMETADATATOKEN=$(curl -sf -X PUT \"http://169.254.169.254/latest/api/token\" -H \"X-aws-ec2-metadata-token-ttl-seconds: 21600\")\nEC2PUBLICIPV4=$(curl -sf http://169.254.169.254/latest/meta-data/public-ipv4 -H \"X-aws-ec2-metadata-token: $METADATATOKEN\")\nif [[ ! \"$EC2PUBLICIPV4\" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then\n  echo \"ERROR: Failed to retrieve a valid public IP. Got: $EC2PUBLICIPV4\"\n  exit 1\nfi\ncd /home/ec2-user/inquisitive_bookworm_club/inquisitive_bookworm_club_project\nsed -i \"/ALLOWED_HOSTS/c\\ALLOWED_HOSTS = ['$EC2PUBLICIPV4','localhost']\" settings.py\nsystemctl restart gunicorn\n"
 					}
 				  }
 			  }
@@ -717,8 +509,7 @@
 				},
 				"TargetValue":100,
 				"DisableScaleIn": "true"
-			  },
-			  "Cooldown":"60"
+			  }
 			}
 		  }
 		},
@@ -767,4 +558,3 @@
 			}
 		}
 	}
-
