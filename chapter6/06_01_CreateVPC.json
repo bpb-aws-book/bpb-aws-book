@@ -1,10 +1,12 @@
 {
-    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway with a default route on the public subnets, and a pair of NAT gateways (one in each AZ) with default routes for them in the private subnets. It also creates the web server and RDS security groups and exports the network resource identifiers for use by later stacks.",
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
         "YourPublicIPAddress": {
             "Description": "Please supply your public IP address with a /32 suffix. Type checkip.amazonaws.com in your web browser to view your public IP address. For example, if your public IP address is 1.2.3.4, provide this value:1.2.3.4/32",
-            "Type": "String"
+            "Type": "String",
+            "AllowedPattern": "^(\\d{1,3}\\.){3}\\d{1,3}/\\d{1,2}$",
+            "ConstraintDescription": "Must be a valid IP address in CIDR notation, for example 1.2.3.4/32"
         },
         "VpcCIDR": {
             "Description": "Please enter the IP range (CIDR notation) for this VPC",
@@ -96,7 +98,7 @@
                 }
             },
             "Metadata": {
-                "Comment": "Attaches the internet gateway to the VPC"
+                "Comment": "Attaches the internet gateway to the VPC. Note: AWS::EC2::VPCGatewayAttachment does not support tags."
             }
         },
         "FirstPublicSubnet": {
@@ -223,7 +225,17 @@
             "Type": "AWS::EC2::EIP",
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Six NAT Gateway EIP in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Six"
+                    }
+                ]
             },
             "Metadata": {
                 "Comment": "Allocates an Elastic IP address for the gateway"
@@ -233,7 +245,17 @@
             "Type": "AWS::EC2::EIP",
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Chapter Six NAT Gateway EIP in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Six"
+                    }
+                ]
             },
             "Metadata": {
                 "Comment": "Allocates an Elastic IP address for the gateway"
@@ -457,7 +479,6 @@
                         "Value": "Six"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
-                "GroupName" : "WebServerSecurityGroup",
                 "VpcId" : {"Ref" : "VPC"},
                 "SecurityGroupIngress" : [{
                     "IpProtocol" : "tcp",
@@ -489,8 +510,8 @@
                 "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "5432",
-                        "ToPort": "5432",
+                        "FromPort": 5432,
+                        "ToPort": 5432,
                         "SourceSecurityGroupId": {
                             "Ref": "WebServerSecurityGroup"
                         }
