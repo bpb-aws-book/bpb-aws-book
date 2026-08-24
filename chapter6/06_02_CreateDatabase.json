@@ -33,7 +33,7 @@
                   "Ref": "BPBBookRDSDBSubnetGroup"
               },
               "ManageMasterUserPassword": true,
-              "MultiAZ": "False",
+              "MultiAZ": false,
               "MasterUserSecret": {
                   "KmsKeyId": {
                       "Ref": "KMSKey"
@@ -72,6 +72,7 @@
     },
     "Outputs": {
       "BPBBookRDSSecretARN": {
+        "Description": "ARN of the Secrets Manager secret holding the database master credentials",
         "Value": {
             "Fn::GetAtt": "BPBBookRDSDBInstance.MasterUserSecret.SecretArn"
         },
@@ -80,6 +81,7 @@
         }
     },
     "BPBBookKMSKeyARN": {
+      "Description": "ARN of the KMS key used to encrypt the database secret",
       "Value": {
           "Fn::GetAtt": "KMSKey.Arn"
       },
