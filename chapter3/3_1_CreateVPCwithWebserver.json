@@ -1,5 +1,5 @@
 {
-    "Description": "This CloudFormation Template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway, with a default route on the public subnets. It deploys a pair of NAT gateways (one in each AZ) and default routes for them in the private subnets.The template deploys an EC2 based web server with a public IP address and allows access to the web server from your IP address.",
+    "Description": "This CloudFormation template creates a VPC with two pairs of public and private subnets spread across two Availability Zones. It deploys an internet gateway with a default route on the public subnets, and a pair of NAT gateways (one in each AZ) with default routes for them in the private subnets. It also deploys an EC2-based Apache web server in a public subnet that serves a simple web page, assigns it a public IP address, and allows HTTP access to the web server from your IP address.",
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
         "YourPublicIPAddress": {
@@ -14,62 +14,14 @@
         "InstanceType" : {
             "Description" : "WebServer EC2 instance type",
             "Type" : "String",
-            "Default" : "t2.small",
+            "Default" : "t3.micro",
             "AllowedValues" : [ 
-              "t1.micro", 
-              "t2.nano", 
               "t2.micro", 
               "t2.small", 
               "t2.medium", 
-              "t2.large",   
-              "m1.small", 
-              "m1.medium", 
-              "m1.large", 
-              "m1.xlarge", 
-              "m2.xlarge", 
-              "m2.2xlarge", 
-              "m2.4xlarge", 
-              "m3.medium", 
-              "m3.large", 
-              "m3.xlarge", 
-              "m3.2xlarge", 
-              "m4.large", 
-              "m4.xlarge", 
-              "m4.2xlarge", 
-              "m4.4xlarge", 
-              "m4.10xlarge", 
-              "c1.medium", 
-              "c1.xlarge", 
-              "c3.large", 
-              "c3.xlarge", 
-              "c3.2xlarge", 
-              "c3.4xlarge", 
-              "c3.8xlarge", 
-              "c4.large", 
-              "c4.xlarge", 
-              "c4.2xlarge", 
-              "c4.4xlarge", 
-              "c4.8xlarge", 
-              "g2.2xlarge", 
-              "g2.8xlarge", 
-              "r3.large", 
-              "r3.xlarge", 
-              "r3.2xlarge", 
-              "r3.4xlarge", 
-              "r3.8xlarge", 
-              "i2.xlarge", 
-              "i2.2xlarge", 
-              "i2.4xlarge", 
-              "i2.8xlarge", 
-              "d2.xlarge", 
-              "d2.2xlarge", 
-              "d2.4xlarge", 
-              "d2.8xlarge", 
-              "hi1.4xlarge", 
-              "hs1.8xlarge", 
-              "cr1.8xlarge", 
-              "cc2.8xlarge", 
-              "cg1.4xlarge"
+              "t3.micro", 
+              "t3.small", 
+              "t3.medium"
             ],
             "ConstraintDescription" : "must be a valid EC2 instance type."
         },
@@ -115,7 +67,7 @@
             "VpcCIDR" : { "default" : "CIDR of the VPC where the web server will be deployed" },
             "FirstPublicSubnetCIDR" : { "default" : "CIDR of the public subnet where the web server will be deployed" },
             "YourPublicIPAddress" : { "default" : "Your public IP Address"},
-            "LatestAmiId" : { "default" : "Amazon Linux 2 AMI ID"},
+            "LatestAmiId" : { "default" : "Amazon Linux 2023 AMI ID"},
             "InstanceType" : { "default" : "Instance Type" }
           }
         }
@@ -297,7 +249,17 @@
             "Type": "AWS::EC2::EIP",
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "EIP for NAT Gateway in the first AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    }
+                ]
             },
             "Metadata": {
                 "Comment": "Allocates an Elastic IP address for the gateway"
@@ -307,7 +269,17 @@
             "Type": "AWS::EC2::EIP",
             "DependsOn": "InternetGatewayAttachment",
             "Properties": {
-                "Domain": "vpc"
+                "Domain": "vpc",
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "EIP for NAT Gateway in the second AZ"
+                    },
+                    {
+                        "Key": "Chapter",
+                        "Value": "Three"
+                    }
+                ]
             },
             "Metadata": {
                 "Comment": "Allocates an Elastic IP address for the gateway"
@@ -315,6 +287,9 @@
         },
         "FirstNATGateway": {
             "Type": "AWS::EC2::NatGateway",
+            "Metadata": {
+                "Comment": "Deployed to demonstrate the NAT gateway concept; it is not used to route traffic in this chapter. NAT gateways incur hourly and data processing charges for as long as they exist, so delete the stack after completing the recipe to avoid unnecessary costs."
+            },
             "Properties": {
                 "AllocationId": {
                     "Fn::GetAtt": [
@@ -340,6 +315,9 @@
         },
         "SecondNATGateway": {
             "Type": "AWS::EC2::NatGateway",
+            "Metadata": {
+                "Comment": "Deployed to demonstrate the NAT gateway concept; it is not used to route traffic in this chapter. NAT gateways incur hourly and data processing charges for as long as they exist, so delete the stack after completing the recipe to avoid unnecessary costs."
+            },
             "Properties": {
                 "AllocationId": {
                     "Fn::GetAtt": [
@@ -531,7 +509,7 @@
                         "Value": "Three"
                     }] ,
                 "GroupDescription" : "Allow http to client host",
-                "GroupName" : "WebServerSecurityGroup",
+                "GroupName" : { "Fn::Sub": "WebServerSecurityGroup-${AWS::StackName}" },
                 "VpcId" : {"Ref" : "VPC"},
                 "SecurityGroupIngress" : [{
                     "IpProtocol" : "tcp",
@@ -577,7 +555,7 @@
               }
             },
             "services" : {
-              "sysvinit" : {  
+              "systemd" : {  
                 "httpd"   : { "enabled" : "true", "ensureRunning" : "true" }
               }
             }
@@ -614,7 +592,7 @@
       },
         "CreationPolicy" : {
             "ResourceSignal" : {
-            "Timeout" : "PT2M"
+            "Timeout" : "PT5M"
                 }
             }
         } 
